@@ -1,0 +1,21 @@
+student_id,name,attendance,study_hours,previous_marks,assignment_score,final_score,performance_category
+STD-88429,Marcus Vance,58.4,6.2,48.0,52.0,51.8,At-Risk
+STD-94021,Aaliyah Chen,64.0,8.5,52.0,61.0,59.3,At-Risk
+STD-77312,Jordan Miller,76.2,11.0,61.0,68.0,69.5,Moderate Performance
+STD-81203,Priya Sen,79.0,10.4,63.0,67.0,68.9,Moderate Performance
+STD-65129,Carlos Gomez,52.1,5.8,41.0,46.0,46.3,At-Risk
+STD-99014,Hannah Zhao,88.5,14.2,73.0,82.0,81.4,High Performance
+STD-55410,Liam O'Connor,92.0,16.5,84.0,89.0,88.9,High Performance
+STD-33921,Sofia Rossi,81.5,12.0,69.0,74.0,74.2,Moderate Performance
+STD-44018,Devon Washington,62.0,7.0,50.0,55.0,56.1,At-Risk
+STD-51290,Elena Rostova Jr.,95.0,18.0,91.0,94.0,94.1,High Performance
+STD-62381,Kenji Sato,84.0,13.5,76.0,80.0,79.8,High Performance
+STD-73492,Fatima Al-Mansoor,78.5,10.8,64.0,70.0,70.7,Moderate Performance
+STD-84503,Lucas Silva,59.0,6.5,49.0,54.0,54.6,At-Risk
+STD-95614,Chloe Martin,87.0,15.0,80.0,85.0,84.3,High Performance
+STD-16725,Zaid Khan,73.0,9.5,59.0,63.0,63.8,Moderate Performance
+STD-27836,Emily Watson,90.5,16.0,83.0,88.0,87.4,High Performance
+STD-38947,Mateo Hernandez,61.5,6.8,51.0,53.0,55.4,At-Risk
+STD-49058,Amina Diop,85.0,13.8,77.0,81.0,81.2,High Performance
+STD-50169,Oliver Brown,75.0,10.2,62.0,66.0,66.5,Moderate Performance
+STD-61270,Maya Patel,93.5,17.2,88.0,91.0,91.5,High Performance

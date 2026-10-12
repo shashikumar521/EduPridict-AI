@@ -1,0 +1,6 @@
+{
+  "name": "EduPredict AI",
+  "description": "AI-based student performance prediction system leveraging supervised machine learning for early academic intervention.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
