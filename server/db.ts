@@ -342,6 +342,27 @@ export async function getDb(): Promise<Database> {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS exam_study_plans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id TEXT NOT NULL,
+      exam_name TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      subjects_json TEXT NOT NULL,
+      availability_json TEXT NOT NULL,
+      days_json TEXT NOT NULL,
+      ai_strategy_tips TEXT DEFAULT '[]',
+      total_topics INTEGER DEFAULT 0,
+      completed_topics INTEGER DEFAULT 0,
+      total_hours_planned REAL DEFAULT 0,
+      completed_hours REAL DEFAULT 0,
+      streak_days INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
   // Seed default students if empty
   const countResult = db.exec("SELECT COUNT(*) as count FROM students");
   const count = countResult[0]?.values[0]?.[0] as number || 0;
@@ -1067,6 +1088,222 @@ export async function getSessionUser(token: string): Promise<User | null> {
 export async function deleteSession(token: string): Promise<void> {
   const db = await getDb();
   db.run("DELETE FROM sessions WHERE token = ?", [token]);
+  saveDbToFile(db);
+}
+
+// ---------------------------------------------------------------------
+// AI Exam Study Plans Persistence
+// ---------------------------------------------------------------------
+export async function getLatestExamStudyPlan(studentId: string): Promise<any | null> {
+  const db = await getDb();
+  const res = db.exec(
+    `SELECT id, student_id, exam_name, start_date, end_date, subjects_json, availability_json, days_json, ai_strategy_tips, total_topics, completed_topics, total_hours_planned, completed_hours, streak_days, created_at, updated_at
+     FROM exam_study_plans
+     WHERE student_id = ?
+     ORDER BY id DESC LIMIT 1`,
+    [studentId]
+  );
+
+  if (!res.length || !res[0].values.length) return null;
+
+  const row = res[0].values[0];
+  try {
+    return {
+      id: row[0],
+      studentId: row[1],
+      examName: row[2],
+      startDate: row[3],
+      endDate: row[4],
+      subjects: JSON.parse(row[5] as string),
+      availability: JSON.parse(row[6] as string),
+      days: JSON.parse(row[7] as string),
+      aiStrategyTips: JSON.parse((row[8] as string) || '[]'),
+      totalTopics: Number(row[9]) || 0,
+      completedTopics: Number(row[10]) || 0,
+      totalHoursPlanned: Number(row[11]) || 0,
+      completedHours: Number(row[12]) || 0,
+      streakDays: Number(row[13]) || 0,
+      createdAt: row[14],
+      updatedAt: row[15]
+    };
+  } catch (err) {
+    console.error('Error parsing exam study plan JSON:', err);
+    return null;
+  }
+}
+
+export async function saveExamStudyPlan(plan: {
+  studentId: string;
+  examName: string;
+  startDate: string;
+  endDate: string;
+  subjects: any[];
+  availability: any;
+  days: any[];
+  aiStrategyTips?: string[];
+  totalTopics?: number;
+  completedTopics?: number;
+  totalHoursPlanned?: number;
+  completedHours?: number;
+  streakDays?: number;
+}): Promise<number> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+
+  const subjectsJson = JSON.stringify(plan.subjects || []);
+  const availabilityJson = JSON.stringify(plan.availability || {});
+  const daysJson = JSON.stringify(plan.days || []);
+  const aiTipsJson = JSON.stringify(plan.aiStrategyTips || []);
+
+  const totalTopics = plan.totalTopics ?? (plan.subjects || []).reduce((acc: number, s: any) => acc + (s.topics?.length || 0), 0);
+  const completedTopics = plan.completedTopics ?? 0;
+  const totalHoursPlanned = plan.totalHoursPlanned ?? 0;
+  const completedHours = plan.completedHours ?? 0;
+  const streakDays = plan.streakDays ?? 1;
+
+  db.run(
+    `INSERT INTO exam_study_plans (
+      student_id, exam_name, start_date, end_date, subjects_json, availability_json, days_json, ai_strategy_tips,
+      total_topics, completed_topics, total_hours_planned, completed_hours, streak_days, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      plan.studentId,
+      plan.examName,
+      plan.startDate,
+      plan.endDate,
+      subjectsJson,
+      availabilityJson,
+      daysJson,
+      aiTipsJson,
+      totalTopics,
+      completedTopics,
+      totalHoursPlanned,
+      completedHours,
+      streakDays,
+      now,
+      now
+    ]
+  );
+
+  const idRes = db.exec("SELECT last_insert_rowid()");
+  const id = idRes[0]?.values[0]?.[0] as number || 1;
+  saveDbToFile(db);
+  return id;
+}
+
+export async function updateExamSessionStatus(
+  planId: number,
+  sessionId: string,
+  newStatus: 'pending' | 'completed' | 'needs_review'
+): Promise<any | null> {
+  const db = await getDb();
+  const res = db.exec("SELECT days_json, student_id FROM exam_study_plans WHERE id = ?", [planId]);
+  if (!res.length || !res[0].values.length) return null;
+
+  const rawDays = res[0].values[0][0] as string;
+  let days: any[] = [];
+  try {
+    days = JSON.parse(rawDays);
+  } catch {
+    return null;
+  }
+
+  let found = false;
+  let completedCount = 0;
+  let totalCount = 0;
+  let completedMinutes = 0;
+  let totalMinutes = 0;
+
+  for (const day of days) {
+    if (Array.isArray(day.sessions)) {
+      for (const sess of day.sessions) {
+        totalCount++;
+        totalMinutes += sess.durationMinutes || 0;
+        if (sess.id === sessionId) {
+          sess.status = newStatus;
+          if (newStatus === 'completed') {
+            sess.completedAt = new Date().toISOString();
+          } else {
+            delete sess.completedAt;
+          }
+          found = true;
+        }
+        if (sess.status === 'completed') {
+          completedCount++;
+          completedMinutes += sess.durationMinutes || 0;
+        }
+      }
+    }
+  }
+
+  if (!found) return null;
+
+  const now = new Date().toISOString();
+  const completedHours = Number((completedMinutes / 60).toFixed(1));
+  const totalHoursPlanned = Number((totalMinutes / 60).toFixed(1));
+
+  db.run(
+    `UPDATE exam_study_plans
+     SET days_json = ?, completed_topics = ?, completed_hours = ?, updated_at = ?
+     WHERE id = ?`,
+    [JSON.stringify(days), completedCount, completedHours, now, planId]
+  );
+
+  saveDbToFile(db);
+  return { planId, sessionId, newStatus, completedCount, completedHours };
+}
+
+export async function updateExamPlanFullDays(
+  planId: number,
+  days: any[],
+  aiStrategyTips?: string[]
+): Promise<void> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+
+  let completedCount = 0;
+  let totalCount = 0;
+  let completedMinutes = 0;
+  let totalMinutes = 0;
+
+  for (const day of days) {
+    if (Array.isArray(day.sessions)) {
+      for (const sess of day.sessions) {
+        totalCount++;
+        totalMinutes += sess.durationMinutes || 0;
+        if (sess.status === 'completed') {
+          completedCount++;
+          completedMinutes += sess.durationMinutes || 0;
+        }
+      }
+    }
+  }
+
+  const completedHours = Number((completedMinutes / 60).toFixed(1));
+  const totalHoursPlanned = Number((totalMinutes / 60).toFixed(1));
+
+  if (aiStrategyTips && aiStrategyTips.length > 0) {
+    db.run(
+      `UPDATE exam_study_plans
+       SET days_json = ?, total_topics = ?, completed_topics = ?, total_hours_planned = ?, completed_hours = ?, ai_strategy_tips = ?, updated_at = ?
+       WHERE id = ?`,
+      [JSON.stringify(days), totalCount, completedCount, totalHoursPlanned, completedHours, JSON.stringify(aiStrategyTips), now, planId]
+    );
+  } else {
+    db.run(
+      `UPDATE exam_study_plans
+       SET days_json = ?, total_topics = ?, completed_topics = ?, total_hours_planned = ?, completed_hours = ?, updated_at = ?
+       WHERE id = ?`,
+      [JSON.stringify(days), totalCount, completedCount, totalHoursPlanned, completedHours, now, planId]
+    );
+  }
+
+  saveDbToFile(db);
+}
+
+export async function deleteExamStudyPlan(planId: number): Promise<void> {
+  const db = await getDb();
+  db.run("DELETE FROM exam_study_plans WHERE id = ?", [planId]);
   saveDbToFile(db);
 }
 

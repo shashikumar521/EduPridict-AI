@@ -8,15 +8,11 @@ import {
   RotateCcw,
   Save,
   User,
-  Sun,
-  Moon,
-  Laptop
+  Sun
 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 export const SettingsView: React.FC = () => {
-  const { theme, setTheme } = useTheme();
   const { user, isAuthenticated, updateProfile } = useAuth();
 
   // Profile state
@@ -66,7 +62,6 @@ export const SettingsView: React.FC = () => {
     setMinAttendanceThreshold(75);
     setEmailAlerts(true);
     setAutoSavePredictions(true);
-    setTheme('light');
   };
 
   return (
@@ -157,48 +152,23 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Section 1: Appearance / Dark Theme Mode */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <Sun className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Interface Appearance & Theme</h3>
+        {/* Section 1: Appearance */}
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <Sun className="w-4 h-4 text-indigo-600" />
+            <h3 className="text-sm font-bold text-slate-900">Interface Appearance & Theme</h3>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-xs font-semibold text-slate-700 mb-2">
               Color Theme Mode
             </label>
-            <div className="grid grid-cols-2 gap-3 max-w-md">
-              <button
-                type="button"
-                onClick={() => setTheme('light')}
-                className={`p-3 rounded-xl border flex items-center gap-3 transition cursor-pointer ${
-                  theme === 'light'
-                    ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-600 text-indigo-900 dark:text-indigo-200 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <Sun className="w-5 h-5 text-amber-500" />
-                <div className="text-left text-xs">
-                  <span className="block font-bold">Light Theme</span>
-                  <span className="text-[10px] text-slate-400">Clean soft-neutral</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTheme('dark')}
-                className={`p-3 rounded-xl border flex items-center gap-3 transition cursor-pointer ${
-                  theme === 'dark'
-                    ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-600 text-indigo-900 dark:text-indigo-200 font-bold'
-                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                }`}
-              >
-                <Moon className="w-5 h-5 text-indigo-400" />
-                <div className="text-left text-xs">
-                  <span className="block font-bold">Dark Theme</span>
-                  <span className="text-[10px] text-slate-400">Low-glare dark</span>
-                </div>
-              </button>
+            <div className="p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/60 flex items-center gap-3 max-w-md">
+              <Sun className="w-5 h-5 text-amber-500 shrink-0" />
+              <div className="text-left text-xs">
+                <span className="block font-bold text-slate-900">Light Theme (Active & Default)</span>
+                <span className="text-[11px] text-slate-600">High-contrast, distraction-free light theme across all pages, dashboards, and export reports.</span>
+              </div>
             </div>
           </div>
         </div>

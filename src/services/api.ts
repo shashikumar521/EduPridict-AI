@@ -12,7 +12,10 @@ import {
   RoadmapTopic,
   ExamReadinessAssessment,
   NotificationItem,
-  AuthUser
+  AuthUser,
+  ExamStudyPlan,
+  ExamSubject,
+  StudyAvailability
 } from '../types';
 
 const API_BASE = '/api';
@@ -383,6 +386,119 @@ export async function deletePlannerTask(id: number): Promise<void> {
   });
   if (!res.ok) {
     throw new Error('Failed to delete planner task');
+  }
+}
+
+// -------------------------------------------------------------
+// AI Exam Scheduler & Personalized Study Planner API
+// -------------------------------------------------------------
+export async function fetchExamStudyPlan(studentId?: string): Promise<ExamStudyPlan | null> {
+  const url = studentId ? `${API_BASE}/planner/exam-plan?student_id=${encodeURIComponent(studentId)}` : `${API_BASE}/planner/exam-plan`;
+  const res = await fetch(url, { headers: getAuthHeaders() });
+  if (!res.ok) {
+    throw new Error('Failed to fetch exam study plan');
+  }
+  const data = await res.json();
+  return data.plan || null;
+}
+
+export async function generateExamStudyPlan(payload: {
+  student_id?: string;
+  exam_name: string;
+  start_date?: string;
+  subjects: ExamSubject[];
+  availability: StudyAvailability;
+}): Promise<ExamStudyPlan> {
+  const res = await fetch(`${API_BASE}/planner/generate`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to generate exam study plan');
+  }
+  const data = await res.json();
+  return data.plan;
+}
+
+export async function updateExamSessionStatus(
+  planId: number,
+  sessionId: string,
+  status: 'pending' | 'completed' | 'needs_review'
+): Promise<any> {
+  const res = await fetch(`${API_BASE}/planner/exam-session/${encodeURIComponent(sessionId)}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ plan_id: planId, status })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update session status');
+  }
+  return res.json();
+}
+
+export async function rebalanceExamSchedule(
+  planId: number,
+  plan: ExamStudyPlan,
+  availability: StudyAvailability
+): Promise<ExamStudyPlan> {
+  const res = await fetch(`${API_BASE}/planner/rebalance`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ plan_id: planId, plan, availability })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to rebalance schedule');
+  }
+  const data = await res.json();
+  return data.plan;
+}
+
+export async function fetchAIScheduleAdvice(plan: ExamStudyPlan): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/planner/ai-advice`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ plan })
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch AI schedule advice');
+  }
+  const data = await res.json();
+  return data.tips || [];
+}
+
+export async function fetchTopicAIAssistance(payload: {
+  subjectName: string;
+  topicName: string;
+  difficulty?: string;
+  confidence?: string;
+}): Promise<{
+  summary: string;
+  activeRecallQuestions: string[];
+  examPitfall: string;
+  source: string;
+}> {
+  const res = await fetch(`${API_BASE}/planner/ask-topic`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error('Failed to retrieve AI topic advice');
+  }
+  return res.json();
+}
+
+export async function deleteExamStudyPlan(planId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/planner/exam-plan/${planId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete exam study plan');
   }
 }
 

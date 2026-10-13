@@ -311,7 +311,7 @@ function AppContent() {
   const studentDisplayName = user?.name || 'Dr. Elena Rostova';
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col md:flex-row overflow-hidden antialiased transition-colors">
+    <div className="h-[100dvh] max-h-[100dvh] w-full bg-slate-50 text-slate-800 flex flex-col md:flex-row overflow-hidden antialiased">
       {/* Sidebar Navigation - Fixed & stationary on desktop */}
       <Sidebar
         currentSection={currentSection}
@@ -334,7 +334,7 @@ function AppContent() {
         {/* Viewport: Renders ONLY the active section; ONLY this container scrolls vertically */}
         <main
           id="dashboard-main-content"
-          className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 md:p-6"
+          className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-6 w-full"
         >
           <div className="max-w-6xl mx-auto pb-10">
             {/* 1. Dashboard Overview */}

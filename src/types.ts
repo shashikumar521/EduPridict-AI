@@ -200,6 +200,83 @@ export interface StudyPlannerTask {
   created_at: string;
 }
 
+export type TopicDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type TopicConfidence = 'Good' | 'Average' | 'Weak';
+export type TopicWeightage = 'High' | 'Medium' | 'Low';
+export type SessionType = 'concept' | 'problem_solving' | 'revision' | 'mock_test' | 'spaced_recall';
+
+export interface ExamTopic {
+  id: string;
+  name: string;
+  unitOrChapter?: string;
+  difficulty: TopicDifficulty;
+  confidence: TopicConfidence;
+  weightage: TopicWeightage;
+  estimatedMinutes: number;
+}
+
+export interface ExamSubject {
+  id: string;
+  name: string;
+  examDate: string; // YYYY-MM-DD
+  topics: ExamTopic[];
+}
+
+export interface StudyAvailability {
+  dailyHoursWeekday: number;
+  dailyHoursWeekend: number;
+  preferredTimeSlot: 'morning' | 'afternoon' | 'evening' | 'night' | 'flexible';
+  restDays: string[];
+  revisionBufferDays: number;
+}
+
+export interface ScheduledStudySession {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  topicId: string;
+  topicName: string;
+  unitOrChapter?: string;
+  date: string; // YYYY-MM-DD
+  dayOfWeek: string;
+  durationMinutes: number;
+  sessionType: SessionType;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'completed' | 'needs_review';
+  completedAt?: string;
+  aiTip?: string;
+}
+
+export interface DaySchedule {
+  date: string; // YYYY-MM-DD
+  dayOfWeek: string;
+  isRestDay: boolean;
+  totalPlannedMinutes: number;
+  sessions: ScheduledStudySession[];
+  examOnThisDay?: {
+    subjectName: string;
+  };
+}
+
+export interface ExamStudyPlan {
+  id?: number;
+  studentId: string;
+  examName: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  subjects: ExamSubject[];
+  availability: StudyAvailability;
+  days: DaySchedule[];
+  aiStrategyTips: string[];
+  totalTopics: number;
+  completedTopics: number;
+  totalHoursPlanned: number;
+  completedHours: number;
+  streakDays: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GoalItem {
   id: number;
   student_id: string;

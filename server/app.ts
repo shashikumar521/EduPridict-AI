@@ -37,8 +37,19 @@ import {
   updateUserProfile,
   createSession,
   getSessionUser,
-  deleteSession
+  deleteSession,
+  getLatestExamStudyPlan,
+  saveExamStudyPlan,
+  updateExamSessionStatus,
+  updateExamPlanFullDays,
+  deleteExamStudyPlan
 } from './db';
+import {
+  generateIntelligentSchedule,
+  rebalanceSchedule,
+  getGeminiScheduleAdvice,
+  getTopicAIAssistance
+} from './scheduler';
 import { VERIFIED_COURSES, getCoursesForEducationLevel } from './courses';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -651,6 +662,155 @@ export function createExpressApp(): express.Application {
     } catch (err: any) {
       console.error('Error deleting task:', err);
       res.status(500).json({ error: 'Failed to delete task' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // AI Exam Scheduler & Personalized Study Planner Routes
+  // -------------------------------------------------------------
+  app.get('/api/planner/exam-plan', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const studentId = user ? user.id : ((req.query.student_id as string) || 'STD-88429');
+      const plan = await getLatestExamStudyPlan(studentId);
+      res.json({ plan });
+    } catch (err: any) {
+      console.error('Error fetching exam study plan:', err);
+      res.status(500).json({ error: 'Failed to load exam study plan' });
+    }
+  });
+
+  app.post('/api/planner/generate', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { student_id, exam_name, start_date, subjects, availability } = req.body;
+
+      if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
+        return res.status(400).json({ error: 'At least one subject with topics is required to generate a study schedule.' });
+      }
+
+      const finalStudentId = user ? user.id : (student_id || 'STD-88429');
+      const plan = generateIntelligentSchedule({
+        studentId: finalStudentId,
+        examName: exam_name || 'Upcoming Semester Examination',
+        startDate: start_date,
+        subjects,
+        availability: availability || {
+          dailyHoursWeekday: 3,
+          dailyHoursWeekend: 4,
+          preferredTimeSlot: 'evening',
+          restDays: ['Sunday'],
+          revisionBufferDays: 2
+        }
+      });
+
+      // Enhance with AI advice if possible
+      try {
+        const aiTips = await getGeminiScheduleAdvice(plan);
+        if (aiTips && aiTips.length > 0) {
+          plan.aiStrategyTips = aiTips;
+        }
+      } catch (aiErr) {
+        console.warn('AI advice generation non-fatal error:', aiErr);
+      }
+
+      // Persist plan
+      const planId = await saveExamStudyPlan(plan);
+      plan.id = planId;
+
+      res.status(201).json({ status: 'success', plan });
+    } catch (err: any) {
+      console.error('Error generating exam schedule:', err);
+      res.status(500).json({ error: 'Failed to generate intelligent exam schedule: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.patch('/api/planner/exam-session/:sessionId', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { plan_id, status } = req.body;
+
+      if (!plan_id || !status) {
+        return res.status(400).json({ error: 'plan_id and status are required.' });
+      }
+
+      const updated = await updateExamSessionStatus(Number(plan_id), sessionId, status);
+      if (!updated) {
+        return res.status(404).json({ error: 'Study session or plan not found.' });
+      }
+
+      res.json({ status: 'success', data: updated });
+    } catch (err: any) {
+      console.error('Error updating exam session:', err);
+      res.status(500).json({ error: 'Failed to update session status' });
+    }
+  });
+
+  app.post('/api/planner/rebalance', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const { plan_id, plan, availability } = req.body;
+      if (!plan) {
+        return res.status(400).json({ error: 'Current plan object is required for rebalancing.' });
+      }
+
+      const updatedPlan = rebalanceSchedule(plan, availability || plan.availability);
+
+      if (plan_id) {
+        await updateExamPlanFullDays(Number(plan_id), updatedPlan.days, updatedPlan.aiStrategyTips);
+        updatedPlan.id = Number(plan_id);
+      }
+
+      res.json({ status: 'success', plan: updatedPlan });
+    } catch (err: any) {
+      console.error('Error rebalancing exam schedule:', err);
+      res.status(500).json({ error: 'Failed to rebalance schedule: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.post('/api/planner/ai-advice', async (req, res) => {
+    try {
+      const { plan } = req.body;
+      if (!plan) {
+        return res.status(400).json({ error: 'Plan details required.' });
+      }
+
+      const tips = await getGeminiScheduleAdvice(plan);
+      res.json({ tips });
+    } catch (err: any) {
+      console.error('Error fetching AI advice:', err);
+      res.status(500).json({ error: 'Failed to fetch AI strategy tips' });
+    }
+  });
+
+  app.post('/api/planner/ask-topic', async (req, res) => {
+    try {
+      const { subjectName, topicName, difficulty, confidence } = req.body;
+      if (!subjectName || !topicName) {
+        return res.status(400).json({ error: 'subjectName and topicName are required.' });
+      }
+
+      const assistance = await getTopicAIAssistance({
+        subjectName,
+        topicName,
+        difficulty,
+        confidence
+      });
+
+      res.json(assistance);
+    } catch (err: any) {
+      console.error('Error fetching topic AI assistance:', err);
+      res.status(500).json({ error: 'Failed to retrieve AI topic advice' });
+    }
+  });
+
+  app.delete('/api/planner/exam-plan/:id', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      await deleteExamStudyPlan(id);
+      res.json({ status: 'success', message: 'Exam plan removed' });
+    } catch (err: any) {
+      console.error('Error deleting exam plan:', err);
+      res.status(500).json({ error: 'Failed to delete exam study plan' });
     }
   });
 

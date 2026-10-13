@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
@@ -15,43 +15,26 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('edupredict_theme') as Theme;
-      if (stored === 'light' || stored === 'dark') {
-        return stored;
-      }
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
-    }
-    return 'light';
-  });
-
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
       root.classList.remove('dark');
+      try {
+        localStorage.setItem('edupredict_theme', 'light');
+      } catch {
+        // ignore storage errors
+      }
     }
-    try {
-      localStorage.setItem('edupredict_theme', theme);
-    } catch (e) {
-      // Ignore storage errors in restricted contexts
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme: 'light',
+        toggleTheme: () => {},
+        setTheme: () => {}
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
