@@ -4,6 +4,7 @@ import {
   Lock,
   Mail,
   User,
+  Phone,
   AlertCircle,
   Info,
   ArrowRight,
@@ -14,6 +15,7 @@ import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
+import { MobileAuthFlow } from './MobileAuthFlow';
 
 interface LoginViewProps {
   onNavigate: (section: SectionId) => void;
@@ -34,36 +36,48 @@ export const LoginView: React.FC<LoginViewProps> = ({
 }) => {
   const {
     loginGoogle,
+    loginGoogleAccessToken,
     loginEmail,
     registerEmail,
     googleClientId,
     isGoogleConfigured,
+    currentOrigin,
     pendingRedirectSection
   } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
+  const [authMethod, setAuthMethod] = useState<'mobile' | 'email'>('mobile');
   const [mode, setMode] = useState<'signin' | 'register'>(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showConfigGuide, setShowConfigGuide] = useState(false);
+  const [showRedirectOption, setShowRedirectOption] = useState(false);
+  const [isGsiReady, setIsGsiReady] = useState(false);
 
   const googleButtonRef = useRef<HTMLDivElement>(null);
+  const activeOrigin = currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
 
-  // Initialize Google Identity Services button
+  // Initialize and render Google Identity Services with active retry
   useEffect(() => {
+    let attempts = 0;
+    const maxAttempts = 15; // check for up to 4.5 seconds
+
     const setupGsi = () => {
+      attempts++;
       if (typeof window !== 'undefined' && window.google?.accounts?.id && googleClientId) {
+        setIsGsiReady(true);
         try {
           window.google.accounts.id.initialize({
             client_id: googleClientId,
             callback: async (response: any) => {
               if (response?.credential) {
-                setIsLoading(true);
+                setIsGoogleLoading(true);
                 setErrorMessage(null);
                 try {
                   const res = await loginGoogle(response.credential);
@@ -71,8 +85,17 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 } catch (err: any) {
                   setErrorMessage(err.message || 'Google authentication failed');
                 } finally {
-                  setIsLoading(false);
+                  setIsGoogleLoading(false);
                 }
+              }
+            },
+            error_callback: (err: any) => {
+              console.warn('Google Identity error_callback:', err);
+              if (err?.message?.includes('origin') || err?.type === 'origin_mismatch') {
+                setErrorMessage(
+                  `Authorized origin mismatch: "${activeOrigin}" is not registered in Google Cloud Console for client ID "${googleClientId}".`
+                );
+                setShowConfigGuide(true);
               }
             },
             auto_select: false,
@@ -82,8 +105,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
           if (googleButtonRef.current) {
             googleButtonRef.current.innerHTML = '';
             const calcWidth = typeof window !== 'undefined'
-              ? Math.min(320, Math.max(240, window.innerWidth - 64))
-              : 280;
+              ? Math.min(360, Math.max(260, window.innerWidth - 64))
+              : 300;
 
             window.google.accounts.id.renderButton(googleButtonRef.current, {
               type: 'standard',
@@ -95,15 +118,136 @@ export const LoginView: React.FC<LoginViewProps> = ({
               width: calcWidth
             });
           }
+          return true;
         } catch (e: any) {
           console.error('Failed to initialize Google Identity Services:', e);
-          setErrorMessage('Failed to initialize Google Sign-In SDK: ' + (e.message || 'Unknown error'));
+          return false;
         }
       }
+      return false;
     };
 
-    setupGsi();
-  }, [googleClientId, isGoogleConfigured, isLight, loginGoogle, onSuccess]);
+    const isReady = setupGsi();
+    if (!isReady && googleClientId) {
+      const interval = setInterval(() => {
+        if (setupGsi() || attempts >= maxAttempts) {
+          clearInterval(interval);
+        }
+      }, 300);
+      return () => clearInterval(interval);
+    }
+  }, [googleClientId, isGoogleConfigured, isLight, loginGoogle, onSuccess, activeOrigin]);
+
+  // Primary interactive Google Sign-In handler (OAuth 2.0 Popup & Token Client)
+  const handleGoogleClick = () => {
+    if (isGoogleLoading) return;
+    setErrorMessage(null);
+
+    if (!googleClientId) {
+      setErrorMessage('Google Client ID is not configured. Please set VITE_GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID.');
+      setShowConfigGuide(true);
+      return;
+    }
+
+    // Try Google OAuth2 token client first for clean popup behavior
+    if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
+      setIsGoogleLoading(true);
+      try {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse?.error) {
+              setIsGoogleLoading(false);
+              if (tokenResponse.error === 'popup_closed_by_user') {
+                setErrorMessage('Google sign-in was cancelled.');
+              } else if (tokenResponse.error === 'access_denied') {
+                setErrorMessage('Permission to access Google account was denied.');
+              } else if (tokenResponse.error === 'origin_mismatch') {
+                setErrorMessage(
+                  `Origin mismatch: "${activeOrigin}" must be added to Authorized JavaScript Origins in Google Cloud Console.`
+                );
+                setShowConfigGuide(true);
+              } else {
+                setErrorMessage(`Google sign-in failed: ${tokenResponse.error_description || tokenResponse.error}`);
+              }
+              return;
+            }
+
+            if (tokenResponse?.access_token) {
+              try {
+                const res = await loginGoogleAccessToken(tokenResponse.access_token);
+                onSuccess(res.isNewUser);
+              } catch (err: any) {
+                setErrorMessage(err.message || 'Server failed to verify Google credentials.');
+              } finally {
+                setIsGoogleLoading(false);
+              }
+            } else {
+              setIsGoogleLoading(false);
+              setErrorMessage('No access token received from Google.');
+            }
+          },
+          error_callback: (nonOAuthError: any) => {
+            console.error('Google token client error:', nonOAuthError);
+            setIsGoogleLoading(false);
+            if (nonOAuthError?.type === 'popup_blocked') {
+              setErrorMessage('Google Sign-In popup was blocked by your browser. You can use direct redirect login below.');
+              setShowRedirectOption(true);
+            } else if (nonOAuthError?.type === 'popup_closed') {
+              setErrorMessage('Google sign-in popup was closed.');
+            } else {
+              setErrorMessage(
+                `Google authentication error: ${nonOAuthError?.message || 'SDK failed'}. Ensure ${activeOrigin} is authorized in Google Cloud.`
+              );
+              setShowConfigGuide(true);
+            }
+          }
+        });
+
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+        return;
+      } catch (err: any) {
+        console.error('Failed to launch Google Token Client:', err);
+        setIsGoogleLoading(false);
+      }
+    }
+
+    // If OAuth2 SDK is not ready or failed, prompt standard ID prompt or offer redirect
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed()) {
+            console.warn('Google One Tap not displayed:', notification.getNotDisplayedReason());
+            setShowRedirectOption(true);
+          }
+          if (notification.isSkippedMoment()) {
+            console.warn('Google One Tap skipped:', notification.getSkippedReason());
+          }
+        });
+      } catch (e) {
+        setShowRedirectOption(true);
+      }
+    } else {
+      setShowRedirectOption(true);
+    }
+  };
+
+  // Direct OAuth 2.0 full-page redirect flow for browsers blocking popups or strict iframes
+  const handleGoogleRedirectFlow = () => {
+    if (!googleClientId) {
+      setErrorMessage('Google Client ID is missing.');
+      return;
+    }
+    const redirectUri = activeOrigin || window.location.origin;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+      googleClientId
+    )}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(
+      'email profile openid'
+    )}&prompt=select_account`;
+
+    window.location.href = authUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,86 +391,195 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </div>
             )}
 
-            {/* SECTION 1: GOOGLE ACCOUNT SIGN-IN */}
-            <div className="space-y-3 text-center">
-              <div className="flex items-center justify-center gap-2">
-                <span className={`text-xs font-bold ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
-                  Instant Google Sign-In
-                </span>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                    isLight
-                      ? 'text-[#8000E8] bg-[#8000E8]/10 border-[#8000E8]/20'
-                      : 'text-purple-300 bg-purple-500/15 border-purple-500/30'
-                  }`}
-                >
-                  Recommended
-                </span>
-              </div>
+            {/* Primary Authentication Method Selector */}
+            <div
+              className={`grid grid-cols-2 p-1 rounded-2xl border ${
+                isLight ? 'bg-[#F0F3F8] border-[#E9E5F2]' : 'bg-zinc-900 border-zinc-800'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('mobile');
+                  setErrorMessage(null);
+                }}
+                className={`py-2.5 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  authMethod === 'mobile'
+                    ? isLight
+                      ? 'bg-white text-[#11182E] shadow-sm border border-[#E9E5F2]'
+                      : 'bg-[#FF6B00] text-white shadow-md shadow-[#FF6B00]/25'
+                    : isLight
+                    ? 'text-[#526581] hover:text-[#11182E]'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Phone className={`w-3.5 h-3.5 ${authMethod === 'mobile' && isLight ? 'text-[#FF6B00]' : ''}`} />
+                <span>Mobile & OTP</span>
+              </button>
 
-              {/* Real Google Identity Services Button */}
-              <div className="flex justify-center min-h-[46px] items-center">
-                {isGoogleConfigured ? (
-                  <div ref={googleButtonRef} className="flex justify-center w-full" />
-                ) : (
-                  <div
-                    className={`w-full p-4 rounded-xl border text-left text-xs space-y-2 ${
-                      isLight
-                        ? 'bg-[#F0F3F8] border-[#E9E5F2]'
-                        : 'bg-zinc-900 border-zinc-800'
-                    }`}
-                  >
-                    <div className={`flex items-center gap-2 font-bold ${isLight ? 'text-[#8000E8]' : 'text-purple-300'}`}>
-                      <Info className="w-4 h-4 shrink-0" />
-                      <span>Google OAuth Configuration</span>
-                    </div>
-
-                    <p className={`text-[11px] leading-relaxed ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
-                      To activate official Google Sign-In, configure <code className={isLight ? 'text-[#8000E8]' : 'text-purple-300'}>VITE_GOOGLE_CLIENT_ID</code> in environment settings.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowConfigGuide(!showConfigGuide)}
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-bold cursor-pointer ${
-                        isLight ? 'text-[#8000E8] hover:text-[#6a00c2]' : 'text-purple-300 hover:text-purple-200'
-                      }`}
-                    >
-                      <span>{showConfigGuide ? 'Hide instructions' : 'View Google Cloud & Vercel setup instructions'}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-
-                    {showConfigGuide && (
-                      <div className={`mt-2 pt-2 border-t text-[11px] space-y-2 ${isLight ? 'border-[#E9E5F2] text-[#11182E]' : 'border-zinc-800 text-zinc-300'}`}>
-                        <p className="font-semibold">
-                          Configuration Steps for Google Cloud & Vercel:
-                        </p>
-                        <ol className={`list-decimal list-inside space-y-1 text-[10px] ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
-                          <li>Go to <strong>APIs & Services &gt; Credentials</strong> in Google Cloud Console.</li>
-                          <li>Select your <strong>OAuth 2.0 Web Client</strong>.</li>
-                          <li>
-                            Under <strong>Authorized JavaScript origins</strong>, ensure both origins are added:
-                            <code className={`block mt-0.5 p-1 rounded font-mono text-[9px] select-all break-all ${isLight ? 'bg-white text-[#8000E8] border border-[#E9E5F2]' : 'bg-black/40 text-purple-300'}`}>
-                              https://edu-pridict-ai.vercel.app
-                            </code>
-                            <code className={`block mt-0.5 p-1 rounded font-mono text-[9px] select-all break-all ${isLight ? 'bg-white text-[#526581] border border-[#E9E5F2]' : 'bg-black/40 text-zinc-300'}`}>
-                              http://localhost:3000
-                            </code>
-                          </li>
-                          <li>In Vercel, go to <strong>Project &gt; Settings &gt; Environment Variables</strong> and add:</li>
-                          <code className={`block mt-0.5 p-1 rounded font-mono text-[9px] text-emerald-600 dark:text-emerald-400 select-all break-all ${isLight ? 'bg-white border border-[#E9E5F2]' : 'bg-black/40'}`}>
-                            VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-                          </code>
-                        </ol>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('email');
+                  setErrorMessage(null);
+                }}
+                className={`py-2.5 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  authMethod === 'email'
+                    ? isLight
+                      ? 'bg-white text-[#11182E] shadow-sm border border-[#E9E5F2]'
+                      : 'bg-zinc-800 text-white shadow-sm'
+                    : isLight
+                    ? 'text-[#526581] hover:text-[#11182E]'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Email & Password</span>
+              </button>
             </div>
 
+            {/* OPTION 1: MOBILE NUMBER & OTP FLOW */}
+            {authMethod === 'mobile' && (
+              <MobileAuthFlow
+                onSuccess={onSuccess}
+                onSwitchToEmail={() => setAuthMethod('email')}
+              />
+            )}
+
+            {/* OPTION 2: EMAIL & PASSWORD FLOW */}
+            {authMethod === 'email' && (
+              <div className="space-y-4">
+                {/* Mode Switcher Tabs */}
+                <div
+                  className={`grid grid-cols-2 p-1 rounded-xl border ${
+                    isLight
+                      ? 'bg-[#F0F3F8] border-[#E9E5F2]'
+                      : 'bg-zinc-900 border-zinc-800'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setMode('signin')}
+                    className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
+                      mode === 'signin'
+                        ? isLight
+                          ? 'bg-white text-[#11182E] shadow-xs'
+                          : 'bg-zinc-800 text-white shadow-xs'
+                        : isLight
+                        ? 'text-[#526581] hover:text-[#11182E]'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode('register')}
+                    className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
+                      mode === 'register'
+                        ? isLight
+                          ? 'bg-white text-[#11182E] shadow-xs'
+                          : 'bg-zinc-800 text-white shadow-xs'
+                        : isLight
+                        ? 'text-[#526581] hover:text-[#11182E]'
+                        : 'text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    Create Account
+                  </button>
+                </div>
+
+                {/* Email / Password Form */}
+                <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                  {mode === 'register' && (
+                    <div>
+                      <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
+                        Student Full Name
+                      </label>
+                      <div className="relative">
+                        <User className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="e.g. Shashikumar S."
+                          className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                            isLight
+                              ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                              : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
+                      Student Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="student@university.edu"
+                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                          isLight
+                            ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                            : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
+                      Account Password
+                    </label>
+                    <div className="relative">
+                      <Lock className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                          isLight
+                            ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                            : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                        }`}
+                      />
+                    </div>
+                    <span className={`text-[10px] mt-1 block ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`}>
+                      {mode === 'register' ? 'Minimum 6 characters' : 'Enter your student account password'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg transition cursor-pointer active:scale-98 min-h-[46px] bg-[#FF6B00] hover:bg-[#E05E00] shadow-[#FF6B00]/25 disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <span>Authenticating...</span>
+                    ) : (
+                      <>
+                        <span>{mode === 'register' ? 'Create Student Profile' : 'Sign In with Email'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
+
             {/* Divider */}
-            <div className="relative flex items-center justify-center my-2">
+            <div className="relative flex items-center justify-center my-3">
               <div className={`absolute inset-0 flex items-center ${isLight ? 'border-t border-[#E9E5F2]' : 'border-t border-zinc-800'}`} />
               <span
                 className={`relative px-3 text-[10px] uppercase font-bold tracking-wider ${
@@ -335,140 +588,141 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     : 'bg-[#0d0f17] text-zinc-400'
                 }`}
               >
-                Or Email Credentials
+                Or Continue With Google
               </span>
             </div>
 
-            {/* Mode Switcher Tabs */}
-            <div
-              className={`grid grid-cols-2 p-1 rounded-xl border ${
-                isLight
-                  ? 'bg-[#F0F3F8] border-[#E9E5F2]'
-                  : 'bg-zinc-900 border-zinc-800'
-              }`}
-            >
+            {/* SECTION: GOOGLE ACCOUNT SIGN-IN */}
+            <div className="space-y-3">
+              {/* Primary Interactive Google Button */}
               <button
                 type="button"
-                onClick={() => setMode('signin')}
-                className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  mode === 'signin'
-                    ? isLight
-                      ? 'bg-white text-[#11182E] shadow-xs'
-                      : 'bg-zinc-800 text-white shadow-xs'
-                    : isLight
-                    ? 'text-[#526581] hover:text-[#11182E]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('register')}
-                className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  mode === 'register'
-                    ? isLight
-                      ? 'bg-white text-[#11182E] shadow-xs'
-                      : 'bg-zinc-800 text-white shadow-xs'
-                    : isLight
-                    ? 'text-[#526581] hover:text-[#11182E]'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Create Account
-              </button>
-            </div>
-
-            {/* Email / Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-              {mode === 'register' && (
-                <div>
-                  <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
-                    Student Full Name
-                  </label>
-                  <div className="relative">
-                    <User className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Shashikumar S."
-                      className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
-                        isLight
-                          ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#8000E8] focus:ring-1 focus:ring-[#8000E8]'
-                          : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#8000E8] focus:ring-1 focus:ring-[#8000E8]'
-                      }`}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
-                  Student Email Address
-                </label>
-                <div className="relative">
-                  <Mail className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="student@university.edu"
-                    className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
-                      isLight
-                        ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#8000E8] focus:ring-1 focus:ring-[#8000E8]'
-                        : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#8000E8] focus:ring-1 focus:ring-[#8000E8]'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
-                  Account Password
-                </label>
-                <div className="relative">
-                  <Lock className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
-                      isLight
-                        ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#8000E8] focus:ring-1 focus:ring-[#8000E8]'
-                        : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#8000E8] focus:ring-1 focus:ring-[#8000E8]'
-                    }`}
-                  />
-                </div>
-                <span className={`text-[10px] mt-1 block ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`}>
-                  {mode === 'register' ? 'Minimum 6 characters' : 'Enter your student account password'}
-                </span>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg transition cursor-pointer active:scale-98 min-h-[46px] ${
+                onClick={handleGoogleClick}
+                disabled={isGoogleLoading || isLoading}
+                className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-3 border transition cursor-pointer shadow-sm active:scale-98 min-h-[46px] disabled:opacity-60 ${
                   isLight
-                    ? 'bg-[#8000E8] hover:bg-[#6a00c2] shadow-[#8000E8]/25 disabled:bg-[#8000E8]/50'
-                    : 'bg-[#8000E8] hover:bg-[#9226ff] disabled:bg-[#8000E8]/50 shadow-[#8000E8]/30'
+                    ? 'bg-white hover:bg-slate-50 border-[#E9E5F2] text-[#11182E] shadow-slate-200/50'
+                    : 'bg-[#141724] hover:bg-[#1a1e30] border-zinc-700/80 text-white shadow-black/40'
                 }`}
               >
-                {isLoading ? (
-                  <span>Authenticating...</span>
+                {isGoogleLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+                    <span>Connecting to Google...</span>
+                  </div>
                 ) : (
                   <>
-                    <span>{mode === 'register' ? 'Create Student Profile' : 'Sign In to Workspace'}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                      />
+                    </svg>
+                    <span>Sign in with Google</span>
                   </>
                 )}
               </button>
-            </form>
+
+              {/* Optional GSI Render Container (for users with GIS active) */}
+              {isGoogleConfigured && (
+                <div ref={googleButtonRef} className="flex justify-center w-full min-h-[0px]" />
+              )}
+
+              {/* Redirect Alternative if popup was blocked */}
+              {showRedirectOption && (
+                <div
+                  className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row items-center justify-between gap-2.5 animate-in fade-in ${
+                    isLight
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-900'
+                      : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                  }`}
+                >
+                  <span className="text-[11px] leading-tight text-center sm:text-left">
+                    Popup blocked or restricted? Use standard browser redirect.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleGoogleRedirectFlow}
+                    className="px-3 py-1.5 rounded-lg bg-[#FF6B00] text-white text-[11px] font-bold hover:bg-[#E05E00] transition cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
+                  >
+                    Open Redirect Sign-In
+                  </button>
+                </div>
+              )}
+
+              {/* Domain & Credentials Diagnostics Banner */}
+              <div
+                className={`p-3 rounded-xl border text-left text-xs space-y-1.5 ${
+                  isLight
+                    ? 'bg-[#F0F3F8] border-[#E9E5F2]'
+                    : 'bg-zinc-900 border-zinc-800'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-[11px] text-[#FF6B00]">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    <span>Google OAuth Configuration</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfigGuide(!showConfigGuide)}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF6B00] hover:underline cursor-pointer"
+                  >
+                    <span>{showConfigGuide ? 'Hide details' : 'Domain diagnostics'}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <div className={`text-[10px] space-y-0.5 ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
+                  <p className="truncate">
+                    Current origin: <code className="text-[#FF6B00] font-mono">{activeOrigin || 'http://localhost:3000'}</code>
+                  </p>
+                  <p className="truncate">
+                    Client ID: <span className="font-mono text-[9px] opacity-80">{googleClientId ? `${googleClientId.slice(0, 24)}...` : 'Not configured'}</span>
+                  </p>
+                </div>
+
+                {showConfigGuide && (
+                  <div className={`mt-2 pt-2 border-t text-[11px] space-y-2 ${isLight ? 'border-[#E9E5F2] text-[#11182E]' : 'border-zinc-800 text-zinc-300'}`}>
+                    <p className="font-semibold text-[11px]">
+                      Required Google Cloud Console Settings:
+                    </p>
+                    <ol className={`list-decimal list-inside space-y-1 text-[10px] leading-relaxed ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
+                      <li>
+                        Under <strong>Authorized JavaScript origins</strong>, ensure you have:
+                        <div className="mt-1 font-mono text-[10px] bg-black/10 dark:bg-black/30 p-1.5 rounded text-[#FF6B00] break-all select-all">
+                          {activeOrigin || 'http://localhost:3000'}
+                        </div>
+                      </li>
+                      <li>
+                        Under <strong>Authorized redirect URIs</strong>, add:
+                        <div className="mt-1 font-mono text-[10px] bg-black/10 dark:bg-black/30 p-1.5 rounded text-[#FF6B00] break-all select-all">
+                          {activeOrigin || 'http://localhost:3000'}
+                        </div>
+                      </li>
+                      <li>
+                        In your environment settings, ensure:
+                        <div className="mt-1 font-mono text-[10px] bg-black/10 dark:bg-black/30 p-1.5 rounded text-[#FF6B00] break-all">
+                          VITE_GOOGLE_CLIENT_ID={googleClientId || 'your-client-id.apps.googleusercontent.com'}
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </main>

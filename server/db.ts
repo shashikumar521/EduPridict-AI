@@ -12,6 +12,7 @@ export interface User {
   id: string;
   google_id?: string;
   email: string;
+  phone_number?: string;
   name: string;
   picture?: string;
   password_hash?: string;
@@ -322,6 +323,7 @@ export async function getDb(): Promise<Database> {
       id TEXT PRIMARY KEY,
       google_id TEXT UNIQUE,
       email TEXT NOT NULL UNIQUE,
+      phone_number TEXT UNIQUE,
       name TEXT NOT NULL,
       picture TEXT DEFAULT '',
       password_hash TEXT DEFAULT '',
@@ -332,6 +334,13 @@ export async function getDb(): Promise<Database> {
       last_login_at TEXT NOT NULL
     );
   `);
+
+  // Migration for existing databases: ensure phone_number column exists
+  try {
+    db.run("ALTER TABLE users ADD COLUMN phone_number TEXT;");
+  } catch {
+    // Column already exists or table freshly created
+  }
 
   db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -989,6 +998,54 @@ export async function getUserByGoogleId(googleId: string): Promise<User | null> 
     obj[col] = res[0].values[0][idx];
   });
   return obj as User;
+}
+
+export async function getUserByPhone(phone: string): Promise<User | null> {
+  const db = await getDb();
+  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+  const res = db.exec("SELECT * FROM users WHERE phone_number = ?", [cleanPhone]);
+  if (!res.length || !res[0].values.length) return null;
+  const columns = res[0].columns;
+  const obj: any = {};
+  columns.forEach((col, idx) => {
+    obj[col] = res[0].values[0][idx];
+  });
+  return obj as User;
+}
+
+export async function createPhoneUser(phone: string, name: string, email?: string): Promise<User> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+  const id = 'STD-M' + crypto.randomBytes(3).toString('hex').toUpperCase();
+  const fallbackEmail = email && email.trim()
+    ? email.toLowerCase().trim()
+    : `student_${cleanPhone.replace(/\+/g, '')}@student.edupredict.ai`;
+
+  db.run(
+    `INSERT INTO users (id, phone_number, email, name, picture, education_level, institution, stream_or_branch, created_at, last_login_at)
+     VALUES (?, ?, ?, ?, '', '', '', '', ?, ?)`,
+    [id, cleanPhone, fallbackEmail, name, now, now]
+  );
+  db.run(
+    `INSERT OR IGNORE INTO students (id, name, education_level, stream_or_branch, course, attendance, study_hours, previous_marks, assignment_score, practical_score, predicted_risk, is_demo, created_at)
+     VALUES (?, ?, 'btech', '', 'Core Academic Module', 75, 12, 60, 65, 60, 'good', 0, ?)`,
+    [id, name, now]
+  );
+  saveDbToFile(db);
+  return (await getUserById(id))!;
+}
+
+export async function linkPhoneToUser(userId: string, phone: string): Promise<User> {
+  const db = await getDb();
+  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+  const existing = await getUserByPhone(cleanPhone);
+  if (existing && existing.id !== userId) {
+    throw new Error('This mobile number is already linked to another student account.');
+  }
+  db.run(`UPDATE users SET phone_number = ? WHERE id = ?`, [cleanPhone, userId]);
+  saveDbToFile(db);
+  return (await getUserById(userId))!;
 }
 
 export async function upsertGoogleUser(googleUser: {

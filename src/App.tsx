@@ -84,7 +84,11 @@ function AppContent() {
 
   // Navigation state: displays ONLY the selected section
   const [currentSection, setCurrentSection] = useState<SectionId>(() => {
-    const hash = window.location.hash.replace('#', '') as SectionId;
+    const rawHash = window.location.hash.replace('#', '');
+    if (rawHash.includes('access_token=') || rawHash.includes('id_token=')) {
+      return 'home';
+    }
+    const hash = rawHash as SectionId;
     if (ALL_SECTIONS.includes(hash)) {
       return hash;
     }
@@ -141,7 +145,11 @@ function AppContent() {
   // Initialize and listen to hash change from browser URL
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '') as SectionId;
+      const rawHash = window.location.hash.replace('#', '');
+      if (rawHash.includes('access_token=') || rawHash.includes('id_token=')) {
+        return;
+      }
+      const hash = rawHash as SectionId;
       if (!ALL_SECTIONS.includes(hash)) {
         return;
       }
