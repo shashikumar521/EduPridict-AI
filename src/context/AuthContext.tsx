@@ -34,8 +34,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('edupredict_token'));
   const [isLoading, setIsLoading] = useState(true);
-  const [googleClientId, setGoogleClientId] = useState('');
-  const [isGoogleConfigured, setIsGoogleConfigured] = useState(false);
+  const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const [googleClientId, setGoogleClientId] = useState(envClientId);
+  const [isGoogleConfigured, setIsGoogleConfigured] = useState(Boolean(envClientId));
 
   // Modal control
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -46,8 +47,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const config = await fetchAuthConfig();
-      setGoogleClientId(config.googleClientId);
-      setIsGoogleConfigured(config.isConfigured);
+      const effectiveClientId = envClientId || (config.googleClientId || '').trim();
+      setGoogleClientId(effectiveClientId);
+      setIsGoogleConfigured(Boolean(effectiveClientId && effectiveClientId.length > 0));
 
       if (token) {
         const currentUser = await fetchCurrentUser();

@@ -202,7 +202,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     <span>Google Sign-In Configuration Required</span>
                   </div>
                   <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                    To enable official Google Sign-In, add your <code>VITE_GOOGLE_CLIENT_ID</code> in <code>.env</code>. You can also sign in or register below using your student email account.
+                    To enable official Google Sign-In, set <code>VITE_GOOGLE_CLIENT_ID</code> in your Vercel Project Settings (or <code>.env</code> locally). Authorized origin: <code>https://edu-pridict-ai.vercel.app</code>. You can also sign in or register below with student email.
                   </p>
                 </div>
               )}

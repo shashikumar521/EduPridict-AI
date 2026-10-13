@@ -234,7 +234,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     </div>
 
                     <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                      To activate official Google Sign-In, add your <code>VITE_GOOGLE_CLIENT_ID</code> in <code>.env</code>.
+                      To activate official Google Sign-In, configure <code>VITE_GOOGLE_CLIENT_ID</code> in your Vercel Project Settings (or <code>.env</code> locally).
                     </p>
 
                     <button
@@ -242,28 +242,32 @@ export const LoginView: React.FC<LoginViewProps> = ({
                       onClick={() => setShowConfigGuide(!showConfigGuide)}
                       className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                     >
-                      <span>{showConfigGuide ? 'Hide instructions' : 'View Google Cloud setup instructions'}</span>
+                      <span>{showConfigGuide ? 'Hide instructions' : 'View Google Cloud & Vercel setup instructions'}</span>
                       <ExternalLink className="w-3 h-3" />
                     </button>
 
                     {showConfigGuide && (
                       <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/50 text-[11px] text-slate-700 dark:text-slate-300 space-y-2">
                         <p className="font-semibold text-slate-900 dark:text-slate-100">
-                          3 Quick Steps in Google Cloud Console:
+                          Configuration Steps for Google Cloud & Vercel:
                         </p>
                         <ol className="list-decimal list-inside space-y-1 text-[10px] text-slate-600 dark:text-slate-400">
-                          <li>Go to <strong>APIs & Services &gt; Credentials</strong> in Google Cloud.</li>
-                          <li>Create an <strong>OAuth 2.0 Client ID</strong> (Application type: <em>Web application</em>).</li>
+                          <li>Go to <strong>APIs & Services &gt; Credentials</strong> in Google Cloud Console.</li>
+                          <li>Select your <strong>OAuth 2.0 Web Client</strong>.</li>
                           <li>
-                            Under <strong>Authorized JavaScript origins</strong>, add:
+                            Under <strong>Authorized JavaScript origins</strong>, ensure both origins are added:
                             <code className="block mt-0.5 bg-slate-100 dark:bg-slate-800 p-1 rounded font-mono text-[9px] text-indigo-600 dark:text-indigo-300 select-all">
-                              {currentOrigin}
+                              https://edu-pridict-ai.vercel.app
+                            </code>
+                            <code className="block mt-0.5 bg-slate-100 dark:bg-slate-800 p-1 rounded font-mono text-[9px] text-slate-600 dark:text-slate-400 select-all">
+                              http://localhost:3000
                             </code>
                           </li>
-                          <li>Copy the Client ID and add to your <code>.env</code> file:</li>
+                          <li>In Vercel, go to <strong>Project &gt; Settings &gt; Environment Variables</strong> and add:</li>
                           <code className="block mt-0.5 bg-slate-100 dark:bg-slate-800 p-1 rounded font-mono text-[9px] text-emerald-600 dark:text-emerald-400 select-all">
                             VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
                           </code>
+                          <li className="text-[9px] text-slate-500">Note: Redeploy on Vercel after setting environment variables so Vite embeds it into the production build.</li>
                         </ol>
                       </div>
                     )}

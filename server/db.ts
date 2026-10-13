@@ -132,21 +132,33 @@ export interface NotificationItem {
   created_at: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = isVercel ? path.join('/tmp', 'edupredict') : path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'edupredict.sqlite');
 
 let dbInstance: Database | null = null;
 
-function saveDbToFile(db: Database) {
+function ensureDataDir(): boolean {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_FILE, buffer);
+    return true;
   } catch (err) {
-    console.error('Failed to save SQLite database to disk:', err);
+    console.warn('[EduPredict DB] Notice: Using in-memory storage (filesystem read-only or /tmp unavailable):', err);
+    return false;
+  }
+}
+
+function saveDbToFile(db: Database) {
+  try {
+    if (ensureDataDir()) {
+      const data = db.export();
+      const buffer = Buffer.from(data);
+      fs.writeFileSync(DB_FILE, buffer);
+    }
+  } catch (err) {
+    console.warn('[EduPredict DB] Notice: In-memory snapshot active:', err);
   }
 }
 
@@ -154,15 +166,17 @@ export async function getDb(): Promise<Database> {
   if (dbInstance) return dbInstance;
 
   const SQL = await initSqlJs();
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  ensureDataDir();
 
   let db: Database;
-  if (fs.existsSync(DB_FILE)) {
-    const fileBuffer = fs.readFileSync(DB_FILE);
-    db = new SQL.Database(fileBuffer);
-  } else {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const fileBuffer = fs.readFileSync(DB_FILE);
+      db = new SQL.Database(fileBuffer);
+    } else {
+      db = new SQL.Database();
+    }
+  } catch {
     db = new SQL.Database();
   }
 
