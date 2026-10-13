@@ -13,6 +13,7 @@ import {
   Award
 } from 'lucide-react';
 import { SectionId, DashboardSummary, StudentRecord, SavedPrediction } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface DashboardViewProps {
   onNavigate: (section: SectionId) => void;
@@ -72,6 +73,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const completedGoalsCount = 1;
   const totalGoalsCount = 4;
 
+  const { user } = useAuth();
+
   // Real academic progress calculation from actual recorded data
   // Using active student's actual recorded marks & attendance, or previous/assignment scores
   const hasStudentData = Boolean(activeStudent || latestPrediction);
@@ -86,8 +89,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     ? Math.round(latestPrediction.projected_score)
     : null;
 
-  // Display student name: prefer explicit prop or actual student record
-  const displayName = activeStudent?.name || studentName || 'Student';
+  // Display student name: prefer verified user profile name, then student record or fallback
+  const displayName = user?.name || activeStudent?.name || studentName || 'Student';
 
   // Real subject performance items
   const subjectsData: SubjectItem[] = activeStudent
@@ -202,6 +205,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
         </div>
       </section>
+
+      {/* First-Time User Onboarding Guidance Banner */}
+      {predictions.length === 0 && (
+        <section className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-pink-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span>Welcome to your Student Workspace, {displayName}!</span>
+                <span className="text-[10px] uppercase font-extrabold tracking-wider bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                  First Step
+                </span>
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                You haven&apos;t generated your first performance prediction yet. Enter your current attendance, study hours, and test marks to receive ML-powered grade projections, risk triage, and an actionable revision plan.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('predict')}
+            className="sm:shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs hover:shadow transition cursor-pointer active:scale-95"
+          >
+            <span>Start First Assessment</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </section>
+      )}
 
       {/* ========================================================= */}
       {/* SECTION B: Performance Overview (Only Three Compact Cards)*/}

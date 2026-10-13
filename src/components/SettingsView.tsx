@@ -13,15 +13,27 @@ import {
   Laptop
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 export const SettingsView: React.FC = () => {
   const { theme, setTheme } = useTheme();
+  const { user, isAuthenticated, updateProfile } = useAuth();
 
   // Profile state
-  const [userName, setUserName] = useState('Dr. Elena Rostova');
-  const [userRole, setUserRole] = useState('Senior Academic Advisor & Head of Retention');
-  const [department, setDepartment] = useState('Department of Computer Science & Applied AI');
-  const [email, setEmail] = useState('e.rostova@edupredict.edu');
+  const [userName, setUserName] = useState(user?.name || 'Dr. Elena Rostova');
+  const [userRole, setUserRole] = useState(user?.education_level ? `Student (${user.education_level})` : 'Senior Academic Advisor & Head of Retention');
+  const [department, setDepartment] = useState(user?.stream_or_branch || 'Department of Computer Science & Applied AI');
+  const [email, setEmail] = useState(user?.email || 'e.rostova@edupredict.edu');
+
+  // Sync when user loads
+  React.useEffect(() => {
+    if (user) {
+      setUserName(user.name);
+      setEmail(user.email);
+      if (user.education_level) setUserRole(`Student (${user.education_level})`);
+      if (user.stream_or_branch) setDepartment(user.stream_or_branch);
+    }
+  }, [user]);
 
   // Academic settings
   const [gradingScale, setGradingScale] = useState<'percentage' | 'cgpa_10' | 'gpa_4' | 'letter'>('percentage');
@@ -32,8 +44,18 @@ export const SettingsView: React.FC = () => {
   const [autoSavePredictions, setAutoSavePredictions] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAuthenticated) {
+      try {
+        await updateProfile({
+          name: userName,
+          stream_or_branch: department
+        });
+      } catch (err) {
+        console.error('Failed to update profile from settings:', err);
+      }
+    }
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2500);
   };

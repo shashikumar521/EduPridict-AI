@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sliders,
   Sparkles,
@@ -9,9 +9,12 @@ import {
   RotateCcw,
   Target,
   ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  RefreshCw,
+  Info
 } from 'lucide-react';
-import { StudentRecord } from '../types';
+import { StudentRecord, PredictionResult } from '../types';
+import { runWhatIfAnalysis } from '../services/api';
 
 interface WhatIfViewProps {
   students: StudentRecord[];
@@ -31,7 +34,7 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
     students[0] || {
       id: 'STD-88429',
       name: 'Marcus Vance',
-      education_level: 'Undergraduate (B.Tech)',
+      education_level: 'btech',
       course: 'CS-204 Data Structures & Algorithms',
       attendance: 58.4,
       study_hours: 6.2,
@@ -54,25 +57,81 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
   const [simStudyHours, setSimStudyHours] = useState<number>(Math.round(baseStudyHours + 5));
   const [simAssignment, setSimAssignment] = useState<number>(Math.min(100, Math.round(baseAssignment + 15)));
 
-  // Calculate baseline score
-  const calculateScore = (marks: number, attendance: number, study: number, assign: number) => {
-    const raw = marks * 0.40 + assign * 0.30 + attendance * 0.20 + Math.min(10, study * 0.8);
-    return Math.min(100, Math.max(0, Math.round(raw)));
-  };
+  // ML Analysis Result State
+  const [mlResult, setMlResult] = useState<{
+    baseline: PredictionResult | null;
+    hypothetical: PredictionResult | null;
+    deltaScore: number;
+    categoryChanged: boolean;
+    disclaimer: string;
+  } | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  const baselineScore = calculateScore(baseMarks, baseAttendance, baseStudyHours, baseAssignment);
-  const simulatedScore = calculateScore(simMarks, simAttendance, simStudyHours, simAssignment);
-  const scoreDelta = simulatedScore - baselineScore;
+  // Sync simulation values when selected student changes
+  useEffect(() => {
+    setSimMarks(activeStudent.previous_marks);
+    setSimAttendance(Math.min(100, Math.round(activeStudent.attendance + 15)));
+    setSimStudyHours(Math.round(activeStudent.study_hours + 5));
+    setSimAssignment(Math.min(100, Math.round(activeStudent.assignment_score + 15)));
+  }, [activeStudent]);
 
-  const getTier = (score: number) => {
-    if (score >= 75) return { label: 'High Performance', color: 'emerald', badge: 'Distinction / Honors' };
-    if (score >= 60) return { label: 'Moderate Performance', color: 'indigo', badge: 'Solid Standing' };
-    if (score >= 50) return { label: 'Borderline Passing', color: 'amber', badge: 'Needs Close Support' };
-    return { label: 'Critical At-Risk', color: 'rose', badge: 'Intervention Required' };
-  };
+  // Execute actual ML What-If inference
+  useEffect(() => {
+    let isCurrent = true;
+    const calculateSimulation = async () => {
+      setIsCalculating(true);
+      try {
+        const baselinePayload = {
+          student_id: activeStudent.id,
+          student_name: activeStudent.name,
+          education_level: activeStudent.education_level || 'btech',
+          course: activeStudent.course,
+          attendance: baseAttendance,
+          study_hours: baseStudyHours,
+          previous_marks: baseMarks,
+          assignment_score: baseAssignment,
+          model_type: 'rf'
+        };
 
-  const baseTier = getTier(baselineScore);
-  const simTier = getTier(simulatedScore);
+        const hypotheticalPayload = {
+          student_id: activeStudent.id,
+          student_name: activeStudent.name,
+          education_level: activeStudent.education_level || 'btech',
+          course: activeStudent.course,
+          attendance: simAttendance,
+          study_hours: simStudyHours,
+          previous_marks: simMarks,
+          assignment_score: simAssignment,
+          model_type: 'rf'
+        };
+
+        const result = await runWhatIfAnalysis(baselinePayload, hypotheticalPayload);
+        if (isCurrent) {
+          setMlResult(result);
+        }
+      } catch (err) {
+        console.warn('What-If ML simulation fallback active:', err);
+      } finally {
+        if (isCurrent) setIsCalculating(false);
+      }
+    };
+
+    const timer = setTimeout(calculateSimulation, 250);
+    return () => {
+      isCurrent = false;
+      clearTimeout(timer);
+    };
+  }, [
+    activeStudent,
+    baseAttendance,
+    baseStudyHours,
+    baseMarks,
+    baseAssignment,
+    simAttendance,
+    simStudyHours,
+    simMarks,
+    simAssignment
+  ]);
 
   const handleReset = () => {
     setSimMarks(baseMarks);
@@ -80,6 +139,31 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
     setSimStudyHours(baseStudyHours);
     setSimAssignment(baseAssignment);
   };
+
+  const baselineScore = mlResult?.baseline?.projected_score ?? Math.round(
+    (baseAttendance * 0.342) + (baseAssignment * 0.286) + (Math.min(100, baseStudyHours * 4.0) * 0.214) + (baseMarks * 0.158)
+  );
+
+  const simulatedScore = mlResult?.hypothetical?.projected_score ?? Math.round(
+    (simAttendance * 0.342) + (simAssignment * 0.286) + (Math.min(100, simStudyHours * 4.0) * 0.214) + (simMarks * 0.158)
+  );
+
+  const scoreDelta = mlResult ? mlResult.deltaScore : Number((simulatedScore - baselineScore).toFixed(1));
+  const categoryChanged = mlResult ? mlResult.categoryChanged : (simulatedScore >= 75 && baselineScore < 75);
+
+  const getTierDetails = (score: number, category?: string) => {
+    if (category) {
+      if (category.includes('High')) return { label: category, color: 'emerald', badge: 'On Track' };
+      if (category.includes('Moderate')) return { label: category, color: 'indigo', badge: 'Monitoring' };
+      return { label: category, color: 'rose', badge: 'Immediate Triage' };
+    }
+    if (score >= 75) return { label: 'High Performance', color: 'emerald', badge: 'On Track' };
+    if (score >= 60) return { label: 'Moderate Performance', color: 'indigo', badge: 'Monitoring' };
+    return { label: 'At-Risk', color: 'rose', badge: 'Immediate Triage' };
+  };
+
+  const baseTier = getTierDetails(baselineScore, mlResult?.baseline?.predicted_category);
+  const simTier = getTierDetails(simulatedScore, mlResult?.hypothetical?.predicted_category);
 
   return (
     <div className="space-y-6">
@@ -90,13 +174,13 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
               Interactive Simulation
             </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">Scenario Modeling</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Supervised Model Sensitivity</span>
           </div>
           <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 tracking-tight">
             What-If Scenario Analysis
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-            Simulate how targeted improvements in attendance, self-study volume, or assignment completion directly elevate projected academic outcomes.
+            Simulate hypothetical adjustments to attendance, self-study volume, or coursework marks to evaluate statistical sensitivity from the trained machine learning model.
           </p>
         </div>
 
@@ -108,16 +192,7 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
           <div className="relative">
             <select
               value={selectedStudentId}
-              onChange={(e) => {
-                setSelectedStudentId(e.target.value);
-                const std = students.find((s) => s.id === e.target.value);
-                if (std) {
-                  setSimMarks(std.previous_marks);
-                  setSimAttendance(Math.min(100, Math.round(std.attendance + 15)));
-                  setSimStudyHours(Math.round(std.study_hours + 5));
-                  setSimAssignment(Math.min(100, Math.round(std.assignment_score + 15)));
-                }
-              }}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none pr-10"
             >
               {students.map((std) => (
@@ -154,8 +229,6 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
                   : baseTier.color === 'indigo'
                   ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
-                  : baseTier.color === 'amber'
-                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
                   : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'
               }`}
             >
@@ -166,13 +239,20 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
           <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div>Attendance: <strong className="text-slate-800 dark:text-slate-200">{baseAttendance}%</strong></div>
             <div>Study Volume: <strong className="text-slate-800 dark:text-slate-200">{baseStudyHours} hrs/wk</strong></div>
-            <div>Exam Marks: <strong className="text-slate-800 dark:text-slate-200">{baseMarks}%</strong></div>
-            <div>Continuous Work: <strong className="text-slate-800 dark:text-slate-200">{baseAssignment}%</strong></div>
+            <div>Previous Marks: <strong className="text-slate-800 dark:text-slate-200">{baseMarks}%</strong></div>
+            <div>Coursework: <strong className="text-slate-800 dark:text-slate-200">{baseAssignment}%</strong></div>
           </div>
         </div>
 
         {/* Simulated Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-xs relative">
+          {isCalculating && (
+            <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>Inferring...</span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-xs pb-3 border-b border-indigo-100 dark:border-indigo-900/40">
             <span className="font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
@@ -189,49 +269,53 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
               <span className="text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                 {simulatedScore}%
               </span>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Projected Outcome with Scenario</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Projected Outcome</p>
             </div>
 
-            <span
-              className={`text-xs font-bold px-3 py-1 rounded-full border ${
-                simTier.color === 'emerald'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                  : simTier.color === 'indigo'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
-                  : simTier.color === 'amber'
-                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'
-              }`}
-            >
-              {simTier.label}
-            </span>
+            <div className="text-right">
+              <span
+                className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                  simTier.color === 'emerald'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                    : simTier.color === 'indigo'
+                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
+                    : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                }`}
+              >
+                {simTier.label}
+              </span>
+              {categoryChanged && (
+                <span className="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                  ✓ Category Promoted!
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-indigo-100 dark:border-indigo-900/40">
-            <div>Simulated Attendance: <strong className="text-indigo-700 dark:text-indigo-400">{simAttendance}%</strong></div>
-            <div>Simulated Study: <strong className="text-indigo-700 dark:text-indigo-400">{simStudyHours} hrs/wk</strong></div>
-            <div>Simulated Marks: <strong className="text-indigo-700 dark:text-indigo-400">{simMarks}%</strong></div>
-            <div>Simulated Work: <strong className="text-indigo-700 dark:text-indigo-400">{simAssignment}%</strong></div>
+            <div>Attendance: <strong className="text-indigo-700 dark:text-indigo-300">{simAttendance}%</strong></div>
+            <div>Study Volume: <strong className="text-indigo-700 dark:text-indigo-300">{simStudyHours} hrs/wk</strong></div>
+            <div>Previous Marks: <strong className="text-indigo-700 dark:text-indigo-300">{simMarks}%</strong></div>
+            <div>Coursework: <strong className="text-indigo-700 dark:text-indigo-300">{simAssignment}%</strong></div>
           </div>
         </div>
       </div>
 
-      {/* Interactive Control Sliders */}
+      {/* Interactive Simulation Sliders */}
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Sliders className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              Adjust Hypothetical Values
+              Adjust Hypothetical Academic Levers
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Drag each variable to model its individual and compounded effect on semester success.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Drag sliders to simulate realistic changes in attendance, study habits, or coursework completion.
             </p>
           </div>
-
           <button
             onClick={handleReset}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 transition cursor-pointer"
+            className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset to Baseline</span>
@@ -240,122 +324,126 @@ export const WhatIfView: React.FC<WhatIfViewProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Slider 1: Attendance */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
-                Class Attendance Percentage
+                Classroom Attendance Rate
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900">
-                {simAttendance}% {simAttendance !== baseAttendance && `(${simAttendance > baseAttendance ? '+' : ''}${simAttendance - baseAttendance}%)`}
+              <span className="font-bold text-indigo-700 dark:text-indigo-400 font-mono">
+                {simAttendance}% ({simAttendance >= baseAttendance ? `+${simAttendance - baseAttendance}%` : `${simAttendance - baseAttendance}%`})
               </span>
             </div>
             <input
               type="range"
-              min="30"
-              max="100"
+              min={30}
+              max={100}
               value={simAttendance}
               onChange={(e) => setSimAttendance(Number(e.target.value))}
-              className="w-full accent-indigo-600 cursor-pointer"
+              className="w-full accent-indigo-600 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>Baseline: {baseAttendance}%</span>
-              <span>Mandatory Standard: 75%</span>
-              <span>100% Full Attendance</span>
+              <span>Statistically #1 Impact Feature (34.2%)</span>
             </div>
           </div>
 
           {/* Slider 2: Study Hours */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
-                Weekly Self-Study Volume
+                Weekly Independent Study Hours
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900">
-                {simStudyHours} hrs/week {simStudyHours !== baseStudyHours && `(${simStudyHours > baseStudyHours ? '+' : ''}${simStudyHours - baseStudyHours}h)`}
+              <span className="font-bold text-indigo-700 dark:text-indigo-400 font-mono">
+                {simStudyHours} hrs/wk ({simStudyHours >= baseStudyHours ? `+${(simStudyHours - baseStudyHours).toFixed(1)}h` : `${(simStudyHours - baseStudyHours).toFixed(1)}h`})
               </span>
             </div>
             <input
               type="range"
-              min="0"
-              max="35"
+              min={0}
+              max={30}
+              step={0.5}
               value={simStudyHours}
               onChange={(e) => setSimStudyHours(Number(e.target.value))}
-              className="w-full accent-indigo-600 cursor-pointer"
+              className="w-full accent-indigo-600 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>Baseline: {baseStudyHours}h</span>
-              <span>Target: 14h</span>
-              <span>35h/wk Intensive</span>
+              <span>Baseline: {baseStudyHours} hrs</span>
+              <span>Target Benchmark: 14 hrs/wk</span>
             </div>
           </div>
 
-          {/* Slider 3: Assignment & Continuous Work */}
-          <div className="space-y-2">
+          {/* Slider 3: Coursework & Assignment Marks */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
-                Continuous Assessment & Homework (%)
+                Continuous Coursework / Assignment Score
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900">
-                {simAssignment}% {simAssignment !== baseAssignment && `(${simAssignment > baseAssignment ? '+' : ''}${simAssignment - baseAssignment}%)`}
+              <span className="font-bold text-indigo-700 dark:text-indigo-400 font-mono">
+                {simAssignment}% ({simAssignment >= baseAssignment ? `+${simAssignment - baseAssignment}%` : `${simAssignment - baseAssignment}%`})
               </span>
             </div>
             <input
               type="range"
-              min="20"
-              max="100"
+              min={30}
+              max={100}
               value={simAssignment}
               onChange={(e) => setSimAssignment(Number(e.target.value))}
-              className="w-full accent-indigo-600 cursor-pointer"
+              className="w-full accent-indigo-600 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>Baseline: {baseAssignment}%</span>
-              <span>Target: 75%</span>
-              <span>100% Complete</span>
+              <span>Second Highest Importance (28.6%)</span>
             </div>
           </div>
 
-          {/* Slider 4: Examination Marks */}
-          <div className="space-y-2">
+          {/* Slider 4: Previous Examination Marks */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
-                Exam Marks Target Baseline (%)
+                Examination Prerequisite Marks
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900">
-                {simMarks}% {simMarks !== baseMarks && `(${simMarks > baseMarks ? '+' : ''}${simMarks - baseMarks}%)`}
+              <span className="font-bold text-indigo-700 dark:text-indigo-400 font-mono">
+                {simMarks}% ({simMarks >= baseMarks ? `+${simMarks - baseMarks}%` : `${simMarks - baseMarks}%`})
               </span>
             </div>
             <input
               type="range"
-              min="20"
-              max="100"
+              min={30}
+              max={100}
               value={simMarks}
               onChange={(e) => setSimMarks(Number(e.target.value))}
-              className="w-full accent-indigo-600 cursor-pointer"
+              className="w-full accent-indigo-600 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-400">
               <span>Baseline: {baseMarks}%</span>
-              <span>Pass: 50%</span>
-              <span>Distinction: 80%</span>
+              <span>Prerequisite Baseline (15.8%)</span>
             </div>
           </div>
         </div>
 
-        {/* Action button to save scenario as real goal */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3">
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Simulated outcome grounded in multi-factor regression coefficients.</span>
-          </div>
-
-          <button
-            onClick={onNavigateToGoals}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-          >
-            <Target className="w-4 h-4" />
-            <span>Commit Scenario as Target Academic Goal</span>
-            <ArrowRight className="w-3.5 h-3.5 ml-1" />
-          </button>
+        {/* Disclaimer Notice */}
+        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            <strong>Methodological Disclaimer:</strong> This what-if simulation demonstrates statistical sensitivity from the trained machine learning model. It is an educational planning estimate, not a guaranteed grade outcome. Your real student records remain unmodified.
+          </p>
         </div>
+
+        {/* Convert to Real Action Goal */}
+        {onNavigateToGoals && (
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Turn this simulated scenario into an actionable target:
+            </span>
+            <button
+              onClick={onNavigateToGoals}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span>Create Target in Goals & Reminders</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

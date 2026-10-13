@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Download, Search, RefreshCw, BookmarkPlus, GraduationCap, CheckCircle } from 'lucide-react';
+import { Download, Search, RefreshCw, BookmarkPlus, GraduationCap, CheckCircle, Trash2, AlertCircle } from 'lucide-react';
 import { SavedPrediction } from '../types';
 import { getEducationLevelConfig } from '../data/educationLevels';
+import { deletePrediction } from '../services/api';
 
 interface HistoryViewProps {
   predictions: SavedPrediction[];
@@ -20,6 +21,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   const [tierFilter, setTierFilter] = useState<'all' | 'risk' | 'moderate' | 'high'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'verified' | 'demo'>('all');
   const [selectedPrediction, setSelectedPrediction] = useState<SavedPrediction | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredPredictions = predictions.filter((p) => {
     const q = searchQuery.toLowerCase();
@@ -44,7 +47,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
   const handleExportCsv = () => {
     if (predictions.length === 0) {
-      alert('No prediction records available to export.');
+      setFeedbackMessage('No prediction records are currently available to export.');
+      setTimeout(() => setFeedbackMessage(null), 3500);
       return;
     }
 
@@ -341,10 +345,34 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               </div>
             )}
 
-            <div className="text-right pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={async () => {
+                  if (!selectedPrediction) return;
+                  setIsDeleting(true);
+                  try {
+                    await deletePrediction(selectedPrediction.id);
+                    setSelectedPrediction(null);
+                    setFeedbackMessage('Prediction record removed from audit log.');
+                    onRefresh();
+                    setTimeout(() => setFeedbackMessage(null), 3500);
+                  } catch (err: any) {
+                    setFeedbackMessage(err?.message || 'Failed to delete record.');
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeleting ? 'Deleting...' : 'Delete Record'}</span>
+              </button>
+
               <button
                 onClick={() => setSelectedPrediction(null)}
-                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700"
+                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer"
               >
                 Close
               </button>

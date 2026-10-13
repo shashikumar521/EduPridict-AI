@@ -6,6 +6,21 @@
 import initSqlJs, { Database } from 'sql.js';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+
+export interface User {
+  id: string;
+  google_id?: string;
+  email: string;
+  name: string;
+  picture?: string;
+  password_hash?: string;
+  education_level?: string;
+  institution?: string;
+  stream_or_branch?: string;
+  created_at: string;
+  last_login_at: string;
+}
 
 export interface StudentRecord {
   id: string;
@@ -288,6 +303,31 @@ export async function getDb(): Promise<Database> {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      google_id TEXT UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      picture TEXT DEFAULT '',
+      password_hash TEXT DEFAULT '',
+      education_level TEXT DEFAULT '',
+      institution TEXT DEFAULT '',
+      stream_or_branch TEXT DEFAULT '',
+      created_at TEXT NOT NULL,
+      last_login_at TEXT NOT NULL
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+  `);
+
   // Seed default students if empty
   const countResult = db.exec("SELECT COUNT(*) as count FROM students");
   const count = countResult[0]?.values[0]?.[0] as number || 0;
@@ -486,9 +526,13 @@ export async function upsertStudent(student: Omit<StudentRecord, 'created_at'>):
 // -------------------------------------------------------------
 // PREDICTIONS
 // -------------------------------------------------------------
-export async function getAllPredictions(): Promise<PredictionRecord[]> {
+export async function getAllPredictions(studentId?: string): Promise<PredictionRecord[]> {
   const db = await getDb();
-  const res = db.exec("SELECT * FROM predictions ORDER BY id DESC");
+  const query = studentId
+    ? "SELECT * FROM predictions WHERE student_id = ? ORDER BY id DESC"
+    : "SELECT * FROM predictions ORDER BY id DESC";
+  const params = studentId ? [studentId] : [];
+  const res = db.exec(query, params);
   if (!res.length) return [];
   const columns = res[0].columns;
   return res[0].values.map(row => {
@@ -814,11 +858,11 @@ export async function markNotificationAsRead(id: number): Promise<void> {
 // -------------------------------------------------------------
 // DASHBOARD STATS
 // -------------------------------------------------------------
-export async function getDashboardStats() {
+export async function getDashboardStats(studentId?: string) {
   const students = await getAllStudents();
-  const predictions = await getAllPredictions();
-  const goals = await getGoals();
-  const notifications = await getNotifications();
+  const predictions = await getAllPredictions(studentId);
+  const goals = await getGoals(studentId);
+  const notifications = await getNotifications(studentId);
 
   const totalStudents = 1248 + Math.max(0, students.filter(s => !s.is_demo).length);
   const predictionsCount = 3420 + predictions.filter(p => !p.is_demo).length;
@@ -838,3 +882,177 @@ export async function getDashboardStats() {
     averageAttendance: 78.4
   };
 }
+
+// -------------------------------------------------------------
+// USER & AUTHENTICATION MANAGEMENT
+// -------------------------------------------------------------
+export async function getUserById(id: string): Promise<User | null> {
+  const db = await getDb();
+  const res = db.exec("SELECT * FROM users WHERE id = ?", [id]);
+  if (!res.length || !res[0].values.length) return null;
+  const columns = res[0].columns;
+  const obj: any = {};
+  columns.forEach((col, idx) => {
+    obj[col] = res[0].values[0][idx];
+  });
+  return obj as User;
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const db = await getDb();
+  const res = db.exec("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", [email.trim()]);
+  if (!res.length || !res[0].values.length) return null;
+  const columns = res[0].columns;
+  const obj: any = {};
+  columns.forEach((col, idx) => {
+    obj[col] = res[0].values[0][idx];
+  });
+  return obj as User;
+}
+
+export async function getUserByGoogleId(googleId: string): Promise<User | null> {
+  const db = await getDb();
+  const res = db.exec("SELECT * FROM users WHERE google_id = ?", [googleId]);
+  if (!res.length || !res[0].values.length) return null;
+  const columns = res[0].columns;
+  const obj: any = {};
+  columns.forEach((col, idx) => {
+    obj[col] = res[0].values[0][idx];
+  });
+  return obj as User;
+}
+
+export async function upsertGoogleUser(googleUser: {
+  google_id: string;
+  email: string;
+  name: string;
+  picture: string;
+}): Promise<User> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  let existing = await getUserByGoogleId(googleUser.google_id);
+  if (!existing) {
+    existing = await getUserByEmail(googleUser.email);
+  }
+
+  if (existing) {
+    db.run(
+      `UPDATE users SET google_id = ?, name = ?, picture = ?, last_login_at = ? WHERE id = ?`,
+      [googleUser.google_id, googleUser.name || existing.name, googleUser.picture || existing.picture || '', now, existing.id]
+    );
+    saveDbToFile(db);
+    return (await getUserById(existing.id))!;
+  } else {
+    // Generate clean student id format: STD-G<random>
+    const id = 'STD-G' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    db.run(
+      `INSERT INTO users (id, google_id, email, name, picture, education_level, institution, stream_or_branch, created_at, last_login_at)
+       VALUES (?, ?, ?, ?, ?, '', '', '', ?, ?)`,
+      [id, googleUser.google_id, googleUser.email.toLowerCase(), googleUser.name, googleUser.picture, now, now]
+    );
+
+    // Also register in students table so initial profile exists
+    db.run(
+      `INSERT OR IGNORE INTO students (id, name, education_level, stream_or_branch, course, attendance, study_hours, previous_marks, assignment_score, practical_score, predicted_risk, is_demo, created_at)
+       VALUES (?, ?, 'btech', '', 'Core Academic Module', 75, 12, 60, 65, 60, 'good', 0, ?)`,
+      [id, googleUser.name, now]
+    );
+
+    saveDbToFile(db);
+    return (await getUserById(id))!;
+  }
+}
+
+export async function createEmailUser(email: string, name: string, passwordHash: string): Promise<User> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const id = 'STD-E' + crypto.randomBytes(3).toString('hex').toUpperCase();
+  db.run(
+    `INSERT INTO users (id, email, name, password_hash, picture, education_level, institution, stream_or_branch, created_at, last_login_at)
+     VALUES (?, ?, ?, ?, '', '', '', '', ?, ?)`,
+    [id, email.toLowerCase(), name, passwordHash, now, now]
+  );
+  db.run(
+    `INSERT OR IGNORE INTO students (id, name, education_level, stream_or_branch, course, attendance, study_hours, previous_marks, assignment_score, practical_score, predicted_risk, is_demo, created_at)
+     VALUES (?, ?, 'btech', '', 'Core Academic Module', 75, 12, 60, 65, 60, 'good', 0, ?)`,
+    [id, name, now]
+  );
+  saveDbToFile(db);
+  return (await getUserById(id))!;
+}
+
+export async function updateUserProfile(
+  userId: string,
+  updates: {
+    name?: string;
+    education_level?: string;
+    institution?: string;
+    stream_or_branch?: string;
+  }
+): Promise<User> {
+  const db = await getDb();
+  const user = await getUserById(userId);
+  if (!user) throw new Error('User not found');
+
+  const newName = updates.name !== undefined ? updates.name : (user.name || '');
+  const newLevel = updates.education_level !== undefined ? updates.education_level : (user.education_level || '');
+  const newInst = updates.institution !== undefined ? updates.institution : (user.institution || '');
+  const newStream = updates.stream_or_branch !== undefined ? updates.stream_or_branch : (user.stream_or_branch || '');
+
+  db.run(
+    `UPDATE users SET name = ?, education_level = ?, institution = ?, stream_or_branch = ? WHERE id = ?`,
+    [newName, newLevel, newInst, newStream, userId]
+  );
+
+  // Synchronize with students table
+  db.run(
+    `UPDATE students SET name = ?, education_level = ?, stream_or_branch = ? WHERE id = ?`,
+    [newName, newLevel, newStream, userId]
+  );
+
+  saveDbToFile(db);
+  return (await getUserById(userId))!;
+}
+
+export async function createSession(userId: string): Promise<string> {
+  const db = await getDb();
+  const token = crypto.randomBytes(32).toString('hex');
+  const now = new Date();
+  const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+  db.run(
+    `INSERT INTO sessions (token, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)`,
+    [token, userId, expires, now.toISOString()]
+  );
+  saveDbToFile(db);
+  return token;
+}
+
+export async function getSessionUser(token: string): Promise<User | null> {
+  if (!token) return null;
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const res = db.exec("SELECT user_id, expires_at FROM sessions WHERE token = ?", [token]);
+  if (!res.length || !res[0].values.length) return null;
+  const userId = res[0].values[0][0] as string;
+  const expiresAt = res[0].values[0][1] as string;
+
+  if (expiresAt < now) {
+    db.run("DELETE FROM sessions WHERE token = ?", [token]);
+    saveDbToFile(db);
+    return null;
+  }
+
+  const user = await getUserById(userId);
+  if (user) {
+    db.run("UPDATE users SET last_login_at = ? WHERE id = ?", [now, user.id]);
+    saveDbToFile(db);
+  }
+  return user;
+}
+
+export async function deleteSession(token: string): Promise<void> {
+  const db = await getDb();
+  db.run("DELETE FROM sessions WHERE token = ?", [token]);
+  saveDbToFile(db);
+}
+

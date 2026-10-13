@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Compass,
   CheckCircle2,
@@ -9,127 +9,97 @@ import {
   Award,
   Calendar,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  RefreshCw,
+  Layers,
+  HelpCircle
 } from 'lucide-react';
 import { EDUCATION_LEVELS } from '../data/educationLevels';
-import { EducationLevelId } from '../types';
+import { EducationLevelId, RoadmapTopic } from '../types';
+import { fetchRoadmapTopics, updateRoadmapTopicStatus } from '../services/api';
 
-interface RoadmapStage {
-  id: number;
-  stageNumber: string;
+const PHASES: Array<{
+  phase: RoadmapTopic['phase'];
   title: string;
-  timeframe: string;
+  stepNumber: string;
   description: string;
-  completed: boolean;
-  tasks: { text: string; done: boolean }[];
-  deliverables: string;
-}
+}> = [
+  {
+    phase: 'foundations',
+    stepNumber: '01',
+    title: 'Foundations & Core Prerequisites',
+    description: 'Fundamental vocabulary, essential formulas, and core conceptual scaffolding.'
+  },
+  {
+    phase: 'improvements',
+    stepNumber: '02',
+    title: 'Topics to Improve & Weak Areas',
+    description: 'Targeted remediation on topics with lower past examination scores.'
+  },
+  {
+    phase: 'practice',
+    stepNumber: '03',
+    title: 'Practice & Laboratory Activities',
+    description: 'Hands-on problem sets, laboratory vivas, and assignment problem solving.'
+  },
+  {
+    phase: 'intermediate',
+    stepNumber: '04',
+    title: 'Intermediate Concepts & Applications',
+    description: 'Multi-topic synthesis, architectural patterns, and mid-tier problem sets.'
+  },
+  {
+    phase: 'advanced',
+    stepNumber: '05',
+    title: 'Advanced Specialization & Exam Distinction',
+    description: 'High-complexity synthesis, timed past-paper runs, and honors milestones.'
+  }
+];
 
 export const RoadmapView: React.FC = () => {
   const [selectedLevelId, setSelectedLevelId] = useState<EducationLevelId>('btech');
+  const [topics, setTopics] = useState<RoadmapTopic[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [stages, setStages] = useState<RoadmapStage[]>([
-    {
-      id: 1,
-      stageNumber: '01',
-      title: 'Diagnostic Baseline & Syllabus Scaffolding',
-      timeframe: 'Weeks 1–3',
-      description: 'Audit prerequisites, download official curriculum blueprint, and establish weekly study rhythm.',
-      completed: true,
-      tasks: [
-        { text: 'Complete baseline diagnostic test in core subject modules', done: true },
-        { text: 'Set up weekly study timetable (target 14 hrs/week)', done: true },
-        { text: 'Register with academic advisor and verify course credits', done: true }
-      ],
-      deliverables: 'Study schedule active & course materials procured'
-    },
-    {
-      id: 2,
-      stageNumber: '02',
-      title: 'Core Conceptual Foundations',
-      timeframe: 'Weeks 4–7',
-      description: 'Master theoretical fundamentals, attend 100% of lectures, and create concise concept summaries.',
-      completed: true,
-      tasks: [
-        { text: 'Complete Units 1 & 2 theory derivations and definitions', done: true },
-        { text: 'Maintain minimum 80% class attendance threshold', done: true },
-        { text: 'Submit continuous evaluation assignment series 1', done: true }
-      ],
-      deliverables: 'Unit notes completed & Assignment 1 score > 65%'
-    },
-    {
-      id: 3,
-      stageNumber: '03',
-      title: 'Midterm Examination & Formative Feedback',
-      timeframe: 'Weeks 8–10',
-      description: 'Evaluate midterm scores to pinpoint misconceptions and recalibrate study allocation.',
-      completed: false,
-      tasks: [
-        { text: 'Sit for mid-semester evaluations across all enrolled subjects', done: true },
-        { text: 'Audit errors in midterms with course tutors or professors', done: false },
-        { text: 'Adjust study hours for any subject scoring under 60%', done: false }
-      ],
-      deliverables: 'Post-midterm diagnostic triage & action plan'
-    },
-    {
-      id: 4,
-      stageNumber: '04',
-      title: 'Advanced Problem Solving & Laboratory Practicals',
-      timeframe: 'Weeks 11–14',
-      description: 'Solve multi-step problems, past examination papers, and verify laboratory experiment records.',
-      completed: false,
-      tasks: [
-        { text: 'Solve past 5 years of examination papers (PYQs)', done: false },
-        { text: 'Finalize lab manual records, code repositories, or term projects', done: false },
-        { text: 'Participate in peer group problem sets or tutoring clinics', done: false }
-      ],
-      deliverables: 'Lab viva readiness verified & PYQ archive completed'
-    },
-    {
-      id: 5,
-      stageNumber: '05',
-      title: 'Timed Simulation & Comprehensive Revision',
-      timeframe: 'Weeks 15–16',
-      description: 'Simulate full-length 3-hour exam conditions and execute active recall on cheat-sheets.',
-      completed: false,
-      tasks: [
-        { text: 'Complete 2 full timed mock tests under strict conditions', done: false },
-        { text: 'Memorize formula sheets and key taxonomy lists', done: false },
-        { text: 'Verify hall ticket, admit card, and attendance eligibility', done: false }
-      ],
-      deliverables: 'Readiness Index > 80% & hall ticket verified'
-    },
-    {
-      id: 6,
-      stageNumber: '06',
-      title: 'End-Term Examination & Distinction Standing',
-      timeframe: 'Final Exam Week',
-      description: 'Execute strategic exam pacing, review step markings, and attain targeted GPA.',
-      completed: false,
-      tasks: [
-        { text: 'Rest 7+ hours prior to each major evaluation date', done: false },
-        { text: 'Execute step-by-step presentation in answer sheets', done: false },
-        { text: 'Achieve end-of-semester honors or distinction grade', done: false }
-      ],
-      deliverables: 'Semester completion with good academic standing'
+  const loadTopics = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchRoadmapTopics();
+      setTopics(data);
+    } catch (err) {
+      console.error('Failed to load roadmap topics:', err);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  }, []);
 
-  const toggleTask = (stageId: number, taskIndex: number) => {
-    setStages((prev) =>
-      prev.map((stage) => {
-        if (stage.id !== stageId) return stage;
-        const newTasks = [...stage.tasks];
-        newTasks[taskIndex].done = !newTasks[taskIndex].done;
-        const allDone = newTasks.every((t) => t.done);
-        return { ...stage, tasks: newTasks, completed: allDone };
-      })
+  useEffect(() => {
+    loadTopics();
+  }, [loadTopics]);
+
+  const handleToggleStatus = async (topic: RoadmapTopic) => {
+    let nextStatus: RoadmapTopic['status'] = 'in_progress';
+    if (topic.status === 'not_started') nextStatus = 'in_progress';
+    else if (topic.status === 'in_progress') nextStatus = 'completed';
+    else nextStatus = 'not_started';
+
+    // Optimistic UI update
+    setTopics((prev) =>
+      prev.map((t) => (t.id === topic.id ? { ...t, status: nextStatus } : t))
     );
+
+    try {
+      await updateRoadmapTopicStatus(topic.id, nextStatus);
+    } catch (err) {
+      console.error('Failed to persist roadmap status:', err);
+      await loadTopics();
+    }
   };
 
-  const totalTasks = stages.reduce((acc, s) => acc + s.tasks.length, 0);
-  const doneTasks = stages.reduce((acc, s) => acc + s.tasks.filter((t) => t.done).length, 0);
-  const overallProgress = Math.round((doneTasks / totalTasks) * 100);
+  const totalTopics = topics.length;
+  const completedCount = topics.filter((t) => t.status === 'completed').length;
+  const inProgressCount = topics.filter((t) => t.status === 'in_progress').length;
+  const progressPercent = totalTopics > 0 ? Math.round((completedCount / totalTopics) * 100) : 0;
 
   const currentLevelConfig =
     EDUCATION_LEVELS.find((l) => l.id === selectedLevelId) || EDUCATION_LEVELS[5];
@@ -141,23 +111,20 @@ export const RoadmapView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
-              Milestone Navigation
+              Adaptive Curriculum
             </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">Structured Path</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Persistent SQLite Progress</span>
           </div>
           <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 tracking-tight">
-            Academic Learning Roadmap
+            Personalized Learning Roadmap
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-            A step-by-step phased progression from diagnostic orientation to final examination mastery and distinction.
+            Structured step-by-step milestones organized into Foundations, Topics to Improve, Practice, Intermediate, and Advanced milestones.
           </p>
         </div>
 
         {/* Level selector */}
-        <div className="shrink-0">
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-            Academic Track
-          </label>
+        <div className="shrink-0 flex items-center gap-2">
           <select
             value={selectedLevelId}
             onChange={(e) => setSelectedLevelId(e.target.value as EducationLevelId)}
@@ -169,113 +136,163 @@ export const RoadmapView: React.FC = () => {
               </option>
             ))}
           </select>
+          <button
+            onClick={loadTopics}
+            className="p-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 
-      {/* Progress Summary Card */}
+      {/* Progress Metric Card */}
       <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              Overall Roadmap Completion: {currentLevelConfig.label}
+              Curriculum Mastery Completion: {progressPercent}%
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {doneTasks} of {totalTasks} milestones completed across 6 academic stages.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {completedCount} completed • {inProgressCount} in progress • {totalTopics - completedCount - inProgressCount} pending
             </p>
           </div>
-          <span className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 font-mono">
-            {overallProgress}% Achieved
-          </span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900">
+              {currentLevelConfig.courseTerm}: Core Specialization
+            </span>
+          </div>
         </div>
 
-        <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
+        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
           <div
-            className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-500"
-            style={{ width: `${overallProgress}%` }}
+            className="h-full bg-gradient-to-r from-indigo-600 to-emerald-500 rounded-full transition-all duration-500"
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
-      {/* Phased Roadmap Timeline */}
+      {/* 5-Phase Longitudinal Progression Cards */}
       <div className="space-y-4">
-        {stages.map((stage) => (
-          <div
-            key={stage.id}
-            className={`bg-white dark:bg-slate-900 rounded-xl p-5 border transition ${
-              stage.completed
-                ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/10 dark:bg-emerald-950/10'
-                : 'border-slate-200/90 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900'
-            }`}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-start gap-3.5">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                    stage.completed
-                      ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                      : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900'
-                  }`}
-                >
-                  {stage.stageNumber}
-                </div>
+        {PHASES.map((phaseItem) => {
+          const phaseTopics = topics.filter((t) => t.phase === phaseItem.phase);
+          const allCompleted = phaseTopics.length > 0 && phaseTopics.every((t) => t.status === 'completed');
 
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {stage.title}
-                    </h4>
-                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
-                      {stage.timeframe}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {stage.description}
-                  </p>
-                </div>
-              </div>
-
-              <div className="shrink-0">
-                <span
-                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
-                    stage.completed
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
-                  }`}
-                >
-                  {stage.completed ? 'Stage Cleared' : 'In Progress'}
-                </span>
-              </div>
-            </div>
-
-            {/* Checkable Tasks */}
-            <div className="pt-3 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                Milestone Deliverables:
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {stage.tasks.map((task, tIdx) => (
+          return (
+            <div
+              key={phaseItem.phase}
+              className={`bg-white dark:bg-slate-900 rounded-xl p-5 border transition-all shadow-xs ${
+                allCompleted
+                  ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/10 dark:bg-emerald-950/10'
+                  : 'border-slate-200/90 dark:border-slate-800'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3">
                   <div
-                    key={tIdx}
-                    onClick={() => toggleTask(stage.id, tIdx)}
-                    className={`p-2.5 rounded-lg border text-xs flex items-center gap-2.5 transition cursor-pointer ${
-                      task.done
-                        ? 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 line-through'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900 text-slate-700 dark:text-slate-300'
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                      allCompleted
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400'
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={task.done}
-                      onChange={() => {}}
-                      className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer pointer-events-none"
-                    />
-                    <span className="truncate">{task.text}</span>
+                    {phaseItem.stepNumber}
                   </div>
-                ))}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {phaseItem.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {phaseItem.description}
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    allCompleted
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                      : phaseTopics.some((t) => t.status === 'in_progress')
+                      ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-400'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  {allCompleted
+                    ? 'Phase Completed'
+                    : phaseTopics.some((t) => t.status === 'in_progress')
+                    ? 'In Progress'
+                    : 'Prerequisites Pending'}
+                </span>
+              </div>
+
+              {/* Topics in this phase */}
+              <div className="mt-3.5 space-y-2">
+                {phaseTopics.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-1">
+                    No specific sub-topics assigned for this stage yet.
+                  </p>
+                ) : (
+                  phaseTopics.map((topic) => (
+                    <div
+                      key={topic.id}
+                      onClick={() => handleToggleStatus(topic)}
+                      className={`p-3 rounded-lg border flex items-center justify-between gap-3 text-xs cursor-pointer transition ${
+                        topic.status === 'completed'
+                          ? 'border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20'
+                          : topic.status === 'in_progress'
+                          ? 'border-indigo-200 dark:border-indigo-900 bg-indigo-50/30 dark:bg-indigo-950/20'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                          type="button"
+                          className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                            topic.status === 'completed'
+                              ? 'bg-emerald-600 border-emerald-600 text-white'
+                              : topic.status === 'in_progress'
+                              ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                              : 'border-slate-300 dark:border-slate-600'
+                          }`}
+                        >
+                          {topic.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
+                          {topic.status === 'in_progress' && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>}
+                        </button>
+                        <span
+                          className={`font-semibold truncate ${
+                            topic.status === 'completed'
+                              ? 'line-through text-slate-400 dark:text-slate-500'
+                              : 'text-slate-800 dark:text-slate-200'
+                          }`}
+                        >
+                          {topic.title}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> ~{topic.estimated_hours}h
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded capitalize ${
+                            topic.status === 'completed'
+                              ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-400'
+                              : topic.status === 'in_progress'
+                              ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-400'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {topic.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

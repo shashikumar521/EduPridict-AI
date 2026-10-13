@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { runInference } from './server/ml';
@@ -28,7 +29,16 @@ import {
   addExamReadinessAssessment,
   getNotifications,
   markNotificationAsRead,
-  getDashboardStats
+  getDashboardStats,
+  User,
+  getUserById,
+  getUserByEmail,
+  upsertGoogleUser,
+  createEmailUser,
+  updateUserProfile,
+  createSession,
+  getSessionUser,
+  deleteSession
 } from './server/db';
 import { VERIFIED_COURSES, getCoursesForEducationLevel } from './server/courses';
 
@@ -41,6 +51,244 @@ async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
 
   app.use(express.json());
+
+  // Authentication Middleware
+  const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in to access your student records.' });
+    }
+    const token = authHeader.substring(7).trim();
+    const user = await getSessionUser(token);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid or expired session. Please sign in again.' });
+    }
+    (req as any).user = user;
+    next();
+  };
+
+  const optionalAuthMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim();
+      const user = await getSessionUser(token);
+      if (user) {
+        (req as any).user = user;
+      }
+    }
+    next();
+  };
+
+  // -------------------------------------------------------------
+  // AUTHENTICATION ROUTES (Google Identity Services & Student Accounts)
+  // -------------------------------------------------------------
+  app.get('/api/auth/config', (req, res) => {
+    const clientId = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '';
+    res.json({
+      googleClientId: clientId,
+      isConfigured: Boolean(clientId && clientId.trim().length > 0)
+    });
+  });
+
+  app.post('/api/auth/google', async (req, res) => {
+    try {
+      const { credential } = req.body;
+      if (!credential || typeof credential !== 'string') {
+        return res.status(400).json({ error: 'Google credential (ID token) is required.' });
+      }
+
+      // Verify token with Google's public tokeninfo endpoint
+      const tokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`;
+      const tokenRes = await fetch(tokenInfoUrl);
+      if (!tokenRes.ok) {
+        const errorBody = await tokenRes.json().catch(() => ({}));
+        return res.status(401).json({
+          error: errorBody.error_description || errorBody.error || 'Invalid or expired Google credential.'
+        });
+      }
+
+      const tokenData = await tokenRes.json();
+      const { sub, email, name, picture, aud } = tokenData;
+
+      if (!sub || !email) {
+        return res.status(400).json({ error: 'Google token does not contain verified user identity.' });
+      }
+
+      // Verify audience matches if client id is configured
+      const expectedClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+      if (expectedClientId && expectedClientId.trim() && aud !== expectedClientId.trim()) {
+        console.warn(`Audience mismatch: received ${aud}, expected ${expectedClientId}`);
+      }
+
+      const user = await upsertGoogleUser({
+        google_id: sub,
+        email: email.toLowerCase(),
+        name: name || email.split('@')[0],
+        picture: picture || ''
+      });
+
+      const token = await createSession(user.id);
+      const isNewUser = !user.education_level || user.education_level.trim() === '';
+
+      return res.json({
+        status: 'success',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+          education_level: user.education_level,
+          institution: user.institution,
+          stream_or_branch: user.stream_or_branch,
+          created_at: user.created_at
+        },
+        token,
+        isNewUser
+      });
+    } catch (err: any) {
+      console.error('Error in /api/auth/google:', err);
+      return res.status(500).json({ error: 'Google authentication service error: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { name, email, password } = req.body;
+      if (!name || !email || !password) {
+        return res.status(400).json({ error: 'Name, email, and password are required.' });
+      }
+      if (typeof password !== 'string' || password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+      }
+
+      const existing = await getUserByEmail(email);
+      if (existing) {
+        return res.status(409).json({ error: 'An account with this email address already exists. Please sign in.' });
+      }
+
+      const salt = crypto.randomBytes(16).toString('hex');
+      const hash = crypto.scryptSync(password, salt, 64).toString('hex') + ':' + salt;
+      const user = await createEmailUser(email, name, hash);
+      const token = await createSession(user.id);
+
+      return res.status(201).json({
+        status: 'success',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+          education_level: user.education_level,
+          institution: user.institution,
+          stream_or_branch: user.stream_or_branch,
+          created_at: user.created_at
+        },
+        token,
+        isNewUser: true
+      });
+    } catch (err: any) {
+      console.error('Error in /api/auth/register:', err);
+      return res.status(500).json({ error: 'Registration failed: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required.' });
+      }
+
+      const user = await getUserByEmail(email);
+      if (!user || !user.password_hash) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
+
+      const [storedHash, salt] = user.password_hash.split(':');
+      if (!storedHash || !salt) {
+        return res.status(401).json({ error: 'Invalid account credentials.' });
+      }
+
+      const computedHash = crypto.scryptSync(password, salt, 64).toString('hex');
+      if (computedHash !== storedHash) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
+
+      const token = await createSession(user.id);
+      return res.json({
+        status: 'success',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          picture: user.picture,
+          education_level: user.education_level,
+          institution: user.institution,
+          stream_or_branch: user.stream_or_branch,
+          created_at: user.created_at
+        },
+        token,
+        isNewUser: !user.education_level || user.education_level.trim() === ''
+      });
+    } catch (err: any) {
+      console.error('Error in /api/auth/login:', err);
+      return res.status(500).json({ error: 'Login failed: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.get('/api/auth/me', authMiddleware, async (req, res) => {
+    const user = (req as any).user as User;
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+        education_level: user.education_level,
+        institution: user.institution,
+        stream_or_branch: user.stream_or_branch,
+        created_at: user.created_at
+      }
+    });
+  });
+
+  app.patch('/api/auth/profile', authMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user as User;
+      const { name, education_level, institution, stream_or_branch } = req.body;
+      const updated = await updateUserProfile(user.id, {
+        name,
+        education_level,
+        institution,
+        stream_or_branch
+      });
+      res.json({
+        status: 'success',
+        user: {
+          id: updated.id,
+          email: updated.email,
+          name: updated.name,
+          picture: updated.picture,
+          education_level: updated.education_level,
+          institution: updated.institution,
+          stream_or_branch: updated.stream_or_branch,
+          created_at: updated.created_at
+        }
+      });
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      res.status(500).json({ error: 'Failed to update user profile' });
+    }
+  });
+
+  app.post('/api/auth/logout', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim();
+      await deleteSession(token);
+    }
+    res.json({ status: 'success', message: 'Logged out successfully' });
+  });
 
   // 1. Health check
   app.get('/api/health', (req, res) => {
@@ -205,9 +453,11 @@ async function startServer() {
   });
 
   // 6. Prediction History
-  app.get('/api/predictions', async (req, res) => {
+  app.get('/api/predictions', optionalAuthMiddleware, async (req, res) => {
     try {
-      const predictions = await getAllPredictions();
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
+      const predictions = await getAllPredictions(studentId);
       res.json(predictions);
     } catch (err: any) {
       console.error('Error fetching predictions:', err);
@@ -215,8 +465,9 @@ async function startServer() {
     }
   });
 
-  app.post('/api/predictions', async (req, res) => {
+  app.post('/api/predictions', optionalAuthMiddleware, async (req, res) => {
     try {
+      const user = (req as any).user;
       const {
         student_id,
         student_name,
@@ -238,15 +489,19 @@ async function startServer() {
         advisor
       } = req.body;
 
-      if (!student_id || !predicted_category) {
-        return res.status(400).json({ error: 'student_id and predicted_category are required.' });
+      if (!predicted_category) {
+        return res.status(400).json({ error: 'predicted_category is required.' });
       }
 
+      const finalStudentId = user ? user.id : (student_id ? String(student_id) : 'STD-88429');
+      const finalStudentName = user ? user.name : (student_name || 'Anonymous Student');
+      const finalEduLevel = user?.education_level || education_level || 'btech';
+
       const insertId = await insertPrediction({
-        student_id: String(student_id),
-        student_name: student_name || 'Anonymous Student',
-        education_level: education_level || 'btech',
-        stream_or_branch: stream_or_branch || '',
+        student_id: finalStudentId,
+        student_name: finalStudentName,
+        education_level: finalEduLevel,
+        stream_or_branch: stream_or_branch || user?.stream_or_branch || '',
         course: course || 'Core Academic Subject',
         model_used: model_used || 'Random Forest v2.4 (Ensemble)',
         attendance: Number(attendance) || 0,
@@ -260,7 +515,7 @@ async function startServer() {
         recommendations: Array.isArray(recommendations) ? recommendations : [],
         study_plan: study_plan || {},
         recommended_courses: Array.isArray(recommended_courses) ? recommended_courses : [],
-        advisor: advisor || 'Dr. Elena Rostova',
+        advisor: advisor || (user ? user.name : 'Dr. Elena Rostova'),
         is_demo: false
       });
 
@@ -275,7 +530,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/predictions/:id', async (req, res) => {
+  app.delete('/api/predictions/:id', optionalAuthMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       await deletePrediction(id);
@@ -287,9 +542,10 @@ async function startServer() {
   });
 
   // 7. Academic Records (Progress Tracking)
-  app.get('/api/academic-records', async (req, res) => {
+  app.get('/api/academic-records', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const records = await getAcademicRecords(studentId);
       res.json(records);
     } catch (err: any) {
@@ -298,15 +554,17 @@ async function startServer() {
     }
   });
 
-  app.post('/api/academic-records', async (req, res) => {
+  app.post('/api/academic-records', optionalAuthMiddleware, async (req, res) => {
     try {
+      const user = (req as any).user;
       const { student_id, subject, marks, attendance, assignment_score, assessment_type, recorded_date, notes } = req.body;
-      if (!student_id || !subject) {
+      const finalStudentId = user ? user.id : student_id;
+      if (!finalStudentId || !subject) {
         return res.status(400).json({ error: 'student_id and subject are required.' });
       }
 
       const id = await addAcademicRecord({
-        student_id,
+        student_id: finalStudentId,
         subject,
         marks: Number(marks) || 0,
         attendance: Number(attendance) || 0,
@@ -324,9 +582,10 @@ async function startServer() {
   });
 
   // 8. Study Planner Tasks
-  app.get('/api/planner-tasks', async (req, res) => {
+  app.get('/api/planner-tasks', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const tasks = await getPlannerTasks(studentId);
       res.json(tasks);
     } catch (err: any) {
@@ -335,15 +594,17 @@ async function startServer() {
     }
   });
 
-  app.post('/api/planner-tasks', async (req, res) => {
+  app.post('/api/planner-tasks', optionalAuthMiddleware, async (req, res) => {
     try {
+      const user = (req as any).user;
       const { student_id, title, subject, day_of_week, time_slot, duration_minutes, priority, status } = req.body;
       if (!title || !subject) {
         return res.status(400).json({ error: 'Title and subject are required.' });
       }
 
+      const finalStudentId = user ? user.id : (student_id || 'STD-88429');
       const id = await addPlannerTask({
-        student_id: student_id || 'STD-88429',
+        student_id: finalStudentId,
         title,
         subject,
         day_of_week: day_of_week || 'Monday',
@@ -360,7 +621,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/planner-tasks/:id', async (req, res) => {
+  app.patch('/api/planner-tasks/:id', optionalAuthMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const { status } = req.body;
@@ -372,7 +633,7 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/planner-tasks/:id', async (req, res) => {
+  app.delete('/api/planner-tasks/:id', optionalAuthMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       await deletePlannerTask(id);
@@ -384,9 +645,10 @@ async function startServer() {
   });
 
   // 9. Goals
-  app.get('/api/goals', async (req, res) => {
+  app.get('/api/goals', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const goals = await getGoals(studentId);
       res.json(goals);
     } catch (err: any) {
@@ -395,15 +657,17 @@ async function startServer() {
     }
   });
 
-  app.post('/api/goals', async (req, res) => {
+  app.post('/api/goals', optionalAuthMiddleware, async (req, res) => {
     try {
+      const user = (req as any).user;
       const { student_id, title, category, target_date, progress_percent, is_completed } = req.body;
       if (!title) {
         return res.status(400).json({ error: 'Goal title is required.' });
       }
 
+      const finalStudentId = user ? user.id : (student_id || 'STD-88429');
       const id = await addGoal({
-        student_id: student_id || 'STD-88429',
+        student_id: finalStudentId,
         title,
         category: category || 'score',
         target_date: target_date || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
@@ -418,7 +682,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/goals/:id', async (req, res) => {
+  app.patch('/api/goals/:id', optionalAuthMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const { progress_percent, is_completed } = req.body;
@@ -431,9 +695,10 @@ async function startServer() {
   });
 
   // 10. Learning Roadmap Topics
-  app.get('/api/roadmap-topics', async (req, res) => {
+  app.get('/api/roadmap-topics', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const topics = await getRoadmapTopics(studentId);
       res.json(topics);
     } catch (err: any) {
@@ -442,7 +707,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/roadmap-topics/:id', async (req, res) => {
+  app.patch('/api/roadmap-topics/:id', optionalAuthMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       const { status } = req.body;
@@ -455,9 +720,10 @@ async function startServer() {
   });
 
   // 11. Saved Courses
-  app.get('/api/saved-courses', async (req, res) => {
+  app.get('/api/saved-courses', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const list = await getSavedCourses(studentId);
       res.json(list);
     } catch (err: any) {
@@ -466,10 +732,12 @@ async function startServer() {
     }
   });
 
-  app.post('/api/saved-courses/toggle', async (req, res) => {
+  app.post('/api/saved-courses/toggle', optionalAuthMiddleware, async (req, res) => {
     try {
+      const user = (req as any).user;
       const { student_id, course_id, status } = req.body;
-      const isSaved = await toggleSaveCourse(student_id || 'STD-88429', course_id, status || 'saved');
+      const finalStudentId = user ? user.id : (student_id || 'STD-88429');
+      const isSaved = await toggleSaveCourse(finalStudentId, course_id, status || 'saved');
       res.json({ status: 'success', isSaved });
     } catch (err: any) {
       console.error('Error toggling course save:', err);
@@ -478,9 +746,10 @@ async function startServer() {
   });
 
   // 12. Examination Readiness
-  app.get('/api/exam-readiness', async (req, res) => {
+  app.get('/api/exam-readiness', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const assessments = await getExamReadinessAssessments(studentId);
       res.json(assessments);
     } catch (err: any) {
@@ -489,22 +758,23 @@ async function startServer() {
     }
   });
 
-  app.post('/api/exam-readiness', async (req, res) => {
+  app.post('/api/exam-readiness', optionalAuthMiddleware, async (req, res) => {
     try {
+      const user = (req as any).user;
       const { student_id, exam_name, exam_date, syllabus_completion, practice_score, revision_progress } = req.body;
 
       const syllabus = Math.max(0, Math.min(100, Number(syllabus_completion) || 0));
       const practice = Math.max(0, Math.min(100, Number(practice_score) || 0));
       const revision = Math.max(0, Math.min(100, Number(revision_progress) || 0));
 
-      // Rule-based readiness calculation (clearly documented as rule-based planning estimate)
       const readiness_score = Number(((syllabus * 0.45) + (practice * 0.35) + (revision * 0.20)).toFixed(1));
       const readiness_tier = readiness_score >= 75
         ? 'High Readiness'
         : (readiness_score >= 55 ? 'Moderate Readiness' : 'Needs Urgent Preparation');
 
+      const finalStudentId = user ? user.id : (student_id || 'STD-88429');
       const id = await addExamReadinessAssessment({
-        student_id: student_id || 'STD-88429',
+        student_id: finalStudentId,
         exam_name: exam_name || 'Upcoming Semester Examination',
         exam_date: exam_date || new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
         syllabus_completion: syllabus,
@@ -522,9 +792,10 @@ async function startServer() {
   });
 
   // 13. Notifications
-  app.get('/api/notifications', async (req, res) => {
+  app.get('/api/notifications', optionalAuthMiddleware, async (req, res) => {
     try {
-      const studentId = req.query.student_id as string;
+      const user = (req as any).user;
+      const studentId = user ? user.id : (req.query.student_id as string);
       const notifs = await getNotifications(studentId);
       res.json(notifs);
     } catch (err: any) {
@@ -533,7 +804,7 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/notifications/:id/read', async (req, res) => {
+  app.patch('/api/notifications/:id/read', optionalAuthMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       await markNotificationAsRead(id);
@@ -639,9 +910,10 @@ How can I assist you today? You can ask about:
   });
 
   // 16. Dashboard Summary
-  app.get('/api/dashboard-summary', async (req, res) => {
+  app.get('/api/dashboard-summary', optionalAuthMiddleware, async (req, res) => {
     try {
-      const stats = await getDashboardStats();
+      const user = (req as any).user;
+      const stats = await getDashboardStats(user ? user.id : undefined);
       res.json(stats);
     } catch (err: any) {
       console.error('Error loading dashboard stats:', err);

@@ -1,4 +1,6 @@
 export type SectionId =
+  | 'home'
+  | 'login'
   | 'dashboard'
   | 'predict'
   | 'whatif'
@@ -17,6 +19,17 @@ export type SectionId =
   | 'notifications'
   | 'settings'
   | 'about';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+  education_level?: string;
+  institution?: string;
+  stream_or_branch?: string;
+  created_at?: string;
+}
 
 export type EducationLevelId =
   | 'primary_school'

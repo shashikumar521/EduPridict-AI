@@ -20,9 +20,15 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Home,
+  Globe,
+  User,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { SectionId } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   currentSection: SectionId;
@@ -47,8 +53,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   studentCount = 1248
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleSignOut = async () => {
+    await logout();
+    onNavigate('home');
+  };
 
   const navGroups: { group: string; items: NavItem[] }[] = [
+    {
+      group: 'Portal',
+      items: [
+        { id: 'home', label: 'Public Home Page', icon: Home }
+      ]
+    },
     {
       group: 'Overview',
       items: [
@@ -115,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-slate-200/90 dark:border-slate-800 flex flex-col transform transition-all duration-200 ease-in-out md:static md:translate-x-0 shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-slate-200/90 dark:border-slate-800 flex flex-col transform transition-all duration-200 ease-in-out md:static md:translate-x-0 shrink-0 h-full max-h-[100dvh] overflow-hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}
       >
@@ -164,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation Menu Items */}
-        <div className="px-2.5 py-3 flex-1 overflow-y-auto custom-scrollbar space-y-4">
+        <div className="px-2.5 py-3 flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-4">
           {navGroups.map((group) => (
             <div key={group.group}>
               {!isCollapsed && (
@@ -245,18 +263,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* User Profile Footer */}
-        <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2.5 bg-white dark:bg-slate-900">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold text-xs ring-2 ring-indigo-50 dark:ring-indigo-900 shrink-0">
-            DR
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                Dr. Elena Rostova
-              </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                Senior Academic Advisor
-              </p>
+        <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2.5">
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/30 shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-indigo-100 dark:ring-indigo-900 shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+
+              {!isCollapsed && (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate capitalize">
+                      {user.education_level || 'Authenticated Student'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                    title="Sign Out"
+                    aria-label="Sign Out"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  onNavigate('login');
+                  onClose();
+                }}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center p-2' : 'justify-center gap-2 px-3 py-2'
+                } rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition cursor-pointer`}
+                title="Sign In to Save"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                {!isCollapsed && <span>Sign In</span>}
+              </button>
             </div>
           )}
         </div>

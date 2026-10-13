@@ -1,6 +1,6 @@
 /**
  * EduPredict AI - AI-Based Student Performance Prediction System
- * Main Application Orchestrator
+ * Main Application Orchestrator with Google Identity Services & Protected Dashboard
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -13,6 +13,7 @@ import {
   PredictionInput
 } from './types';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardView } from './components/DashboardView';
@@ -33,6 +34,10 @@ import { ReportsView } from './components/ReportsView';
 import { NotificationsView } from './components/NotificationsView';
 import { SettingsView } from './components/SettingsView';
 import { AboutView } from './components/AboutView';
+import { HomeView } from './components/HomeView';
+import { LoginView } from './components/LoginView';
+import { AuthModal } from './components/AuthModal';
+import { ProfileSetupModal } from './components/ProfileSetupModal';
 import {
   fetchStudents,
   fetchPredictions,
@@ -41,6 +46,8 @@ import {
 } from './services/api';
 
 const ALL_SECTIONS: SectionId[] = [
+  'home',
+  'login',
   'dashboard',
   'predict',
   'whatif',
@@ -61,10 +68,30 @@ const ALL_SECTIONS: SectionId[] = [
   'about'
 ];
 
+// Sections open to public visitors without authentication
+const PUBLIC_SECTIONS: SectionId[] = ['home', 'about', 'login'];
+
 function AppContent() {
+  const {
+    user,
+    isAuthenticated,
+    isLoading: isAuthLoading,
+    isAuthModalOpen,
+    closeAuthModal
+  } = useAuth();
+
   // Navigation state: displays ONLY the selected section
-  const [currentSection, setCurrentSection] = useState<SectionId>('dashboard');
+  const [currentSection, setCurrentSection] = useState<SectionId>(() => {
+    const hash = window.location.hash.replace('#', '') as SectionId;
+    if (ALL_SECTIONS.includes(hash)) {
+      return hash;
+    }
+    return 'home';
+  });
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [pendingRedirectSection, setPendingRedirectSection] = useState<SectionId | null>(null);
 
   // Data states
   const [students, setStudents] = useState<StudentRecord[]>([]);
@@ -81,25 +108,68 @@ function AppContent() {
   // Predictor prefill state (e.g. when advisor clicks "Load into Predictor" on a student)
   const [prefillData, setPrefillData] = useState<Partial<PredictionInput> | null>(null);
 
-  // Initialize section from URL hash if present
+  // Navigation handler with protection checks
+  const handleNavigate = useCallback(
+    (targetSection: SectionId) => {
+      // If destination is protected and user is not authenticated:
+      if (!PUBLIC_SECTIONS.includes(targetSection) && !isAuthenticated) {
+        setPendingRedirectSection(targetSection);
+        setCurrentSection('login');
+        window.location.hash = 'login';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      setCurrentSection(targetSection);
+      window.location.hash = targetSection;
+
+      if (targetSection === 'home' || targetSection === 'login') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Scroll dashboard internal content container to top
+        const dashboardScrollArea = document.getElementById('dashboard-main-content');
+        if (dashboardScrollArea) {
+          dashboardScrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    },
+    [isAuthenticated]
+  );
+
+  // Initialize and listen to hash change from browser URL
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '') as SectionId;
-      if (ALL_SECTIONS.includes(hash)) {
-        setCurrentSection(hash);
+      if (!ALL_SECTIONS.includes(hash)) {
+        return;
       }
+
+      // Check protection on hash change
+      if (!PUBLIC_SECTIONS.includes(hash) && !isAuthenticated && !isAuthLoading) {
+        setPendingRedirectSection(hash);
+        setCurrentSection('login');
+        window.location.hash = 'login';
+        return;
+      }
+
+      setCurrentSection(hash);
     };
 
     handleHashChange();
     window.addEventListener('popstate', handleHashChange);
     return () => window.removeEventListener('popstate', handleHashChange);
-  }, []);
+  }, [isAuthenticated, isAuthLoading]);
 
-  const handleNavigate = (section: SectionId) => {
-    setCurrentSection(section);
-    window.location.hash = section;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  // Protect current section once authentication hydration completes
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (!isAuthenticated && !PUBLIC_SECTIONS.includes(currentSection)) {
+        setPendingRedirectSection(currentSection);
+        setCurrentSection('login');
+        window.location.hash = 'login';
+      }
+    }
+  }, [isAuthLoading, isAuthenticated, currentSection]);
 
   // Load students from API
   const loadStudents = useCallback(async () => {
@@ -153,13 +223,13 @@ function AppContent() {
     }
   }, []);
 
-  // Initial data hydration
+  // Initial & auth-change data hydration
   useEffect(() => {
     loadStudents();
     loadPredictions();
     loadMetrics();
     loadSummary();
-  }, [loadStudents, loadPredictions, loadMetrics, loadSummary]);
+  }, [loadStudents, loadPredictions, loadMetrics, loadSummary, isAuthenticated]);
 
   const handleSelectStudentForPrediction = (prefill: Partial<PredictionInput>) => {
     setPrefillData(prefill);
@@ -171,9 +241,78 @@ function AppContent() {
     loadSummary();
   };
 
+  // Login completion handler
+  const handleLoginSuccess = (isNewUser: boolean) => {
+    loadStudents();
+    loadPredictions();
+    loadSummary();
+
+    if (isNewUser) {
+      setShowProfileSetup(true);
+    } else {
+      const dest = pendingRedirectSection || 'dashboard';
+      setPendingRedirectSection(null);
+      handleNavigate(dest);
+    }
+  };
+
+  // First-time profile setup completion
+  const handleProfileSetupComplete = () => {
+    setShowProfileSetup(false);
+    const dest = pendingRedirectSection || 'predict';
+    setPendingRedirectSection(null);
+    handleNavigate(dest);
+  };
+
+  // 1. PUBLIC LOGIN & REGISTER PAGE
+  if (currentSection === 'login') {
+    return (
+      <>
+        <LoginView
+          onNavigate={handleNavigate}
+          onSuccess={handleLoginSuccess}
+        />
+        {showProfileSetup && (
+          <ProfileSetupModal
+            isOpen={showProfileSetup}
+            onClose={() => setShowProfileSetup(false)}
+            onComplete={handleProfileSetupComplete}
+          />
+        )}
+      </>
+    );
+  }
+
+  // 2. PUBLIC HOME PAGE: Natural document scrolling without dashboard shell or sidebar
+  if (currentSection === 'home') {
+    return (
+      <>
+        <HomeView
+          onNavigateToDashboard={(targetSection = 'dashboard') => handleNavigate(targetSection)}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={closeAuthModal}
+          onSuccess={handleLoginSuccess}
+        />
+        {showProfileSetup && (
+          <ProfileSetupModal
+            isOpen={showProfileSetup}
+            onClose={() => setShowProfileSetup(false)}
+            onComplete={handleProfileSetupComplete}
+          />
+        )}
+      </>
+    );
+  }
+
+  // 3. AUTHENTICATED DASHBOARD & PROTECTED WORKSPACES
+  // 100dvh viewport shell with stationary sidebar and independent main content scrolling
+  const studentDisplayName = user?.name || 'Dr. Elena Rostova';
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col md:flex-row antialiased transition-colors">
-      {/* Sidebar Navigation */}
+    <div className="h-[100dvh] max-h-[100dvh] w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col md:flex-row overflow-hidden antialiased transition-colors">
+      {/* Sidebar Navigation - Fixed & stationary on desktop */}
       <Sidebar
         currentSection={currentSection}
         onNavigate={handleNavigate}
@@ -183,17 +322,20 @@ function AppContent() {
       />
 
       {/* Main View Area with Header and Content */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Top Header */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Top Header - Stationary & sticky at top of main application area */}
         <Header
           currentSection={currentSection}
           onNavigate={handleNavigate}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          studentName="Dr. Elena Rostova"
+          studentName={studentDisplayName}
         />
 
-        {/* Viewport: Renders ONLY the active section */}
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar">
+        {/* Viewport: Renders ONLY the active section; ONLY this container scrolls vertically */}
+        <main
+          id="dashboard-main-content"
+          className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 md:p-6"
+        >
           <div className="max-w-6xl mx-auto pb-10">
             {/* 1. Dashboard Overview */}
             {currentSection === 'dashboard' && (
@@ -201,7 +343,7 @@ function AppContent() {
                 onNavigate={handleNavigate}
                 summary={dashboardSummary}
                 isLoading={isLoadingSummary}
-                studentName="Dr. Elena Rostova"
+                studentName={user?.name || 'Student'}
                 students={students}
                 predictions={predictions}
               />
@@ -297,7 +439,7 @@ function AppContent() {
 
             {/* 15. Reports */}
             {currentSection === 'reports' && (
-              <ReportsView students={students} />
+              <ReportsView students={students} predictions={predictions} />
             )}
 
             {/* 16. Notifications */}
@@ -317,6 +459,21 @@ function AppContent() {
           </div>
         </main>
       </div>
+
+      {/* Global Modals */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        onSuccess={handleLoginSuccess}
+      />
+
+      {showProfileSetup && (
+        <ProfileSetupModal
+          isOpen={showProfileSetup}
+          onClose={() => setShowProfileSetup(false)}
+          onComplete={handleProfileSetupComplete}
+        />
+      )}
     </div>
   );
 }
@@ -324,7 +481,9 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

@@ -10,16 +10,19 @@ import {
   ArrowRight,
   RefreshCw,
   HelpCircle,
-  CheckCircle2
+  CheckCircle2,
+  Bot
 } from 'lucide-react';
 import { EDUCATION_LEVELS } from '../data/educationLevels';
 import { EducationLevelId } from '../types';
+import { counselorChat } from '../services/api';
 
 interface Message {
   id: string;
   sender: 'student' | 'counselor';
   text: string;
   timestamp: string;
+  source?: string;
   steps?: string[];
   recommendedMethod?: string;
 }
@@ -32,7 +35,8 @@ export const CounselorView: React.FC = () => {
       id: 'msg-1',
       sender: 'counselor',
       text: "Hello! I am your AI Academic Counselor. Whether you are dealing with low exam scores, attendance bottlenecks, study habits, or exam anxiety, I'm here to give you practical, evidence-based academic advice tailored to your educational level.",
-      timestamp: '10:00 AM'
+      timestamp: '10:00 AM',
+      source: 'counselor_knowledge_base'
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
@@ -56,14 +60,14 @@ export const CounselorView: React.FC = () => {
     }
   ];
 
-  const handleSend = (queryText?: string) => {
+  const handleSend = async (queryText?: string) => {
     const textToSend = queryText || inputText;
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() || isTyping) return;
 
     const userMsg: Message = {
       id: `usr-${Date.now()}`,
       sender: 'student',
-      text: textToSend,
+      text: textToSend.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -71,64 +75,32 @@ export const CounselorView: React.FC = () => {
     if (!queryText) setInputText('');
     setIsTyping(true);
 
-    // Pedagogical response generator
-    setTimeout(() => {
-      let responseText = '';
-      let steps: string[] = [];
-      let method = '';
-
-      const lower = textToSend.toLowerCase();
-
-      if (lower.includes('raise') || lower.includes('50% to 75%') || lower.includes('improve')) {
-        responseText =
-          "Moving from 50% to 75% is completely achievable. At 50%, you likely understand basic vocabulary but lose marks on numerical problems, multi-step derivations, and precise exam phrasing.";
-        steps = [
-          "1. Audit Past Exam Papers: Categorize every missed mark into 'Careless Error', 'Formula Missed', or 'Concept Not Understood'. Fix the first two in week 1.",
-          "2. Active Problem Solving over Passive Reading: Spend 70% of study time solving unsolved end-of-chapter problems rather than re-reading slides.",
-          "3. Weekly Timed Mock Tests: Replicate 1.5-hour exam conditions on Saturdays to build testing stamina and pace."
-        ];
-        method = "Feynman Technique + 20/80 Pareto Focus on highest weightage syllabus units.";
-      } else if (lower.includes('anxiety') || lower.includes('stress') || lower.includes('cramming')) {
-        responseText =
-          "Exam anxiety almost always stems from unpredictable preparation and the illusion of competence from late-night cramming.";
-        steps = [
-          "1. Break Syllabus into 30-Minute Micro-Units: Eliminate intimidating 10-chapter goals. Focus solely on completing one subtopic today.",
-          "2. The 5-Minute Kickstart Rule: When procrastinating, commit to opening the textbook for just 5 minutes without pressure to finish.",
-          "3. Sleep Hygiene before Exam Week: Memory consolidation and cognitive retrieval require 7+ hours of REM sleep—all-nighters drop test performance by up to 22%."
-        ];
-        method = "Box Breathing (4s in, 4s hold, 4s out, 4s hold) + Spaced Revision Cycles.";
-      } else if (lower.includes('attendance') || lower.includes('backlog')) {
-        responseText =
-          "To recover from low attendance and backlogs, you must triage immediately before the college administration locks exam hall tickets.";
-        steps = [
-          "1. Immediate Faculty Dialogue: Meet your department counselor or professor during office hours. Demonstrate earnest commitment and request approved compensatory assignments.",
-          "2. Unconditional 100% Attendance for Next 30 Days: Every missed lecture now compounds the deficit. Attend every single upcoming class.",
-          "3. Backlog Triage: Dedicate 90 minutes every Sunday morning exclusively to the backlog subject, focusing on previous year questions (PYQs)."
-        ];
-        method = "Academic Triage Matrix: Prioritize core prerequisites required for graduation.";
-      } else {
-        responseText =
-          "Effective academic performance isn't about working 12 hours a day; it's about high-density cognitive effort aligned with the assessment criteria of your institution.";
-        steps = [
-          "1. Clarify the Marking Scheme: Understand what examiners award points for (step marks, diagrams, keywords).",
-          "2. Spaced Retrieval: Test yourself 1 day, 3 days, and 7 days after first learning a concept.",
-          "3. Maintain 14 to 18 Focused Study Hours Weekly: Consistency beats erratic marathon study bursts every single time."
-        ];
-        method = "Active Recall via Cornell Notes.";
-      }
+    try {
+      const data = await counselorChat(textToSend.trim(), {
+        education_level: selectedLevelId
+      });
 
       const counselorMsg: Message = {
         id: `cns-${Date.now()}`,
         sender: 'counselor',
-        text: responseText,
-        steps,
-        recommendedMethod: method,
+        text: data.reply,
+        source: data.source,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setMessages((prev) => [...prev, counselorMsg]);
+    } catch (err: any) {
+      const errorMsg: Message = {
+        id: `cns-${Date.now()}`,
+        sender: 'counselor',
+        text: "I experienced a temporary communication glitch with the counselor service. For immediate guidance, maintain steady attendance above 75%, break revision into 45-minute active blocks, and review previous exam papers.",
+        source: 'system_fallback',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
       setIsTyping(false);
-    }, 600);
+    }
   };
 
   const currentLevelConfig = EDUCATION_LEVELS.find((l) => l.id === selectedLevelId) || EDUCATION_LEVELS[5];
@@ -181,7 +153,8 @@ export const CounselorView: React.FC = () => {
             <button
               key={idx}
               onClick={() => handleSend(pq.text)}
-              className="text-left p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-200 dark:hover:border-indigo-800 transition text-xs group cursor-pointer"
+              disabled={isTyping}
+              className="text-left p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-200 dark:border-indigo-800 transition text-xs group cursor-pointer disabled:opacity-50"
             >
               <span className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 block">
                 {pq.title}
@@ -224,24 +197,14 @@ export const CounselorView: React.FC = () => {
               >
                 <p className="whitespace-pre-line">{msg.text}</p>
 
-                {msg.steps && msg.steps.length > 0 && (
-                  <div className="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
-                    <span className="font-bold text-slate-900 dark:text-slate-100 block">
-                      Target Action Framework:
+                {msg.source && msg.sender === 'counselor' && (
+                  <div className="flex items-center gap-1.5 pt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                    <Bot className="w-3 h-3 text-indigo-500" />
+                    <span>
+                      {msg.source === 'gemini'
+                        ? 'Powered by Gemini AI (Live Academic Guidance)'
+                        : 'Calibrated Pedagogical Knowledge Base'}
                     </span>
-                    {msg.steps.map((step, sIdx) => (
-                      <div key={sIdx} className="flex items-start gap-1.5 text-slate-700 dark:text-slate-300">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                        <span>{step}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {msg.recommendedMethod && (
-                  <div className="p-2 rounded bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/60 text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5 font-medium">
-                    <Lightbulb className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span>Recommended Technique: {msg.recommendedMethod}</span>
                   </div>
                 )}
 
@@ -265,7 +228,7 @@ export const CounselorView: React.FC = () => {
                 <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
                 <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse delay-75"></span>
                 <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse delay-150"></span>
-                <span className="text-[11px] ml-1">Analyzing educational framework...</span>
+                <span className="text-[11px] ml-1">Consulting academic counselor framework...</span>
               </div>
             </div>
           )}
@@ -285,11 +248,12 @@ export const CounselorView: React.FC = () => {
               placeholder={`Ask academic counselor for advice (${currentLevelConfig.label})...`}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              disabled={isTyping}
+              className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!inputText.trim()}
+              disabled={!inputText.trim() || isTyping}
               className="p-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl transition cursor-pointer shrink-0"
               title="Send question"
             >
