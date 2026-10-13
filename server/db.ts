@@ -898,23 +898,57 @@ export async function getDashboardStats(studentId?: string) {
   const predictions = await getAllPredictions(studentId);
   const goals = await getGoals(studentId);
   const notifications = await getNotifications(studentId);
+  const academicRecords = await getAcademicRecords(studentId);
+  const examPlan = studentId ? await getLatestExamStudyPlan(studentId) : null;
 
-  const totalStudents = 1248 + Math.max(0, students.filter(s => !s.is_demo).length);
-  const predictionsCount = 3420 + predictions.filter(p => !p.is_demo).length;
-  const criticalCount = students.filter(s => s.predicted_risk === 'critical').length;
-  const activeGoalsCount = goals.filter(g => !g.is_completed).length;
-  const upcomingExamsCount = notifications.filter(n => n.type === 'exam' && !n.is_read).length;
+  const totalStudents = students.length;
+  const predictionsCount = predictions.length;
+  const highPerformanceCount = predictions.filter(
+    (p) => p.predicted_category === 'High Performance'
+  ).length;
+  const highPerformancePercentage =
+    predictionsCount > 0
+      ? Number(((highPerformanceCount / predictionsCount) * 100).toFixed(1))
+      : 0;
+  const studentsNeedingSupport = predictions.filter(
+    (p) => p.predicted_category === 'At-Risk'
+  ).length;
+
+  // Real average attendance from records or predictions
+  let averageAttendance = 0;
+  if (predictions.length > 0) {
+    const sumAtt = predictions.reduce((acc, p) => acc + (p.attendance || 0), 0);
+    averageAttendance = Number((sumAtt / predictions.length).toFixed(1));
+  } else if (students.length > 0) {
+    const sumAtt = students.reduce((acc, s) => acc + (s.attendance || 0), 0);
+    averageAttendance = Number((sumAtt / students.length).toFixed(1));
+  }
+
+  const activeGoalsCount = goals.filter((g) => !g.is_completed).length;
+  const upcomingExamsCount = notifications.filter(
+    (n) => n.type === 'exam' && !n.is_read
+  ).length;
+
+  let studyPlanCompletion = 0;
+  if (examPlan && examPlan.totalTopics > 0) {
+    studyPlanCompletion = Number(
+      ((examPlan.completedTopics / examPlan.totalTopics) * 100).toFixed(0)
+    );
+  }
 
   return {
     totalStudents,
     predictionsCount,
-    highPerformanceCount: 842,
-    highPerformancePercentage: 67.5,
-    studentsNeedingSupport: 72 + Math.max(0, criticalCount - 3),
-    recentPredictions: predictions.slice(0, 3),
+    highPerformanceCount,
+    highPerformancePercentage,
+    studentsNeedingSupport,
+    recentPredictions: predictions.slice(0, 5),
     activeGoalsCount,
     upcomingExamsCount,
-    averageAttendance: 78.4
+    averageAttendance,
+    studyPlanCompletion,
+    hasStudyPlan: Boolean(examPlan),
+    academicRecordsCount: academicRecords.length
   };
 }
 

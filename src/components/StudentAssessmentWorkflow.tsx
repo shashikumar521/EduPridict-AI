@@ -36,6 +36,7 @@ import {
 import { EDUCATION_LEVELS, getEducationLevelConfig } from '../data/educationLevels';
 import { predictPerformance, savePrediction } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export interface StudentAssessmentWorkflowProps {
   onNavigate: (section: SectionId) => void;
@@ -55,6 +56,8 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
   embeddedInDashboard = false
 }) => {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   // Step state
   const [currentStep, setCurrentStep] = useState<AssessmentStep>(1);
@@ -466,27 +469,57 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
       {/* 1. STUDENT ASSESSMENT WORKFLOW (STEPS 1 TO 4) */}
       {/* ========================================================================= */}
       {(showAssessmentForm || !prediction) && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition-all print:hidden">
+        <div
+          className={`rounded-2xl border transition-all overflow-hidden shadow-xs print:hidden ${
+            isLight
+              ? 'bg-white border-[#E9E5F2]'
+              : 'bg-[#0d0f17] border-zinc-800/80 text-zinc-100'
+          }`}
+        >
           {/* Header of Section 1 */}
-          <div className="p-5 sm:p-6 bg-linear-to-r from-slate-50 via-white to-indigo-50/30 border-b border-slate-200">
+          <div
+            className={`p-5 sm:p-6 border-b transition-colors ${
+              isLight
+                ? 'bg-gradient-to-r from-white via-[#F7F9FC] to-[#8000E8]/5 border-[#E9E5F2]'
+                : 'bg-zinc-900/60 border-zinc-800'
+            }`}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold uppercase tracking-wider mb-2">
-                  <Sparkles className="w-3 h-3 text-indigo-600" />
-                  Primary Dashboard Workflow
+                <div
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold uppercase tracking-wider mb-2 ${
+                    isLight
+                      ? 'bg-[#8000E8]/10 border-[#8000E8]/20 text-[#8000E8]'
+                      : 'bg-[#8B5CF6]/15 border-[#8B5CF6]/30 text-[#8B5CF6]'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Primary Assessment Intake
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                <h2
+                  className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                    isLight ? 'text-[#11182E]' : 'text-white'
+                  }`}
+                >
                   Student Academic Assessment
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
-                  Follow the 4-step assessment process to evaluate academic performance, verify compliance thresholds, and receive real machine learning projections.
+                <p
+                  className={`text-xs sm:text-sm mt-1 max-w-2xl ${
+                    isLight ? 'text-[#526581]' : 'text-zinc-400'
+                  }`}
+                >
+                  Follow the 4-step intake process to compute predicted academic performance and identify learning gaps using machine learning models.
                 </p>
               </div>
 
               {prediction && (
                 <button
                   onClick={() => setShowAssessmentForm(false)}
-                  className="self-start sm:self-auto text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition cursor-pointer"
+                  className={`self-start sm:self-auto text-xs font-semibold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
+                    isLight
+                      ? 'bg-white hover:bg-[#F0F3F8] text-[#526581] border-[#E9E5F2]'
+                      : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border-zinc-700'
+                  }`}
                 >
                   Minimize Form
                 </button>
@@ -511,10 +544,14 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                       onClick={() => setCurrentStep(s.step as AssessmentStep)}
                       className={`text-left p-2.5 sm:p-3 rounded-xl border transition cursor-pointer ${
                         isActive
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          ? 'bg-[#8000E8] text-white border-[#8000E8] shadow-sm'
                           : isCompleted
-                          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 hover:bg-emerald-100/60'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                          ? isLight
+                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900 hover:bg-emerald-100/60'
+                            : 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
+                          : isLight
+                          ? 'bg-white border-[#E9E5F2] text-[#526581] hover:bg-[#F7F9FC]'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -522,12 +559,12 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                           {s.title}
                         </span>
                         {isCompleted && (
-                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 hidden sm:block" />
+                          <Check className={`w-3.5 h-3.5 shrink-0 hidden sm:block ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
                         )}
                       </div>
                       <span
                         className={`text-[10px] hidden sm:block truncate mt-0.5 ${
-                          isActive ? 'text-indigo-100' : 'text-slate-500'
+                          isActive ? 'text-purple-100' : isLight ? 'text-[#526581]' : 'text-zinc-500'
                         }`}
                       >
                         {s.desc}
@@ -1130,11 +1167,15 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                     <select
                       value={modelType}
                       onChange={(e) => setModelType(e.target.value as any)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-xl border focus:ring-2 focus:ring-[#8000E8] ${
+                        isLight
+                          ? 'border-[#E9E5F2] bg-white text-[#11182E]'
+                          : 'border-zinc-700 bg-zinc-900 text-white'
+                      }`}
                     >
-                      <option value="rf">Random Forest Classifier & Regressor (91.4% Accuracy — Recommended)</option>
-                      <option value="dt">Decision Tree Classifier (84.1% Accuracy)</option>
-                      <option value="lr">Linear Regression Model (82.7% Accuracy)</option>
+                      <option value="rf">Random Forest Classifier (Ensemble v2.4) — 89.4% Acc, 92.6% Recall (Recommended)</option>
+                      <option value="dt">Decision Tree Classifier (CART — 84.1% Accuracy)</option>
+                      <option value="lr">Logistic Regression Model (L2 — 82.7% Accuracy)</option>
                     </select>
                   </div>
                 </div>
@@ -1142,12 +1183,16 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
             )}
 
             {/* Stepper Footer Controls */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+            <div className={`flex items-center justify-between pt-4 border-t ${isLight ? 'border-[#E9E5F2]' : 'border-zinc-800'}`}>
               {currentStep > 1 ? (
                 <button
                   type="button"
                   onClick={() => setCurrentStep((prev) => (prev - 1) as AssessmentStep)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2.5 rounded-xl transition cursor-pointer"
+                  className={`inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2.5 rounded-xl transition cursor-pointer border ${
+                    isLight
+                      ? 'text-[#526581] hover:text-[#11182E] bg-[#F0F3F8] hover:bg-[#E9E5F2] border-[#E9E5F2]'
+                      : 'text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 border-zinc-700'
+                  }`}
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Previous Step</span>
@@ -1167,7 +1212,7 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                     setErrorMessage(null);
                     setCurrentStep((prev) => (prev + 1) as AssessmentStep);
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl transition cursor-pointer shadow-xs active:scale-95"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#8000E8] hover:bg-[#6a00c2] px-5 py-2.5 rounded-xl transition cursor-pointer shadow-xs active:scale-95"
                 >
                   <span>Continue to Step {currentStep + 1}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1176,7 +1221,7 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex items-center gap-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 px-6 py-2.5 rounded-xl transition cursor-pointer shadow-md hover:shadow-lg active:scale-95"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-white bg-[#8000E8] hover:bg-[#6a00c2] disabled:bg-[#8000E8]/50 px-6 py-2.5 rounded-xl transition cursor-pointer shadow-md hover:shadow-lg active:scale-95"
                 >
                   {isLoading ? (
                     <>

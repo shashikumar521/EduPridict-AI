@@ -400,4 +400,7 @@ export interface DashboardSummary {
   activeGoalsCount?: number;
   upcomingExamsCount?: number;
   averageAttendance?: number;
+  studyPlanCompletion?: number;
+  hasStudyPlan?: boolean;
+  academicRecordsCount?: number;
 }

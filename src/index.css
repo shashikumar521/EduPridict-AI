@@ -1,14 +1,38 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --color-bg-main: #F7F9FC;
+    --color-surface-card: #FFFFFF;
+    --color-text-primary: #11182E;
+    --color-text-secondary: #526581;
+    --color-accent-primary: #8000E8;
+    --color-border-subtle: #E9E5F2;
+    --color-btn-secondary: #F0F3F8;
+  }
+
   html, body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #f8fafc;
-    color: #1e293b;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Default Light Theme styles */
+  html:not(.dark),
+  html.light,
+  body:not(.dark) {
+    background-color: #F7F9FC;
+    color: #11182E;
+  }
+
+  /* Dark Theme overrides when .dark is present */
+  html.dark,
+  body.dark {
+    background-color: #090a0f;
+    color: #f4f4f5;
   }
 
   /* Prevent iOS zoom while maintaining desktop compact sizing */
@@ -34,6 +58,284 @@
   background: #cbd5e1;
   border-radius: 4px;
 }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a;
+}
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+.site-container {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+/* =========================================================================
+   LIGHT THEME (Default) — Exact Palette:
+   - Main page background: #F7F9FC
+   - Navbar and cards: #FFFFFF
+   - Main headings and text: #11182E
+   - Secondary text: #526581
+   - Primary buttons and accents: #8000E8
+   - Gradient accents: #8000E8 to #633BFF
+   - Borders and dividers: #E9E5F2
+   - Secondary button backgrounds: #F0F3F8
+   ========================================================================= */
+
+/* When LIGHT mode is active (not .dark), convert dark utility backgrounds to light theme */
+html:not(.dark) #dashboard-main-content .bg-\[\#0d0f17\],
+html:not(.dark) #dashboard-main-content .bg-\[\#090a0f\],
+html:not(.dark) #dashboard-main-content .bg-\[\#0a0c12\],
+html:not(.dark) #dashboard-main-content .bg-\[\#0c0e17\],
+html:not(.dark) #dashboard-main-content .bg-\[\#121522\],
+html:not(.dark) #dashboard-main-content .bg-\[\#131722\],
+html:not(.dark) #dashboard-main-content .bg-\[\#141724\],
+html:not(.dark) #dashboard-main-content .bg-\[\#0f111a\],
+html:not(.dark) #dashboard-main-content .bg-\[\#141824\] {
+  background-color: #FFFFFF !important;
+  color: #11182E;
+}
+
+html:not(.dark) #dashboard-main-content .bg-zinc-900,
+html:not(.dark) #dashboard-main-content .bg-zinc-900\/80,
+html:not(.dark) #dashboard-main-content .bg-zinc-900\/90 {
+  background-color: #F0F3F8 !important;
+  color: #11182E;
+}
+
+html:not(.dark) #dashboard-main-content .border-zinc-800,
+html:not(.dark) #dashboard-main-content .border-zinc-800\/80,
+html:not(.dark) #dashboard-main-content .border-zinc-800\/90,
+html:not(.dark) #dashboard-main-content .border-zinc-800\/60,
+html:not(.dark) #dashboard-main-content .border-zinc-700 {
+  border-color: #E9E5F2 !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-zinc-100,
+html:not(.dark) #dashboard-main-content .text-zinc-200,
+html:not(.dark) #dashboard-main-content :not(button):not(a):not(.text-white):not([class*="bg-[#8000E8]"]):not([class*="bg-indigo-600"]):not([class*="bg-orange-500"]) > .text-white {
+  color: #11182E !important;
+}
+
+html:not(.dark) button[class*="bg-[#8000E8]"],
+html:not(.dark) button[class*="bg-indigo-600"],
+html:not(.dark) button[class*="bg-orange-500"],
+html:not(.dark) a[class*="bg-[#8000E8]"],
+html:not(.dark) .btn-primary {
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-zinc-300,
+html:not(.dark) #dashboard-main-content .text-zinc-400,
+html:not(.dark) #dashboard-main-content .text-zinc-500 {
+  color: #526581 !important;
+}
+
+/* Orange badges and accents convert to purple #8000E8 in light mode */
+html:not(.dark) #dashboard-main-content .bg-orange-500,
+html:not(.dark) #dashboard-main-content .bg-orange-600 {
+  background-color: #8000E8 !important;
+}
+
+html:not(.dark) #dashboard-main-content .hover\:bg-orange-600:hover {
+  background-color: #6a00c2 !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-orange-400,
+html:not(.dark) #dashboard-main-content .text-orange-500 {
+  color: #8000E8 !important;
+}
+
+html:not(.dark) #dashboard-main-content .bg-orange-500\/10,
+html:not(.dark) #dashboard-main-content .bg-orange-500\/15,
+html:not(.dark) #dashboard-main-content .bg-orange-500\/20 {
+  background-color: rgba(128, 0, 232, 0.08) !important;
+}
+
+html:not(.dark) #dashboard-main-content .border-orange-500\/20,
+html:not(.dark) #dashboard-main-content .border-orange-500\/30,
+html:not(.dark) #dashboard-main-content .border-orange-500\/40 {
+  border-color: rgba(128, 0, 232, 0.25) !important;
+}
+
+/* Light Theme overrides for Workspace Dashboard & Component sections */
+html:not(.dark) #dashboard-main-content .bg-white {
+  background-color: #FFFFFF !important;
+  color: #11182E;
+}
+
+html:not(.dark) #dashboard-main-content .bg-slate-50,
+html:not(.dark) #dashboard-main-content .bg-slate-50\/70,
+html:not(.dark) #dashboard-main-content .bg-slate-50\/80 {
+  background-color: #F7F9FC !important;
+}
+
+html:not(.dark) #dashboard-main-content .bg-slate-100 {
+  background-color: #F0F3F8 !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-slate-900,
+html:not(.dark) #dashboard-main-content .text-slate-800 {
+  color: #11182E !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-slate-700 {
+  color: #334155 !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-slate-600,
+html:not(.dark) #dashboard-main-content .text-slate-500 {
+  color: #526581 !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-slate-400 {
+  color: #64748b !important;
+}
+
+html:not(.dark) #dashboard-main-content .border-slate-200,
+html:not(.dark) #dashboard-main-content .border-slate-200\/90,
+html:not(.dark) #dashboard-main-content .border-slate-300,
+html:not(.dark) #dashboard-main-content .border-slate-100 {
+  border-color: #E9E5F2 !important;
+}
+
+html:not(.dark) #dashboard-main-content input,
+html:not(.dark) #dashboard-main-content select,
+html:not(.dark) #dashboard-main-content textarea {
+  background-color: #FFFFFF !important;
+  border-color: #E9E5F2 !important;
+  color: #11182E !important;
+}
+
+html:not(.dark) #dashboard-main-content input:focus,
+html:not(.dark) #dashboard-main-content select:focus,
+html:not(.dark) #dashboard-main-content textarea:focus {
+  border-color: #8000E8 !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(128, 0, 232, 0.2);
+}
+
+html:not(.dark) #dashboard-main-content .bg-indigo-600 {
+  background-color: #8000E8 !important;
+  border-color: #8000E8 !important;
+}
+
+html:not(.dark) #dashboard-main-content .hover\:bg-indigo-700:hover {
+  background-color: #6a00c2 !important;
+}
+
+html:not(.dark) #dashboard-main-content .text-indigo-600,
+html:not(.dark) #dashboard-main-content .text-indigo-700 {
+  color: #8000E8 !important;
+}
+
+html:not(.dark) #dashboard-main-content .bg-indigo-50,
+html:not(.dark) #dashboard-main-content .bg-indigo-50\/30,
+html:not(.dark) #dashboard-main-content .bg-indigo-50\/70,
+html:not(.dark) #dashboard-main-content .bg-indigo-50\/80 {
+  background-color: rgba(128, 0, 232, 0.08) !important;
+}
+
+html:not(.dark) #dashboard-main-content .border-indigo-200,
+html:not(.dark) #dashboard-main-content .border-indigo-600 {
+  border-color: rgba(128, 0, 232, 0.25) !important;
+}
+
+/* =========================================================================
+   DARK THEME Workspace Overrides (applied when .dark is active)
+   ========================================================================= */
+.dark #dashboard-main-content .bg-white {
+  background-color: #0d0f17 !important;
+  color: #f4f4f5;
+}
+
+.dark #dashboard-main-content .bg-slate-50,
+.dark #dashboard-main-content .bg-slate-50\/70,
+.dark #dashboard-main-content .bg-slate-50\/80 {
+  background-color: #121522 !important;
+}
+
+.dark #dashboard-main-content .bg-slate-100 {
+  background-color: #171b2b !important;
+}
+
+.dark #dashboard-main-content .text-slate-900 {
+  color: #ffffff !important;
+}
+
+.dark #dashboard-main-content .text-slate-800 {
+  color: #f4f4f5 !important;
+}
+
+.dark #dashboard-main-content .text-slate-700 {
+  color: #e4e4e7 !important;
+}
+
+.dark #dashboard-main-content .text-slate-600 {
+  color: #a1a1aa !important;
+}
+
+.dark #dashboard-main-content .text-slate-500 {
+  color: #71717a !important;
+}
+
+.dark #dashboard-main-content .text-slate-400 {
+  color: #a1a1aa !important;
+}
+
+.dark #dashboard-main-content .border-slate-200,
+.dark #dashboard-main-content .border-slate-200\/90,
+.dark #dashboard-main-content .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark #dashboard-main-content .border-slate-100 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark #dashboard-main-content input,
+.dark #dashboard-main-content select,
+.dark #dashboard-main-content textarea {
+  background-color: #141724 !important;
+  border-color: #27272a !important;
+  color: #ffffff !important;
+}
+
+.dark #dashboard-main-content input:focus,
+.dark #dashboard-main-content select:focus,
+.dark #dashboard-main-content textarea:focus {
+  border-color: #8000E8 !important;
+  outline: none;
+}
+
+.dark #dashboard-main-content .bg-indigo-600 {
+  background-color: #8000E8 !important;
+  border-color: #8000E8 !important;
+}
+
+.dark #dashboard-main-content .hover\:bg-indigo-700:hover {
+  background-color: #6a00c2 !important;
+}
+
+.dark #dashboard-main-content .text-indigo-600,
+.dark #dashboard-main-content .text-indigo-700 {
+  color: #a855f7 !important;
+}
+
+.dark #dashboard-main-content .bg-indigo-50,
+.dark #dashboard-main-content .bg-indigo-50\/30,
+.dark #dashboard-main-content .bg-indigo-50\/70,
+.dark #dashboard-main-content .bg-indigo-50\/80 {
+  background-color: rgba(128, 0, 232, 0.15) !important;
+}
+
+.dark #dashboard-main-content .border-indigo-200,
+.dark #dashboard-main-content .border-indigo-600 {
+  border-color: rgba(128, 0, 232, 0.35) !important;
 }

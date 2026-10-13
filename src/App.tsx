@@ -12,7 +12,7 @@ import {
   DashboardSummary,
   PredictionInput
 } from './types';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -79,6 +79,8 @@ function AppContent() {
     isAuthModalOpen,
     closeAuthModal
   } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   // Navigation state: displays ONLY the selected section
   const [currentSection, setCurrentSection] = useState<SectionId>(() => {
@@ -308,17 +310,21 @@ function AppContent() {
 
   // 3. AUTHENTICATED DASHBOARD & PROTECTED WORKSPACES
   // 100dvh viewport shell with stationary sidebar and independent main content scrolling
-  const studentDisplayName = user?.name || 'Dr. Elena Rostova';
+  const studentDisplayName = user?.name || predictions[0]?.student_name || 'Student';
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full bg-slate-50 text-slate-800 flex flex-col md:flex-row overflow-hidden antialiased">
+    <div
+      className={`h-[100dvh] max-h-[100dvh] w-full flex flex-col md:flex-row overflow-hidden antialiased transition-colors ${
+        isLight ? 'bg-[#F7F9FC] text-[#11182E]' : 'bg-[#090a0f] text-zinc-100'
+      }`}
+    >
       {/* Sidebar Navigation - Fixed & stationary on desktop */}
       <Sidebar
         currentSection={currentSection}
         onNavigate={handleNavigate}
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
-        studentCount={students.length > 0 ? 1248 + Math.max(0, students.length - 8) : 1248}
+        studentCount={students.length}
       />
 
       {/* Main View Area with Header and Content */}
@@ -336,7 +342,7 @@ function AppContent() {
           id="dashboard-main-content"
           className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-6 w-full"
         >
-          <div className="max-w-6xl mx-auto pb-10">
+          <div className="site-container pb-10">
             {/* 1. Dashboard Overview */}
             {currentSection === 'dashboard' && (
               <DashboardView

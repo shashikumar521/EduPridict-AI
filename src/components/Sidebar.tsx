@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Sparkles,
   Sliders,
-  Users,
   TrendingUp,
   BookOpen,
   Calendar,
@@ -11,24 +10,21 @@ import {
   GraduationCap,
   ShieldCheck,
   Bot,
-  Trophy,
-  History,
-  BarChart3,
-  FileText,
-  Bell,
   Settings,
-  Info,
   ChevronLeft,
   ChevronRight,
   X,
   Home,
-  Globe,
-  User,
   LogOut,
-  LogIn
+  LogIn,
+  Sun,
+  Moon,
+  Target
 } from 'lucide-react';
 import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
 
 interface SidebarProps {
   currentSection: SectionId;
@@ -49,11 +45,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentSection,
   onNavigate,
   isOpen,
-  onClose,
-  studentCount = 1248
+  onClose
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   const handleSignOut = async () => {
     await logout();
@@ -62,36 +59,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navGroups: { group: string; items: NavItem[] }[] = [
     {
-      group: 'Student Workspace',
+      group: 'Core Platform',
       items: [
-        { id: 'dashboard', label: 'Dashboard & Assessment', icon: LayoutDashboard },
+        { id: 'dashboard', label: 'Dashboard & Overview', icon: LayoutDashboard },
+        { id: 'predict', label: 'Predict Performance', icon: Sparkles },
         { id: 'whatif', label: 'What-If Simulator', icon: Sliders },
-        { id: 'planner', label: 'AI Exam & Study Planner', icon: Calendar },
-        { id: 'courses', label: 'Course Directory', icon: GraduationCap }
+        { id: 'planner', label: 'AI Exam Planner', icon: Calendar }
       ]
     },
     {
       group: 'Academic Intelligence',
       items: [
-        { id: 'subjects', label: 'Subject Analysis', icon: BookOpen },
-        { id: 'roadmap', label: 'Learning Roadmap', icon: Compass },
-        { id: 'readiness', label: 'Exam Readiness', icon: ShieldCheck }
+        { id: 'progress', label: 'Academic Progress', icon: TrendingUp },
+        { id: 'subjects', label: 'Subject Diagnostics', icon: BookOpen },
+        { id: 'roadmap', label: 'Skill Gap Roadmap', icon: Compass },
+        { id: 'counselor', label: 'AI Academic Coach', icon: Bot },
+        { id: 'readiness', label: 'Exam Readiness', icon: ShieldCheck },
+        { id: 'courses', label: 'Verified Curricula', icon: GraduationCap }
       ]
     },
     {
-      group: 'Records & Reports',
+      group: 'Student Goals',
       items: [
-        { id: 'history', label: 'Assessment History', icon: History },
-        { id: 'analytics', label: 'Model Analytics', icon: BarChart3 },
-        { id: 'reports', label: 'Academic Reports', icon: FileText }
+        { id: 'goals', label: 'Goals & Achievements', icon: Target },
+        { id: 'settings', label: 'Settings', icon: Settings }
       ]
     },
     {
-      group: 'Portal & Settings',
+      group: 'Quick Navigation',
       items: [
-        { id: 'settings', label: 'Profile & Settings', icon: Settings },
-        { id: 'about', label: 'About Project', icon: Info },
-        { id: 'home', label: 'Public Home Page', icon: Home }
+        { id: 'home', label: 'Public Website', icon: Home }
       ]
     }
   ];
@@ -102,33 +99,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden transition-opacity"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 flex flex-col transform transition-all duration-200 ease-in-out md:static md:translate-x-0 shrink-0 h-full max-h-[100dvh] overflow-hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col transform transition-all duration-200 ease-in-out md:static md:translate-x-0 shrink-0 h-full max-h-[100dvh] overflow-hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}
+        } ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64 ${
+          isLight
+            ? 'bg-white border-r border-[#E9E5F2] text-[#11182E]'
+            : 'bg-[#0d0f17] border-r border-zinc-800/80 text-zinc-100'
+        }`}
       >
         {/* App Logo & Branding */}
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div
+          className={`p-4 border-b flex items-center justify-between ${
+            isLight ? 'border-[#E9E5F2]' : 'border-zinc-800/80'
+          }`}
+        >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-950 via-indigo-700 to-indigo-500 text-white flex items-center justify-center font-extrabold shadow-md shrink-0">
+            <div
+              className={`w-9 h-9 rounded-xl text-white flex items-center justify-center font-extrabold shadow-md shrink-0 ${
+                isLight
+                  ? 'bg-gradient-to-tr from-[#8000E8] to-[#633BFF] shadow-[#8000E8]/20'
+                  : 'bg-gradient-to-tr from-[#8000E8] to-[#633BFF] shadow-[#8000E8]/30'
+              }`}
+            >
               <GraduationCap className="w-5 h-5" />
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-slate-900 tracking-tight text-sm truncate">
+                  <span className={`font-bold tracking-tight text-sm truncate ${isLight ? 'text-[#11182E]' : 'text-white'}`}>
                     EduPredict AI
                   </span>
-                  <span className="text-[10px] uppercase font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded shrink-0">
-                    v2.4
+                  <span
+                    className={`text-[10px] uppercase font-bold px-1.5 py-0.2 rounded shrink-0 border ${
+                      isLight
+                        ? 'bg-[#8000E8]/10 text-[#8000E8] border-[#8000E8]/20'
+                        : 'bg-[#8000E8]/25 text-purple-300 border-[#8000E8]/40'
+                    }`}
+                  >
+                    AI
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium truncate">
-                  Applied AI Education
+                <p className={`text-[10px] font-medium truncate ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
+                  Academic Intelligence
                 </p>
               </div>
             )}
@@ -138,7 +155,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Desktop Collapse Toggle */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              className={`hidden md:flex p-1 rounded-lg transition cursor-pointer ${
+                isLight
+                  ? 'text-[#526581] hover:text-[#11182E] hover:bg-[#F0F3F8]'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
+              }`}
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -147,7 +168,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Mobile Close Button */}
             <button
               onClick={onClose}
-              className="md:hidden text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+              className={`md:hidden p-1.5 rounded-lg cursor-pointer ${
+                isLight
+                  ? 'text-[#526581] hover:text-[#11182E] hover:bg-[#F0F3F8]'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
               aria-label="Close navigation"
             >
               <X className="w-5 h-5" />
@@ -160,7 +185,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {navGroups.map((group) => (
             <div key={group.group}>
               {!isCollapsed && (
-                <p className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                <p
+                  className={`px-3 text-[10px] font-semibold uppercase tracking-wider mb-1.5 ${
+                    isLight ? 'text-[#526581]' : 'text-zinc-400'
+                  }`}
+                >
                   {group.group}
                 </p>
               )}
@@ -180,15 +209,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
                       } rounded-xl text-xs transition-all text-left font-medium cursor-pointer ${
                         isActive
-                          ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 font-bold border-r-3 border-indigo-600 dark:border-indigo-500'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                          ? isLight
+                            ? 'bg-[#8000E8]/10 text-[#8000E8] font-bold ring-1 ring-[#8000E8]/30'
+                            : 'bg-[#8000E8]/20 text-purple-300 font-semibold ring-1 ring-[#8000E8]/40'
+                          : isLight
+                          ? 'text-[#526581] hover:bg-[#F0F3F8] hover:text-[#11182E]'
+                          : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100'
                       }`}
                     >
                       <Icon
                         className={`w-4 h-4 shrink-0 ${
                           isActive
-                            ? 'text-indigo-600 dark:text-indigo-400'
-                            : 'text-slate-400 dark:text-slate-500'
+                            ? isLight
+                              ? 'text-[#8000E8]'
+                              : 'text-[#8B5CF6]'
+                            : isLight
+                            ? 'text-[#526581]'
+                            : 'text-zinc-400'
                         }`}
                       />
                       {!isCollapsed && (
@@ -197,9 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           {item.badge && (
                             <span
                               className={`ml-auto text-[10px] font-semibold px-2 py-0.2 rounded-full ${
-                                item.id === 'notifications'
-                                  ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400 font-bold'
-                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                isLight ? 'bg-[#F0F3F8] text-[#526581]' : 'bg-zinc-800 text-zinc-400'
                               }`}
                             >
                               {item.badge}
@@ -215,39 +250,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </div>
 
-        {/* Model Calibration Status Pill */}
-        {!isCollapsed && (
-          <div className="p-3 m-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-[11px] font-bold text-slate-800">
-                Random Forest v2.4
-              </span>
-              <span className="text-[9px] text-emerald-700 bg-emerald-50 font-bold px-1.5 py-0.2 rounded border border-emerald-200 ml-auto">
-                92.6% Recall
+        {/* Theme Mode Option in Sidebar (accessible on mobile & desktop) */}
+        {!isCollapsed ? (
+          <div
+            className={`px-3.5 py-2.5 border-t flex items-center justify-between text-xs transition-colors ${
+              isLight ? 'bg-white border-[#E9E5F2]' : 'bg-[#0d0f17] border-zinc-800/80'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  isLight ? 'bg-[#F0F3F8] text-[#8000E8]' : 'bg-zinc-800 text-amber-400'
+                }`}
+              >
+                {isLight ? <Sun className="w-3.5 h-3.5 text-amber-500" /> : <Moon className="w-3.5 h-3.5 text-[#8000E8]" />}
+              </div>
+              <span className={`text-xs font-semibold ${isLight ? 'text-[#11182E]' : 'text-zinc-200'}`}>
+                {isLight ? 'Light Theme' : 'Dark Theme'}
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 leading-snug">
-              Calibrated for early academic triage & support.
-            </p>
+            <ThemeToggle className="scale-90" />
+          </div>
+        ) : (
+          <div className="py-2 flex justify-center border-t border-zinc-800/50">
+            <ThemeToggle className="scale-85" />
           </div>
         )}
 
         {/* User Profile Footer */}
-        <div className="p-3 border-t border-slate-100 bg-white">
+        <div
+          className={`p-3 border-t ${
+            isLight ? 'bg-[#F7F9FC] border-[#E9E5F2]' : 'bg-[#0a0c12] border-zinc-800/80'
+          }`}
+        >
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2.5">
               {user.picture ? (
                 <img
                   src={user.picture}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500/30 shrink-0"
+                  className="w-8 h-8 rounded-full object-cover ring-1 shrink-0 ring-[#8000E8]/40"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-indigo-100 shrink-0">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${
+                    isLight
+                      ? 'bg-[#8000E8]/15 text-[#8000E8] border-[#8000E8]/30'
+                      : 'bg-[#8000E8]/25 text-purple-300 border-[#8000E8]/40'
+                  }`}
+                >
                   {user.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -255,16 +306,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!isCollapsed && (
                 <>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">
+                    <p
+                      className={`text-xs font-bold truncate ${
+                        isLight ? 'text-[#11182E]' : 'text-white'
+                      }`}
+                    >
                       {user.name}
                     </p>
-                    <p className="text-[10px] text-slate-400 truncate capitalize">
-                      {user.education_level || 'Authenticated Student'}
+                    <p
+                      className={`text-[10px] truncate capitalize ${
+                        isLight ? 'text-[#526581]' : 'text-zinc-400'
+                      }`}
+                    >
+                      {user.education_level || 'Student Account'}
                     </p>
                   </div>
                   <button
                     onClick={handleSignOut}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                    className={`p-1.5 rounded-lg transition cursor-pointer ${
+                      isLight
+                        ? 'text-[#526581] hover:text-rose-600 hover:bg-rose-50'
+                        : 'text-zinc-400 hover:text-rose-400 hover:bg-zinc-800'
+                    }`}
                     title="Sign Out"
                     aria-label="Sign Out"
                   >
@@ -280,9 +343,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onNavigate('login');
                   onClose();
                 }}
-                className={`w-full flex items-center ${
-                  isCollapsed ? 'justify-center p-2' : 'justify-center gap-2 px-3 py-2'
-                } rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition cursor-pointer`}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-full text-white text-xs font-bold shadow-md transition cursor-pointer bg-[#8000E8] hover:bg-[#6a00c2] shadow-[#8000E8]/20"
                 title="Sign In to Save"
               >
                 <LogIn className="w-3.5 h-3.5" />
