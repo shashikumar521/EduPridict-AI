@@ -59,36 +59,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navGroups: { group: string; items: NavItem[] }[] = [
     {
-      group: 'Core Platform',
+      group: 'Core Workflows',
       items: [
-        { id: 'dashboard', label: 'Dashboard & Overview', icon: LayoutDashboard },
-        { id: 'predict', label: 'Predict Performance', icon: Sparkles },
-        { id: 'whatif', label: 'What-If Simulator', icon: Sliders },
-        { id: 'planner', label: 'AI Exam Planner', icon: Calendar }
+        { id: 'analysis', label: 'Academic Analysis', icon: TrendingUp, badge: 'ML Trajectory' },
+        { id: 'scheduler', label: 'Exam Scheduler', icon: Calendar, badge: 'Smart Plan' },
+        { id: 'learn', label: 'Learn & Practice', icon: BookOpen, badge: 'Theory & Quiz' }
       ]
     },
     {
-      group: 'Academic Intelligence',
+      group: 'Secondary & Tools',
       items: [
-        { id: 'progress', label: 'Academic Progress', icon: TrendingUp },
-        { id: 'subjects', label: 'Subject Diagnostics', icon: BookOpen },
-        { id: 'roadmap', label: 'Skill Gap Roadmap', icon: Compass },
-        { id: 'counselor', label: 'AI Academic Coach', icon: Bot },
-        { id: 'readiness', label: 'Exam Readiness', icon: ShieldCheck },
-        { id: 'courses', label: 'Verified Curricula', icon: GraduationCap }
-      ]
-    },
-    {
-      group: 'Student Goals',
-      items: [
-        { id: 'goals', label: 'Goals & Achievements', icon: Target },
-        { id: 'settings', label: 'Settings', icon: Settings }
-      ]
-    },
-    {
-      group: 'Quick Navigation',
-      items: [
-        { id: 'home', label: 'Public Website', icon: Home }
+        { id: 'settings', label: 'Account & Settings', icon: Settings },
+        { id: 'home', label: 'Public Portal', icon: Home }
       ]
     }
   ];
@@ -108,43 +90,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64 ${
           isLight
-            ? 'bg-white border-r border-slate-200 text-slate-900 shadow-xs'
-            : 'bg-[#111827] border-r border-slate-800 text-slate-100 shadow-xs'
+            ? 'bg-white border-r border-[#E1E6EF] text-[#172033] shadow-xs'
+            : 'bg-[#131926] border-r border-[#1E2B42] text-[#F7F8FC] shadow-xs'
         }`}
       >
         {/* App Logo & Branding */}
         <div
           className={`p-4 border-b flex items-center justify-between ${
-            isLight ? 'border-slate-200' : 'border-slate-800'
+            isLight ? 'border-[#E1E6EF]' : 'border-[#1E2B42]'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div
-              className={`w-9 h-9 rounded-xl text-white flex items-center justify-center font-extrabold shadow-md shrink-0 ${
-                isLight
-                  ? 'bg-gradient-to-tr from-purple-700 to-indigo-600 shadow-purple-500/20'
-                  : 'bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-purple-500/30'
-              }`}
-            >
-              <GraduationCap className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md shrink-0 bg-[#0B132B] flex items-center justify-center border border-[#7000E8]/30">
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI Logo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className={`font-bold tracking-tight text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <span className={`font-bold tracking-tight text-sm truncate ${isLight ? 'text-[#172033]' : 'text-white'}`}>
                     EduPredict AI
                   </span>
                   <span
                     className={`text-[10px] uppercase font-bold px-1.5 py-0.2 rounded shrink-0 border ${
                       isLight
-                        ? 'bg-purple-50 text-purple-800 border-purple-200'
-                        : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                        ? 'bg-[#EEE7FF] text-[#7000E8] border-[#D1B8FC]'
+                        : 'bg-[#7000E8]/20 text-[#C4B5FD] border-[#8E30FF]/40'
                     }`}
                   >
                     AI
                   </span>
                 </div>
-                <p className={`text-[11px] font-medium truncate ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                <p className={`text-[11px] font-medium truncate ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
                   Academic Intelligence
                 </p>
               </div>
@@ -157,8 +138,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => setIsCollapsed(!isCollapsed)}
               className={`hidden md:flex p-1 rounded-lg transition cursor-pointer ${
                 isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  ? 'text-[#526078] hover:text-[#172033] hover:bg-[#F0F3F9]'
+                  : 'text-slate-300 hover:text-white hover:bg-[#182236]'
               }`}
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -171,8 +152,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={onClose}
               className={`md:hidden p-1.5 rounded-lg cursor-pointer ${
                 isLight
-                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  ? 'text-[#526078] hover:text-[#172033] hover:bg-[#F0F3F9]'
+                  : 'text-slate-300 hover:text-white hover:bg-[#182236]'
               }`}
               aria-label="Close navigation"
             >
@@ -188,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!isCollapsed && (
                 <p
                   className={`px-3 text-[11px] font-bold uppercase tracking-wider mb-1.5 ${
-                    isLight ? 'text-slate-700' : 'text-slate-300'
+                    isLight ? 'text-[#667085]' : 'text-slate-400'
                   }`}
                 >
                   {group.group}
@@ -197,7 +178,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <nav className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = currentSection === item.id;
+                  const isActive =
+                    currentSection === item.id ||
+                    (item.id === 'analysis' &&
+                      ['dashboard', 'predict', 'whatif', 'subjects', 'progress', 'students'].includes(currentSection)) ||
+                    (item.id === 'scheduler' && ['planner', 'readiness'].includes(currentSection)) ||
+                    (item.id === 'learn' && ['courses', 'counselor', 'roadmap'].includes(currentSection));
                   return (
                     <button
                       key={item.id}
@@ -211,22 +197,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       } rounded-xl text-xs transition-all text-left cursor-pointer ${
                         isActive
                           ? isLight
-                            ? 'bg-purple-100 text-purple-900 font-bold border border-purple-300 shadow-xs'
-                            : 'bg-purple-950/70 text-purple-200 font-bold border border-purple-700/80 shadow-xs'
+                            ? 'bg-[#EEE7FF] text-[#7000E8] font-bold border border-[#D1B8FC] shadow-xs'
+                            : 'bg-[#7000E8]/20 text-[#C4B5FD] font-bold border border-[#8E30FF]/40 shadow-xs'
                           : isLight
-                          ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-medium'
-                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white font-medium'
+                          ? 'text-[#526078] hover:bg-[#F0F3F9] hover:text-[#172033] font-medium'
+                          : 'text-slate-300 hover:bg-[#182236] hover:text-white font-medium'
                       }`}
                     >
                       <Icon
                         className={`w-4 h-4 shrink-0 ${
                           isActive
                             ? isLight
-                              ? 'text-purple-700'
-                              : 'text-purple-300'
+                              ? 'text-[#7000E8]'
+                              : 'text-[#C4B5FD]'
                             : isLight
-                            ? 'text-slate-600'
-                            : 'text-slate-300'
+                            ? 'text-[#526078]'
+                            : 'text-slate-400'
                         }`}
                       />
                       {!isCollapsed && (
@@ -235,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           {item.badge && (
                             <span
                               className={`ml-auto text-[10px] font-bold px-2 py-0.2 rounded-full ${
-                                isLight ? 'bg-slate-200 text-slate-800' : 'bg-slate-800 text-slate-200'
+                                isLight ? 'bg-[#F0F3F9] text-[#526078] border border-[#E1E6EF]' : 'bg-[#182236] text-slate-300 border border-[#1E2B42]'
                               }`}
                             >
                               {item.badge}
@@ -255,25 +241,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {!isCollapsed ? (
           <div
             className={`px-3.5 py-2.5 border-t flex items-center justify-between text-xs transition-colors ${
-              isLight ? 'bg-white border-slate-200' : 'bg-[#161F33] border-slate-800'
+              isLight ? 'bg-white border-[#E1E6EF]' : 'bg-[#182236] border-[#1E2B42]'
             }`}
           >
             <div className="flex items-center gap-2.5">
               <div
                 className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                  isLight ? 'bg-slate-100 text-purple-700' : 'bg-slate-800 text-amber-400'
+                  isLight ? 'bg-[#F0F3F9] text-[#7000E8]' : 'bg-[#131926] text-amber-400'
                 }`}
               >
-                {isLight ? <Sun className="w-3.5 h-3.5 text-amber-600" /> : <Moon className="w-3.5 h-3.5 text-purple-400" />}
+                {isLight ? <Sun className="w-3.5 h-3.5 text-amber-600" /> : <Moon className="w-3.5 h-3.5 text-[#C4B5FD]" />}
               </div>
-              <span className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>
+              <span className={`text-xs font-bold ${isLight ? 'text-[#172033]' : 'text-[#F7F8FC]'}`}>
                 {isLight ? 'Light Theme' : 'Dark Theme'}
               </span>
             </div>
             <ThemeToggle className="scale-90" />
           </div>
         ) : (
-          <div className="py-2 flex justify-center border-t border-slate-800">
+          <div className="py-2 flex justify-center border-t border-[#E1E6EF] dark:border-[#1E2B42]">
             <ThemeToggle className="scale-85" />
           </div>
         )}
@@ -281,7 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* User Profile Footer */}
         <div
           className={`p-3 border-t ${
-            isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#0B0F19] border-slate-800'
+            isLight ? 'bg-[#F0F3F9] border-[#E1E6EF]' : 'bg-[#0C101A] border-[#1E2B42]'
           }`}
         >
           {isAuthenticated && user ? (
@@ -290,14 +276,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <img
                   src={user.picture}
                   alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover ring-1 shrink-0 ring-purple-600/40"
+                  className="w-8 h-8 rounded-full object-cover ring-1 shrink-0 ring-[#7000E8]/40"
                 />
               ) : (
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border ${
                     isLight
-                      ? 'bg-purple-100 text-purple-800 border-purple-300'
-                      : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                      ? 'bg-[#EEE7FF] text-[#7000E8] border-[#D1B8FC]'
+                      : 'bg-[#7000E8]/20 text-[#C4B5FD] border-[#8E30FF]/40'
                   }`}
                 >
                   {user.name.charAt(0).toUpperCase()}
@@ -309,14 +295,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="flex-1 min-w-0">
                     <p
                       className={`text-xs font-bold truncate ${
-                        isLight ? 'text-slate-900' : 'text-white'
+                        isLight ? 'text-[#172033]' : 'text-white'
                       }`}
                     >
                       {user.name}
                     </p>
                     <p
                       className={`text-[10px] font-medium truncate capitalize ${
-                        isLight ? 'text-slate-600' : 'text-slate-300'
+                        isLight ? 'text-[#526078]' : 'text-slate-300'
                       }`}
                     >
                       {user.education_level || 'Student Account'}
@@ -326,8 +312,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={handleSignOut}
                     className={`p-1.5 rounded-lg transition cursor-pointer ${
                       isLight
-                        ? 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'
-                        : 'text-slate-300 hover:text-rose-400 hover:bg-slate-800'
+                        ? 'text-[#526078] hover:text-[#B42318] hover:bg-[#FEECEC]'
+                        : 'text-slate-300 hover:text-[#FCA5A5] hover:bg-[#182236]'
                     }`}
                     title="Sign Out"
                     aria-label="Sign Out"

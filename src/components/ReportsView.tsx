@@ -154,8 +154,13 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         {/* Document Header */}
         <div className="flex items-start justify-between pb-6 border-b-2 border-slate-900 dark:border-slate-700 gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xl">
-              <GraduationCap className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#0B132B] flex items-center justify-center border border-teal-500/30 shrink-0">
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI Logo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div>
               <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">

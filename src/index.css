@@ -2,84 +2,94 @@
 
 @layer base {
   :root {
-    /* Light Mode Design Tokens (WCAG 2.2 AA Compliant) */
-    --color-bg-page: #F8FAFC;
+    /* EduPredict AI Unified Design System Tokens - Light Mode Default */
+    --color-bg-page: #F7F8FC;
     --color-surface-card: #FFFFFF;
-    --color-surface-subtle: #F1F5F9;
+    --color-surface-subtle: #F0F3F9;
     --color-surface-elevated: #FFFFFF;
 
-    /* Text Contrast Scale on Light (>= 4.5:1 for normal text) */
-    --color-text-primary: #0F172A;      /* Slate 900 - 18.7:1 AAA */
-    --color-text-secondary: #334155;    /* Slate 700 - 9.5:1 AAA */
-    --color-text-muted: #475569;        /* Slate 600 - 5.9:1 AA */
-    --color-text-faint: #64748B;        /* Slate 500 - 4.0:1 */
+    /* Typography Contrast Tokens (WCAG 2.2 AA Compliant) */
+    --color-text-primary: #172033;      /* Deep Navy: 15.9:1 on #F7F8FC, 16.8:1 on #FFFFFF (AAA) */
+    --color-text-secondary: #526078;    /* Slate: 6.3:1 on white (AA) */
+    --color-text-muted: #667085;        /* Muted Slate: 4.9:1 on white (AA) */
+    --color-text-faint: #8E98A8;        /* Supporting / Caption */
 
-    /* Borders & Hairlines */
-    --color-border-subtle: #E2E8F0;     /* Slate 200 */
-    --color-border-strong: #CBD5E1;     /* Slate 300 */
-    --color-border-focus: #7C3AED;      /* Purple 600 */
+    /* Primary Brand Palette */
+    --color-brand-primary: #7000E8;     /* Violet Brand: 6.1:1 on white text */
+    --color-brand-hover: #5B00C4;       /* Deep Violet: 8.2:1 on white text */
+    --color-brand-surface: #EEE7FF;     /* Pale Brand Surface */
+    --color-brand-border: #D1B8FC;      /* Pale Brand Border */
+    --color-brand-text: #7000E8;        /* Brand Text */
 
-    /* Brand Purple / Academic Indigo */
-    --color-brand-primary: #7C3AED;     /* Purple 600 */
-    --color-brand-hover: #6D28D9;       /* Purple 700 - 6.2:1 with white */
-    --color-brand-active: #5B21B6;      /* Purple 800 */
-    --color-brand-surface: #F5F3FF;     /* Purple 50 */
-    --color-brand-border: #DDD6FE;      /* Purple 200 */
-    --color-brand-text: #6D28D9;        /* Purple 700 */
+    /* Borders & Dividers */
+    --color-border-subtle: #E1E6EF;     /* Subtle Surface Border */
+    --color-border-strong: #CBD3E1;     /* Strong Input / Control Border */
+    --color-border-focus: #7000E8;      /* Focus Ring */
 
-    /* Semantic Status Colors */
-    --color-success-bg: #ECFDF5;
-    --color-success-text: #065F46;
-    --color-success-border: #A7F3D0;
+    /* Semantic Status Tokens */
+    --color-success: #087A55;
+    --color-success-bg: #E8F7EF;
+    --color-success-border: #A3DEC0;
+    --color-success-text: #087A55;
 
-    --color-warning-bg: #FFFBEB;
-    --color-warning-text: #92400E;
-    --color-warning-border: #FDE68A;
+    --color-warning: #945800;
+    --color-warning-bg: #FFF4D6;
+    --color-warning-border: #FFE299;
+    --color-warning-text: #945800;
 
-    --color-danger-bg: #FEF2F2;
-    --color-danger-text: #991B1B;
-    --color-danger-border: #FECACA;
+    --color-danger: #B42318;
+    --color-danger-bg: #FEECEC;
+    --color-danger-border: #FECDCA;
+    --color-danger-text: #B42318;
+
+    --color-info: #2458A6;
+    --color-info-bg: #EAF2FF;
+    --color-info-border: #BCD8FF;
+    --color-info-text: #2458A6;
   }
 
   html.dark,
   body.dark {
-    /* Dark Mode Design Tokens (Deep Slate / Navy) */
-    --color-bg-page: #0B0F19;
-    --color-surface-card: #111827;      /* Slate 900 */
-    --color-surface-subtle: #161F33;    /* Slate 850 */
-    --color-surface-elevated: #1E293B;  /* Slate 800 */
+    /* Coordinated Dark Palette */
+    --color-bg-page: #0C101A;
+    --color-surface-card: #131926;
+    --color-surface-subtle: #182236;
+    --color-surface-elevated: #1F2C46;
 
-    /* Text Contrast Scale on Dark (>= 4.5:1 for normal text) */
-    --color-text-primary: #F8FAFC;      /* Slate 50 - 15.3:1 AAA */
-    --color-text-secondary: #E2E8F0;    /* Slate 200 - 12.5:1 AAA */
-    --color-text-muted: #94A3B8;        /* Slate 400 - 6.3:1 AA */
-    --color-text-faint: #64748B;        /* Slate 500 */
+    --color-text-primary: #F7F8FC;
+    --color-text-secondary: #CBD5E1;
+    --color-text-muted: #94A3B8;
+    --color-text-faint: #64748B;
 
-    /* Borders & Hairlines */
-    --color-border-subtle: #1E293B;     /* Slate 800 */
-    --color-border-strong: #334155;     /* Slate 700 */
-    --color-border-focus: #A78BFA;      /* Purple 400 */
-
-    /* Brand Purple / Academic Indigo */
-    --color-brand-primary: #8B5CF6;     /* Purple 500 */
-    --color-brand-hover: #A78BFA;       /* Purple 400 */
-    --color-brand-active: #7C3AED;      /* Purple 600 */
-    --color-brand-surface: rgba(139, 92, 246, 0.12);
-    --color-brand-border: rgba(139, 92, 246, 0.28);
+    --color-brand-primary: #8E30FF;
+    --color-brand-hover: #A354FF;
+    --color-brand-surface: rgba(112, 0, 232, 0.18);
+    --color-brand-border: rgba(142, 48, 255, 0.35);
     --color-brand-text: #C4B5FD;
 
-    /* Semantic Status Colors */
-    --color-success-bg: rgba(16, 185, 129, 0.12);
+    --color-border-subtle: #1E2B42;
+    --color-border-strong: #2D3E5E;
+    --color-border-focus: #8E30FF;
+
+    --color-success: #10B981;
+    --color-success-bg: rgba(8, 122, 85, 0.22);
+    --color-success-border: rgba(16, 185, 129, 0.35);
     --color-success-text: #6EE7B7;
-    --color-success-border: rgba(16, 185, 129, 0.28);
 
-    --color-warning-bg: rgba(245, 158, 11, 0.12);
+    --color-warning: #F59E0B;
+    --color-warning-bg: rgba(148, 88, 0, 0.22);
+    --color-warning-border: rgba(245, 158, 11, 0.35);
     --color-warning-text: #FCD34D;
-    --color-warning-border: rgba(245, 158, 11, 0.28);
 
-    --color-danger-bg: rgba(239, 68, 68, 0.12);
+    --color-danger: #F04438;
+    --color-danger-bg: rgba(180, 35, 24, 0.22);
+    --color-danger-border: rgba(239, 68, 68, 0.35);
     --color-danger-text: #FCA5A5;
-    --color-danger-border: rgba(239, 68, 68, 0.28);
+
+    --color-info: #3B82F6;
+    --color-info-bg: rgba(36, 88, 166, 0.22);
+    --color-info-border: rgba(59, 130, 246, 0.35);
+    --color-info-text: #93C5FD;
   }
 
   html, body {
@@ -133,11 +143,11 @@
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #cbd3e1;
   border-radius: 4px;
 }
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #2d3e5e;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
@@ -155,10 +165,10 @@
 }
 
 /* =========================================================================
-   UNIVERSAL REUSABLE DESIGN SYSTEM UTILITIES
+   CENTRAL DESIGN SYSTEM REUSABLE UTILITIES
    ========================================================================= */
 
-/* Primary Button: Solid high-contrast purple/indigo with readable white text */
+/* Primary Button: #7000E8 violet with high contrast white text */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -170,16 +180,16 @@
   border-radius: 0.75rem;
   padding: 0.5625rem 1.125rem;
   color: #FFFFFF !important;
-  background-color: #6D28D9; /* Purple 700: 6.2:1 contrast on white */
+  background-color: #7000E8;
   border: 1px solid transparent;
-  box-shadow: 0 1px 3px 0 rgba(109, 40, 217, 0.25);
+  box-shadow: 0 1px 3px 0 rgba(112, 0, 232, 0.25);
   transition: all 0.15s ease-in-out;
   cursor: pointer;
   white-space: nowrap;
 }
 .btn-primary:hover {
-  background-color: #5B21B6; /* Purple 800 */
-  box-shadow: 0 4px 6px -1px rgba(109, 40, 217, 0.3);
+  background-color: #5B00C4;
+  box-shadow: 0 4px 6px -1px rgba(112, 0, 232, 0.3);
 }
 .btn-primary:active {
   transform: scale(0.98);
@@ -190,14 +200,14 @@
   transform: none;
 }
 .dark .btn-primary {
-  background-color: #7C3AED;
-  box-shadow: 0 1px 3px 0 rgba(124, 58, 237, 0.35);
+  background-color: #8E30FF;
+  box-shadow: 0 1px 3px 0 rgba(142, 48, 255, 0.35);
 }
 .dark .btn-primary:hover {
-  background-color: #6D28D9;
+  background-color: #7000E8;
 }
 
-/* Secondary Button: Distinct surface with clear border and readable dark/light label */
+/* Secondary Button: Subtle surface #F0F3F9 with visible border #CBD3E1 against white cards */
 .btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -208,17 +218,17 @@
   line-height: 1.25rem;
   border-radius: 0.75rem;
   padding: 0.5rem 1rem;
-  color: #1E293B !important; /* Slate 800: 11.2:1 contrast */
-  background-color: #F1F5F9;
-  border: 1px solid #CBD5E1;
+  color: #172033 !important;
+  background-color: #F0F3F9;
+  border: 1px solid #CBD3E1;
   transition: all 0.15s ease-in-out;
   cursor: pointer;
   white-space: nowrap;
 }
 .btn-secondary:hover {
-  background-color: #E2E8F0;
-  color: #0F172A !important;
-  border-color: #94A3B8;
+  background-color: #E1E6EF;
+  color: #172033 !important;
+  border-color: #B8C2D3;
 }
 .btn-secondary:active {
   transform: scale(0.98);
@@ -229,13 +239,13 @@
   transform: none;
 }
 .dark .btn-secondary {
-  color: #F8FAFC !important;
-  background-color: #1E293B;
-  border-color: #334155;
+  color: #F7F8FC !important;
+  background-color: #182236;
+  border-color: #2D3E5E;
 }
 .dark .btn-secondary:hover {
-  background-color: #334155;
-  border-color: #475569;
+  background-color: #1F2C46;
+  border-color: #3F537D;
 }
 
 /* Tertiary / Ghost Button */
@@ -248,20 +258,56 @@
   font-size: 0.8125rem;
   border-radius: 0.625rem;
   padding: 0.375rem 0.75rem;
-  color: #334155;
+  color: #526078;
   transition: all 0.15s ease-in-out;
   cursor: pointer;
 }
 .btn-ghost:hover {
-  background-color: #F1F5F9;
-  color: #0F172A;
+  background-color: #F0F3F9;
+  color: #172033;
 }
 .dark .btn-ghost {
-  color: #E2E8F0;
+  color: #CBD5E1;
 }
 .dark .btn-ghost:hover {
-  background-color: #1E293B;
+  background-color: #182236;
   color: #FFFFFF;
+}
+
+/* Destructive Button */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  color: #B42318 !important;
+  background-color: #FEECEC;
+  border: 1px solid #FECDCA;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-danger:hover {
+  background-color: #B42318;
+  color: #FFFFFF !important;
+  border-color: #B42318;
+}
+.btn-danger:active {
+  transform: scale(0.98);
+}
+.dark .btn-danger {
+  color: #FCA5A5 !important;
+  background-color: rgba(180, 35, 24, 0.2);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.dark .btn-danger:hover {
+  background-color: #B42318;
+  color: #FFFFFF !important;
 }
 
 /* Input / Select standard */
@@ -271,233 +317,422 @@
   padding: 0.5625rem 0.875rem;
   font-size: 0.875rem;
   font-weight: 500;
-  border: 1px solid #CBD5E1;
+  border: 1px solid #CBD3E1;
   background-color: #FFFFFF;
-  color: #0F172A;
+  color: #172033;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .input-standard::placeholder {
-  color: #94A3B8;
+  color: #667085;
 }
 .input-standard:focus {
   outline: none;
-  border-color: #7C3AED;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+  border-color: #7000E8;
+  box-shadow: 0 0 0 3px rgba(112, 0, 232, 0.18);
 }
 .dark .input-standard {
-  border-color: #334155;
-  background-color: #161F33;
-  color: #F8FAFC;
+  border-color: #2D3E5E;
+  background-color: #182236;
+  color: #F7F8FC;
 }
 .dark .input-standard::placeholder {
   color: #64748B;
 }
 .dark .input-standard:focus {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+  border-color: #8E30FF;
+  box-shadow: 0 0 0 3px rgba(142, 48, 255, 0.25);
 }
 
-/* Card Surface Utility */
+/* Card Surface Utility: Crisp white on subtle cool-white page */
 .card-surface {
   background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #E1E6EF;
   border-radius: 1rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
 }
 .dark .card-surface {
-  background-color: #111827;
-  border-color: #1E293B;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  background-color: #131926;
+  border-color: #1E2B42;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
 }
 
 /* Card Subtle Utility */
 .card-subtle {
-  background-color: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  background-color: #F0F3F9;
+  border: 1px solid #E1E6EF;
   border-radius: 0.75rem;
 }
 .dark .card-subtle {
-  background-color: #161F33;
-  border-color: #1E293B;
+  background-color: #182236;
+  border-color: #1E2B42;
+}
+
+/* Status Badges */
+.badge-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #E8F7EF;
+  color: #087A55;
+  border: 1px solid #A3DEC0;
+}
+.dark .badge-success {
+  background-color: rgba(8, 122, 85, 0.22);
+  color: #6EE7B7;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.badge-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #FFF4D6;
+  color: #945800;
+  border: 1px solid #FFE299;
+}
+.dark .badge-warning {
+  background-color: rgba(148, 88, 0, 0.22);
+  color: #FCD34D;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.badge-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #FEECEC;
+  color: #B42318;
+  border: 1px solid #FECDCA;
+}
+.dark .badge-error {
+  background-color: rgba(180, 35, 24, 0.22);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.badge-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #EAF2FF;
+  color: #2458A6;
+  border: 1px solid #BCD8FF;
+}
+.dark .badge-info {
+  background-color: rgba(36, 88, 166, 0.22);
+  color: #93C5FD;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.badge-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #EEE7FF;
+  color: #7000E8;
+  border: 1px solid #D1B8FC;
+}
+.dark .badge-brand {
+  background-color: rgba(112, 0, 232, 0.2);
+  color: #C4B5FD;
+  border-color: rgba(142, 48, 255, 0.35);
+}
+
+/* Callouts / Alert Panels */
+.callout-success {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #E8F7EF;
+  border: 1px solid #A3DEC0;
+  color: #087A55;
+}
+.dark .callout-success {
+  background-color: rgba(8, 122, 85, 0.18);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6EE7B7;
+}
+
+.callout-warning {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #FFF4D6;
+  border: 1px solid #FFE299;
+  color: #945800;
+}
+.dark .callout-warning {
+  background-color: rgba(148, 88, 0, 0.18);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #FCD34D;
+}
+
+.callout-error {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #FEECEC;
+  border: 1px solid #FECDCA;
+  color: #B42318;
+}
+.dark .callout-error {
+  background-color: rgba(180, 35, 24, 0.18);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #FCA5A5;
+}
+
+.callout-info {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #EAF2FF;
+  border: 1px solid #BCD8FF;
+  color: #2458A6;
+}
+.dark .callout-info {
+  background-color: rgba(36, 88, 166, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #93C5FD;
+}
+
+.callout-brand {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #EEE7FF;
+  border: 1px solid #D1B8FC;
+  color: #7000E8;
+}
+.dark .callout-brand {
+  background-color: rgba(112, 0, 232, 0.18);
+  border-color: rgba(142, 48, 255, 0.35);
+  color: #C4B5FD;
 }
 
 /* =========================================================================
-   LIGHT & DARK MODE GLOBAL CONTRAST FIXES
-   These rules normalize text colors across existing classes so that NO text
-   is ever too faint to read and NO button is ever lost.
+   GLOBAL CONTRAST & HARMONIZATION RULES
+   Maps default color classes across views to the central design system
    ========================================================================= */
 
-/* Light mode text readability upgrades */
-html:not(.dark) .text-slate-400,
-html:not(.dark) .text-zinc-400,
-html:not(.dark) .text-gray-400 {
-  color: #475569 !important; /* Slate 600: 5.9:1 contrast (AA passed) */
+/* Light mode text hierarchy mappings */
+html:not(.dark) .text-slate-900,
+html:not(.dark) .text-zinc-900,
+html:not(.dark) .text-gray-900 {
+  color: #172033 !important;
 }
 
-html:not(.dark) .text-slate-500,
-html:not(.dark) .text-zinc-500,
-html:not(.dark) .text-gray-500 {
-  color: #334155 !important; /* Slate 700: 9.5:1 contrast (AAA passed) */
+html:not(.dark) .text-slate-800,
+html:not(.dark) .text-zinc-800,
+html:not(.dark) .text-gray-800,
+html:not(.dark) .text-slate-700,
+html:not(.dark) .text-zinc-700,
+html:not(.dark) .text-gray-700 {
+  color: #526078 !important;
 }
 
 html:not(.dark) .text-slate-600,
 html:not(.dark) .text-zinc-600,
-html:not(.dark) .text-gray-600 {
-  color: #1E293B !important; /* Slate 800 */
+html:not(.dark) .text-gray-600,
+html:not(.dark) .text-slate-500,
+html:not(.dark) .text-zinc-500,
+html:not(.dark) .text-gray-500 {
+  color: #667085 !important;
 }
 
-html:not(.dark) .text-slate-700,
-html:not(.dark) .text-zinc-700,
-html:not(.dark) .text-gray-700 {
-  color: #0F172A !important; /* Slate 900 */
+html:not(.dark) .text-slate-400,
+html:not(.dark) .text-zinc-400,
+html:not(.dark) .text-gray-400 {
+  color: #667085 !important; /* Raised to pass 4.5:1 AA */
 }
 
-/* Dark mode text readability upgrades */
-html.dark .text-slate-400,
-html.dark .text-zinc-400,
-html.dark .text-gray-400 {
-  color: #94A3B8 !important; /* Slate 400: 6.3:1 contrast on #111827 (AA passed) */
+/* Dark mode text hierarchy mappings */
+html.dark .text-slate-900,
+html.dark .text-zinc-900,
+html.dark .text-gray-900,
+html.dark .text-slate-800,
+html.dark .text-zinc-800 {
+  color: #F7F8FC !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-zinc-700,
+html.dark .text-zinc-600 {
+  color: #CBD5E1 !important;
 }
 
 html.dark .text-slate-500,
+html.dark .text-slate-400,
 html.dark .text-zinc-500,
-html.dark .text-gray-500 {
-  color: #CBD5E1 !important; /* Slate 300: 10.1:1 contrast on #111827 */
+html.dark .text-zinc-400 {
+  color: #94A3B8 !important;
 }
 
-/* CRITICAL: Preserve crisp white text in buttons, pills, and colored badges */
+/* Light mode surfaces and borders */
+html:not(.dark) .border-slate-200,
+html:not(.dark) .border-slate-200\/80,
+html:not(.dark) .border-slate-200\/90,
+html:not(.dark) .border-zinc-200,
+html:not(.dark) .border-gray-200 {
+  border-color: #E1E6EF !important;
+}
+
+html:not(.dark) .border-slate-300,
+html:not(.dark) .border-zinc-300,
+html:not(.dark) .border-gray-300 {
+  border-color: #CBD3E1 !important;
+}
+
+html:not(.dark) .bg-slate-50,
+html:not(.dark) .bg-zinc-50,
+html:not(.dark) .bg-gray-50 {
+  background-color: #F0F3F9 !important;
+}
+
+html:not(.dark) .bg-slate-100,
+html:not(.dark) .bg-zinc-100,
+html:not(.dark) .bg-gray-100 {
+  background-color: #F0F3F9 !important;
+}
+
+/* Dark mode surfaces and borders */
+html.dark .bg-white {
+  background-color: #131926 !important;
+  color: #F7F8FC;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-100,
+html.dark .bg-zinc-900,
+html.dark .bg-zinc-900\/80 {
+  background-color: #182236 !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-zinc-800,
+html.dark .border-zinc-700 {
+  border-color: #1E2B42 !important;
+}
+
+/* Brand color mapping */
+html:not(.dark) .text-purple-600,
+html:not(.dark) .text-purple-700,
+html:not(.dark) .text-violet-600,
+html:not(.dark) .text-violet-700,
+html:not(.dark) .text-\[\#8000E8\],
+html:not(.dark) .text-\[\#7000E8\] {
+  color: #7000E8 !important;
+}
+
+html:not(.dark) .bg-purple-600,
+html:not(.dark) .bg-purple-700,
+html:not(.dark) .bg-violet-600,
+html:not(.dark) .bg-violet-700,
+html:not(.dark) .bg-\[\#8000E8\],
+html:not(.dark) .bg-\[\#7000E8\] {
+  background-color: #7000E8 !important;
+}
+
+html:not(.dark) .hover\:bg-purple-700:hover,
+html:not(.dark) .hover\:bg-violet-700:hover,
+html:not(.dark) .hover\:bg-\[\#7000E8\]:hover {
+  background-color: #5B00C4 !important;
+}
+
+html:not(.dark) .bg-purple-50,
+html:not(.dark) .bg-purple-100,
+html:not(.dark) .bg-violet-50,
+html:not(.dark) .bg-violet-100 {
+  background-color: #EEE7FF !important;
+}
+
+html:not(.dark) .border-purple-200,
+html:not(.dark) .border-purple-300,
+html:not(.dark) .border-violet-200 {
+  border-color: #D1B8FC !important;
+}
+
+html.dark .text-purple-400,
+html.dark .text-purple-300,
+html.dark .text-violet-400 {
+  color: #C4B5FD !important;
+}
+
+/* CRITICAL: Explicit white text protection inside filled buttons and badges */
 button.text-white,
 a.text-white,
 button .text-white,
 a .text-white,
 .btn-primary,
 .btn-primary span,
-[class*="bg-purple-"] .text-white,
-[class*="bg-indigo-"] .text-white,
+.btn-primary svg,
+[class*="bg-purple-600"] .text-white,
+[class*="bg-purple-700"] .text-white,
+[class*="bg-violet-600"] .text-white,
+[class*="bg-violet-700"] .text-white,
+[class*="bg-\[\#7000E8\]"] .text-white,
+[class*="bg-\[\#8000E8\]"] .text-white,
 [class*="bg-rose-"] .text-white,
 [class*="bg-emerald-"] .text-white,
-[class*="bg-[#8000E8]"] .text-white,
-[class*="bg-gradient-"] .text-white,
-[class*="bg-purple-600"] span,
-[class*="bg-purple-700"] span,
-[class*="bg-indigo-600"] span,
-[class*="bg-indigo-700"] span,
-[class*="bg-[#8000E8]"] span {
+[class*="bg-blue-600"] .text-white,
+[class*="bg-teal-600"] .text-white {
   color: #FFFFFF !important;
 }
 
-/* Dark backgrounds in Light Mode convert to clean white or light gray */
-html:not(.dark) .bg-\[\#0d0f17\],
-html:not(.dark) .bg-\[\#090a0f\],
-html:not(.dark) .bg-\[\#0a0c12\],
-html:not(.dark) .bg-\[\#0c0e17\],
-html:not(.dark) .bg-\[\#121522\],
-html:not(.dark) .bg-\[\#131722\],
-html:not(.dark) .bg-\[\#141724\],
-html:not(.dark) .bg-\[\#0f111a\],
-html:not(.dark) .bg-\[\#141824\] {
-  background-color: #FFFFFF !important;
-  color: #0F172A;
-}
-
-html:not(.dark) .bg-zinc-900,
-html:not(.dark) .bg-zinc-900\/80,
-html:not(.dark) .bg-zinc-900\/90 {
-  background-color: #F1F5F9 !important;
-  color: #0F172A;
-}
-
-html:not(.dark) .border-zinc-800,
-html:not(.dark) .border-zinc-800\/80,
-html:not(.dark) .border-zinc-800\/90,
-html:not(.dark) .border-zinc-800\/60,
-html:not(.dark) .border-zinc-700 {
-  border-color: #E2E8F0 !important;
-}
-
-html:not(.dark) .text-zinc-100,
-html:not(.dark) .text-zinc-200 {
-  color: #0F172A !important;
-}
-
-html:not(.dark) .text-zinc-300 {
-  color: #334155 !important;
-}
-
-/* Dark Theme Surface mapping */
-html.dark .bg-white {
-  background-color: #111827 !important;
-  color: #F8FAFC;
-}
-
-html.dark .bg-slate-50,
-html.dark .bg-slate-50\/70,
-html.dark .bg-slate-50\/80 {
-  background-color: #161F33 !important;
-}
-
-html.dark .bg-slate-100 {
-  background-color: #1E293B !important;
-}
-
-html.dark .border-slate-100,
-html.dark .border-slate-200,
-html.dark .border-slate-200\/80,
-html.dark .border-slate-200\/90,
-html.dark .border-slate-300 {
-  border-color: #1E293B !important;
-}
-
-html.dark .text-slate-900,
-html.dark .text-slate-800 {
-  color: #F8FAFC !important;
-}
-
-html.dark .text-slate-700 {
-  color: #E2E8F0 !important;
-}
-
-html.dark .text-slate-600 {
-  color: #CBD5E1 !important;
-}
-
-/* Ensure form controls have visible borders and surfaces */
+/* Ensure form controls have visible borders, surfaces, and focus rings */
 html:not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 html:not(.dark) select,
 html:not(.dark) textarea {
   background-color: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
-  color: #0F172A !important;
+  border-color: #CBD3E1 !important;
+  color: #172033 !important;
 }
 
 html:not(.dark) input:focus,
 html:not(.dark) select:focus,
 html:not(.dark) textarea:focus {
-  border-color: #7C3AED !important;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2) !important;
+  border-color: #7000E8 !important;
+  box-shadow: 0 0 0 3px rgba(112, 0, 232, 0.18) !important;
   outline: none !important;
 }
 
 html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 html.dark select,
 html.dark textarea {
-  background-color: #161F33 !important;
-  border-color: #334155 !important;
-  color: #F8FAFC !important;
+  background-color: #182236 !important;
+  border-color: #2D3E5E !important;
+  color: #F7F8FC !important;
 }
 
 html.dark input:focus,
 html.dark select:focus,
 html.dark textarea:focus {
-  border-color: #A78BFA !important;
-  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25) !important;
+  border-color: #8E30FF !important;
+  box-shadow: 0 0 0 3px rgba(142, 48, 255, 0.25) !important;
   outline: none !important;
 }
 
 /* Sliders */
 input[type="range"] {
-  accent-color: #7C3AED;
+  accent-color: #7000E8;
 }
 html.dark input[type="range"] {
-  accent-color: #A78BFA;
+  accent-color: #8E30FF;
 }

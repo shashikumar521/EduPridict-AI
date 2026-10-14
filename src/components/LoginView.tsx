@@ -320,14 +320,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div
-                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-white flex items-center justify-center font-extrabold shadow-lg shrink-0 ${
-                  isLight
-                    ? 'bg-gradient-to-tr from-purple-700 to-indigo-600 shadow-purple-500/25'
-                    : 'bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-purple-500/30'
-                }`}
-              >
-                <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-lg shrink-0 bg-[#0B132B] flex items-center justify-center border border-teal-500/30">
+                <img
+                  src="/edupredict-ai-logo.png"
+                  alt="EduPredict AI Logo"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div>
                 <div className="flex items-center gap-2">

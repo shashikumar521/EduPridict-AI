@@ -116,19 +116,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }`}
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
-            {/* Header Badge */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                  isLight
-                    ? 'bg-purple-50 text-purple-800 border-purple-200'
-                    : 'bg-purple-950/70 text-purple-300 border-purple-800'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400" />
-                Academic Intelligence Workspace
-              </span>
+          <div className="flex items-start gap-4 max-w-3xl">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden bg-[#0B132B] flex items-center justify-center border border-teal-500/30 shadow-md shrink-0">
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <div className="space-y-2">
+              {/* Header Badge */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                    isLight
+                      ? 'bg-purple-50 text-purple-800 border-purple-200'
+                      : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400" />
+                  Academic Intelligence Workspace
+                </span>
 
               {programDetails && (
                 <span
@@ -161,6 +170,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Predict academic performance, identify learning gaps, and build personalized study plans using validated machine learning models.
             </p>
           </div>
+        </div>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">

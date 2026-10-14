@@ -45,8 +45,18 @@ import {
   saveExamStudyPlan,
   updateExamSessionStatus,
   updateExamPlanFullDays,
-  deleteExamStudyPlan
+  deleteExamStudyPlan,
+  getStudentAcademicProfile,
+  upsertStudentAcademicProfile,
+  saveQuizAttempt,
+  getQuizAttempts,
+  StudentAcademicProfile,
+  UpcomingExamItem
 } from './db';
+import {
+  getOrGenerateTopicModule,
+  normalizeTopicKey
+} from './learnPractice';
 import {
   getSmsProviderConfig,
   normalizePhoneNumber,
@@ -82,6 +92,12 @@ export function createExpressApp(): express.Application {
   });
 
   app.use(express.json());
+
+  // Serve public static assets (logos, favicons, robots.txt, sitemap.xml)
+  const publicDir = path.resolve(__dirname, '../public');
+  if (fs.existsSync(publicDir)) {
+    app.use(express.static(publicDir));
+  }
 
   // Authentication Middleware
   const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -608,10 +624,703 @@ export function createExpressApp(): express.Application {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'healthy',
-      service: 'EduPredict AI Full-Stack Platform',
-      version: '2.4.0',
+      service: 'EduPredict AI Academic Intelligence Platform',
+      version: '2.5.0',
       timestamp: new Date().toISOString()
     });
+  });
+
+  // -------------------------------------------------------------
+  // CORE WORKFLOW 1: STUDENT ACADEMIC PROFILE & ONBOARDING
+  // -------------------------------------------------------------
+  app.get('/api/academic-profile', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      let profile = await getStudentAcademicProfile(targetUserId);
+
+      if (!profile) {
+        // Return structured default profile for first-time onboarding
+        profile = {
+          user_id: targetUserId,
+          full_name: user?.name || 'Student',
+          institution: user?.institution || '',
+          course_degree: user?.education_level || 'B.Tech / Undergraduate',
+          department_branch: user?.stream_or_branch || 'Computer Science & Engineering',
+          academic_year: 'Year 2',
+          semester: 'Semester 4',
+          grading_system: 'percentage',
+          preferred_language: 'English',
+          subjects: [
+            {
+              id: 'sub-1',
+              name: 'Data Structures & Algorithms',
+              marks_obtained: 64,
+              max_marks: 100,
+              percentage: 64,
+              previous_marks: 58,
+              internal_marks: 18,
+              assignment_marks: 17,
+              practical_marks: 20,
+              attendance_percent: 72,
+              difficult_topics: ['Binary Trees', 'Dynamic Programming'],
+              topics_to_improve: ['Tree Traversals', 'Graph Search']
+            },
+            {
+              id: 'sub-2',
+              name: 'Operating Systems',
+              marks_obtained: 54,
+              max_marks: 100,
+              percentage: 54,
+              previous_marks: 50,
+              internal_marks: 14,
+              assignment_marks: 15,
+              practical_marks: 16,
+              attendance_percent: 68,
+              difficult_topics: ['Process Synchronization', 'Deadlocks'],
+              topics_to_improve: ['Bankers Algorithm', 'Paging']
+            },
+            {
+              id: 'sub-3',
+              name: 'Database Management Systems',
+              marks_obtained: 78,
+              max_marks: 100,
+              percentage: 78,
+              previous_marks: 72,
+              internal_marks: 22,
+              assignment_marks: 24,
+              practical_marks: 25,
+              attendance_percent: 88,
+              difficult_topics: ['Database Normalization'],
+              topics_to_improve: ['BCNF Decomposition']
+            },
+            {
+              id: 'sub-4',
+              name: 'Computer Networks',
+              marks_obtained: 82,
+              max_marks: 100,
+              percentage: 82,
+              previous_marks: 80,
+              internal_marks: 26,
+              assignment_marks: 25,
+              practical_marks: 26,
+              attendance_percent: 92,
+              difficult_topics: ['Subnetting'],
+              topics_to_improve: ['TCP Flow Control']
+            }
+          ],
+          overall_attendance: 80,
+          daily_study_hours_weekday: 3,
+          daily_study_hours_weekend: 5,
+          upcoming_exams: [
+            {
+              id: 'exam-1',
+              subject_name: 'Operating Systems',
+              exam_date: new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10),
+              exam_time: '10:00 AM',
+              priority: 'high',
+              syllabus_completion_percent: 55,
+              notes: 'Focus on Process Management and Deadlock prevention algorithms.',
+              status: 'upcoming'
+            },
+            {
+              id: 'exam-2',
+              subject_name: 'Data Structures & Algorithms',
+              exam_date: new Date(Date.now() + 16 * 86400000).toISOString().slice(0, 10),
+              exam_time: '02:00 PM',
+              priority: 'high',
+              syllabus_completion_percent: 65,
+              notes: 'Tree traversals, BST operations, and AVL rotations.',
+              status: 'upcoming'
+            },
+            {
+              id: 'exam-3',
+              subject_name: 'Database Management Systems',
+              exam_date: new Date(Date.now() + 22 * 86400000).toISOString().slice(0, 10),
+              exam_time: '10:00 AM',
+              priority: 'medium',
+              syllabus_completion_percent: 80,
+              notes: 'SQL joins and Normalization from 1NF to BCNF.',
+              status: 'upcoming'
+            }
+          ],
+          weak_topics: ['Binary Trees', 'Deadlocks', 'Database Normalization'],
+          target_goals: ['Raise overall semester average above 75%', 'Achieve 85%+ attendance across all subjects'],
+          onboarding_completed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      res.json({ status: 'success', profile });
+    } catch (err: any) {
+      console.error('Error fetching academic profile:', err);
+      res.status(500).json({ error: 'Failed to retrieve academic profile: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.put('/api/academic-profile', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const body = req.body;
+
+      // 1. Validation
+      if (!body.full_name || typeof body.full_name !== 'string' || body.full_name.trim().length === 0) {
+        return res.status(400).json({ error: 'Student full name is required.' });
+      }
+
+      if (!Array.isArray(body.subjects) || body.subjects.length === 0) {
+        return res.status(400).json({ error: 'At least one academic subject must be recorded.' });
+      }
+
+      // Validate each subject
+      const validatedSubjects = [];
+      for (let i = 0; i < body.subjects.length; i++) {
+        const sub = body.subjects[i];
+        const sName = String(sub.name || '').trim();
+        if (!sName) {
+          return res.status(400).json({ error: `Subject #${i + 1} name cannot be empty.` });
+        }
+        const maxMarks = Number(sub.max_marks);
+        if (isNaN(maxMarks) || maxMarks <= 0) {
+          return res.status(400).json({ error: `Subject "${sName}" must have a valid maximum marks greater than 0.` });
+        }
+        const marksObtained = Number(sub.marks_obtained);
+        if (isNaN(marksObtained) || marksObtained < 0) {
+          return res.status(400).json({ error: `Subject "${sName}" marks obtained cannot be negative.` });
+        }
+        if (marksObtained > maxMarks) {
+          return res.status(400).json({
+            error: `Subject "${sName}" marks obtained (${marksObtained}) cannot exceed maximum marks (${maxMarks}).`
+          });
+        }
+
+        const percentage = Number(((marksObtained / maxMarks) * 100).toFixed(1));
+
+        let attPercent = typeof sub.attendance_percent === 'number' ? Number(sub.attendance_percent) : undefined;
+        if (attPercent !== undefined) {
+          if (attPercent < 0 || attPercent > 100) {
+            return res.status(400).json({ error: `Subject "${sName}" attendance percentage must be between 0 and 100%.` });
+          }
+        }
+
+        validatedSubjects.push({
+          id: sub.id || `sub-${Date.now()}-${i}`,
+          name: sName,
+          marks_obtained: marksObtained,
+          max_marks: maxMarks,
+          percentage,
+          previous_marks: typeof sub.previous_marks === 'number' ? Number(sub.previous_marks) : undefined,
+          internal_marks: typeof sub.internal_marks === 'number' ? Number(sub.internal_marks) : undefined,
+          assignment_marks: typeof sub.assignment_marks === 'number' ? Number(sub.assignment_marks) : undefined,
+          practical_marks: typeof sub.practical_marks === 'number' ? Number(sub.practical_marks) : undefined,
+          attendance_percent: attPercent,
+          difficult_topics: Array.isArray(sub.difficult_topics) ? sub.difficult_topics.map(String) : [],
+          topics_to_improve: Array.isArray(sub.topics_to_improve) ? sub.topics_to_improve.map(String) : []
+        });
+      }
+
+      // Validate upcoming exams
+      const validatedExams = [];
+      if (Array.isArray(body.upcoming_exams)) {
+        for (let i = 0; i < body.upcoming_exams.length; i++) {
+          const ex = body.upcoming_exams[i];
+          const sName = String(ex.subject_name || '').trim();
+          if (!sName) continue;
+          const eDate = String(ex.exam_date || '').trim();
+          if (!eDate || isNaN(Date.parse(eDate))) {
+            return res.status(400).json({ error: `Examination for "${sName}" must have a valid date.` });
+          }
+          const completion = Number(ex.syllabus_completion_percent);
+          const validCompletion = isNaN(completion) ? 0 : Math.max(0, Math.min(100, completion));
+          validatedExams.push({
+            id: ex.id || `exam-${Date.now()}-${i}`,
+            subject_name: sName,
+            exam_date: eDate,
+            exam_time: String(ex.exam_time || '10:00 AM'),
+            priority: ['high', 'medium', 'low'].includes(ex.priority) ? ex.priority : 'medium',
+            syllabus_completion_percent: validCompletion,
+            notes: String(ex.notes || ''),
+            status: (ex.status === 'completed' ? 'completed' : 'upcoming') as 'upcoming' | 'completed'
+          });
+        }
+      }
+
+      const updated = await upsertStudentAcademicProfile({
+        user_id: targetUserId,
+        full_name: body.full_name.trim(),
+        institution: String(body.institution || '').trim(),
+        course_degree: String(body.course_degree || 'B.Tech').trim(),
+        department_branch: String(body.department_branch || '').trim(),
+        academic_year: String(body.academic_year || 'Year 1').trim(),
+        semester: String(body.semester || 'Semester 1').trim(),
+        grading_system: ['percentage', 'gpa_10', 'gpa_4', 'letter'].includes(body.grading_system) ? body.grading_system : 'percentage',
+        preferred_language: String(body.preferred_language || 'English').trim(),
+        subjects: validatedSubjects,
+        overall_attendance: Number(body.overall_attendance) || 75,
+        daily_study_hours_weekday: Number(body.daily_study_hours_weekday) || 3,
+        daily_study_hours_weekend: Number(body.daily_study_hours_weekend) || 5,
+        upcoming_exams: validatedExams,
+        weak_topics: Array.isArray(body.weak_topics) ? body.weak_topics.map(String) : [],
+        target_goals: Array.isArray(body.target_goals) ? body.target_goals.map(String) : [],
+        onboarding_completed: true
+      });
+
+      res.json({ status: 'success', profile: updated });
+    } catch (err: any) {
+      console.error('Error saving academic profile:', err);
+      res.status(500).json({ error: 'Failed to save academic profile: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // CORE WORKFLOW 1: ACADEMIC ANALYSIS
+  // -------------------------------------------------------------
+  app.get('/api/academic-analysis', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      let profile = await getStudentAcademicProfile(targetUserId);
+
+      if (!profile || profile.subjects.length === 0) {
+        return res.json({
+          status: 'needs_onboarding',
+          message: 'Please complete your academic profile to generate your detailed academic analysis.'
+        });
+      }
+
+      // 1. Calculate Subject Metrics
+      const subjectMetrics = profile.subjects.map(sub => {
+        const pct = sub.percentage;
+        let status: 'Strong' | 'Good' | 'Needs Attention' | 'Critical';
+        if (pct >= 80) status = 'Strong';
+        else if (pct >= 65) status = 'Good';
+        else if (pct >= 50) status = 'Needs Attention';
+        else status = 'Critical';
+
+        return {
+          id: sub.id,
+          name: sub.name,
+          marks_obtained: sub.marks_obtained,
+          max_marks: sub.max_marks,
+          percentage: pct,
+          attendance: sub.attendance_percent ?? profile.overall_attendance,
+          status,
+          difficult_topics: sub.difficult_topics || [],
+          topics_to_improve: sub.topics_to_improve || []
+        };
+      });
+
+      // 2. Identify Strong Areas & Weak Areas
+      const sortedByScore = [...subjectMetrics].sort((a, b) => b.percentage - a.percentage);
+      const strongestSubjects = sortedByScore.filter(s => s.percentage >= 70);
+      const subjectsNeedingAttention = sortedByScore.filter(s => s.percentage < 70 || s.attendance < 75);
+
+      // 3. Transparent Academic Score Calculation (0-100 scale)
+      // Weighted Formula:
+      // - Subject Marks Average: 60%
+      // - Attendance Performance: 25%
+      // - Consistency / Assessment completion: 15%
+      const subjectAverage = Number(
+        (profile.subjects.reduce((sum, s) => sum + s.percentage, 0) / profile.subjects.length).toFixed(1)
+      );
+      const attendanceScore = Math.min(100, Math.max(0, profile.overall_attendance));
+
+      // Calculate internal/assignment factor
+      const subsWithAssignments = profile.subjects.filter(s => typeof s.assignment_marks === 'number');
+      const assignmentScore = subsWithAssignments.length > 0
+        ? subsWithAssignments.reduce((sum, s) => sum + (s.assignment_marks || 0), 0) / subsWithAssignments.length
+        : subjectAverage * 0.25; // estimated 25pt scale
+      const normalizedAssignmentPct = Math.min(100, Math.max(0, (assignmentScore / 25) * 100));
+
+      const calculatedScore = Number(
+        (subjectAverage * 0.60 + attendanceScore * 0.25 + normalizedAssignmentPct * 0.15).toFixed(1)
+      );
+
+      let academicStanding: string;
+      let standingTier: 'distinction' | 'good' | 'moderate' | 'critical';
+      if (calculatedScore >= 80) {
+        academicStanding = 'High Academic Distinction (First Class with Honours)';
+        standingTier = 'distinction';
+      } else if (calculatedScore >= 70) {
+        academicStanding = 'Good Standing (Consistent Performance)';
+        standingTier = 'good';
+      } else if (calculatedScore >= 55) {
+        academicStanding = 'Moderate Standing (Targeted Intervention Recommended)';
+        standingTier = 'moderate';
+      } else {
+        academicStanding = 'Critical Academic Risk (Urgent Early Intervention Required)';
+        standingTier = 'critical';
+      }
+
+      // 4. Personalized Concrete Recommendations for Each Weakness
+      const recommendations = [];
+      const weakItems = subjectsNeedingAttention.length > 0 ? subjectsNeedingAttention : [sortedByScore[sortedByScore.length - 1]];
+
+      for (const item of weakItems) {
+        const topWeakTopic = item.difficult_topics[0] || item.topics_to_improve[0] || `${item.name} Core Principles`;
+        recommendations.push({
+          subject_name: item.name,
+          weak_topic: topWeakTopic,
+          current_percentage: item.percentage,
+          what_needs_improvement: `Scoring ${item.percentage}% in ${item.name}. Identified specific friction in "${topWeakTopic}".`,
+          why_it_matters: `${item.name} is a high-credit prerequisite subject that heavily impacts GPA and university progression.`,
+          what_to_study: `Master the foundational definitions, 2 canonical proofs or worked problems, and practice active recall on ${topWeakTopic}.`,
+          learning_resource: {
+            title: `${topWeakTopic} Academic Theory & Curated Video Walkthroughs`,
+            provider: 'Verified University Video Series',
+            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topWeakTopic + ' ' + item.name + ' lecture tutorial')}`
+          },
+          practical_activity: {
+            type: 'quiz_and_theory',
+            topic: topWeakTopic,
+            label: `Learn Theory & Practice 30 Questions on "${topWeakTopic}"`
+          },
+          suggested_time_allocation: '45 minutes daily focused revision slot',
+          measurement_metric: `Targeting >= 75% score on the 30-question diagnostic quiz before the upcoming examination.`
+        });
+      }
+
+      // 5. Manageable Improvement Plan (Daily/Weekly Tasks)
+      const improvementPlan = recommendations.map((rec, idx) => ({
+        id: `plan-task-${idx + 1}`,
+        day: `Day ${idx * 2 + 1}`,
+        topic: rec.weak_topic,
+        subject: rec.subject_name,
+        duration_minutes: 45,
+        resource_url: rec.learning_resource.url,
+        action: rec.practical_activity.label,
+        status: 'pending' as const
+      }));
+
+      // 6. Genuine Progress Tracking from past quiz attempts
+      const quizAttempts = await getQuizAttempts(targetUserId, 5);
+
+      res.json({
+        status: 'success',
+        profile: {
+          full_name: profile.full_name,
+          institution: profile.institution,
+          course_degree: profile.course_degree,
+          academic_year: profile.academic_year,
+          semester: profile.semester,
+          grading_system: profile.grading_system
+        },
+        overview: {
+          academic_score: calculatedScore,
+          standing: academicStanding,
+          standing_tier: standingTier,
+          subject_average: subjectAverage,
+          overall_attendance: attendanceScore,
+          total_subjects: profile.subjects.length,
+          strong_subjects_count: strongestSubjects.length,
+          subjects_needing_attention_count: subjectsNeedingAttention.length
+        },
+        scoring_methodology: {
+          scale: '0–100 Normalized Scale',
+          formula: 'Score = (Subject Marks Average × 60%) + (Attendance Percentage × 25%) + (Assignments & Practicals × 15%)',
+          weights: {
+            subject_marks: '60%',
+            attendance: '25%',
+            assignments_and_practicals: '15%'
+          },
+          explanation: 'This transparent score reflects both academic assessment mastery and semester discipline. It is directly calculated from your verified records, without synthetic inflation.'
+        },
+        subjects: subjectMetrics,
+        strongest_subjects: strongestSubjects,
+        subjects_needing_attention: subjectsNeedingAttention,
+        personalized_recommendations: recommendations,
+        improvement_plan: improvementPlan,
+        recent_quiz_progress: quizAttempts
+      });
+    } catch (err: any) {
+      console.error('Error generating academic analysis:', err);
+      res.status(500).json({ error: 'Failed to generate academic analysis: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // CORE WORKFLOW 2: EXAM MANAGEMENT (CRUD)
+  // -------------------------------------------------------------
+  app.get('/api/exams', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const profile = await getStudentAcademicProfile(targetUserId);
+
+      const exams = profile ? profile.upcoming_exams : [];
+      res.json({ status: 'success', exams });
+    } catch (err: any) {
+      console.error('Error fetching exams:', err);
+      res.status(500).json({ error: 'Failed to retrieve exams' });
+    }
+  });
+
+  app.post('/api/exams', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const { subject_name, exam_date, exam_time, priority, syllabus_completion_percent, notes } = req.body;
+
+      if (!subject_name || typeof subject_name !== 'string' || subject_name.trim().length === 0) {
+        return res.status(400).json({ error: 'Subject name is required.' });
+      }
+
+      if (!exam_date || isNaN(Date.parse(exam_date))) {
+        return res.status(400).json({ error: 'A valid examination date is required.' });
+      }
+
+      let profile = await getStudentAcademicProfile(targetUserId);
+      if (!profile) {
+        profile = await upsertStudentAcademicProfile({
+          user_id: targetUserId,
+          full_name: user?.name || 'Student'
+        });
+      }
+
+      const newExam: UpcomingExamItem = {
+        id: `exam-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        subject_name: subject_name.trim(),
+        exam_date: exam_date.trim(),
+        exam_time: exam_time ? String(exam_time).trim() : '10:00 AM',
+        priority: ['high', 'medium', 'low'].includes(priority) ? priority : 'medium',
+        syllabus_completion_percent: Math.max(0, Math.min(100, Number(syllabus_completion_percent) || 0)),
+        notes: String(notes || '').trim(),
+        status: 'upcoming'
+      };
+
+      profile.upcoming_exams.push(newExam);
+      await upsertStudentAcademicProfile(profile);
+
+      res.status(201).json({ status: 'success', exam: newExam, exams: profile.upcoming_exams });
+    } catch (err: any) {
+      console.error('Error adding exam:', err);
+      res.status(500).json({ error: 'Failed to create exam: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.put('/api/exams/:id', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const examId = req.params.id;
+      const updates = req.body;
+
+      const profile = await getStudentAcademicProfile(targetUserId);
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      const idx = profile.upcoming_exams.findIndex(e => e.id === examId);
+      if (idx === -1) {
+        return res.status(404).json({ error: 'Exam not found' });
+      }
+
+      const current = profile.upcoming_exams[idx];
+      profile.upcoming_exams[idx] = {
+        ...current,
+        subject_name: updates.subject_name !== undefined ? String(updates.subject_name).trim() : current.subject_name,
+        exam_date: updates.exam_date !== undefined ? String(updates.exam_date).trim() : current.exam_date,
+        exam_time: updates.exam_time !== undefined ? String(updates.exam_time).trim() : current.exam_time,
+        priority: ['high', 'medium', 'low'].includes(updates.priority) ? updates.priority : current.priority,
+        syllabus_completion_percent: updates.syllabus_completion_percent !== undefined
+          ? Math.max(0, Math.min(100, Number(updates.syllabus_completion_percent)))
+          : current.syllabus_completion_percent,
+        notes: updates.notes !== undefined ? String(updates.notes).trim() : current.notes,
+        status: updates.status === 'completed' ? 'completed' : 'upcoming'
+      };
+
+      await upsertStudentAcademicProfile(profile);
+      res.json({ status: 'success', exam: profile.upcoming_exams[idx], exams: profile.upcoming_exams });
+    } catch (err: any) {
+      console.error('Error updating exam:', err);
+      res.status(500).json({ error: 'Failed to update exam: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.delete('/api/exams/:id', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const examId = req.params.id;
+
+      const profile = await getStudentAcademicProfile(targetUserId);
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      profile.upcoming_exams = profile.upcoming_exams.filter(e => e.id !== examId);
+      await upsertStudentAcademicProfile(profile);
+      res.json({ status: 'success', message: 'Exam deleted successfully', exams: profile.upcoming_exams });
+    } catch (err: any) {
+      console.error('Error deleting exam:', err);
+      res.status(500).json({ error: 'Failed to delete exam' });
+    }
+  });
+
+  // -------------------------------------------------------------
+  // CORE WORKFLOW 3: LEARN & PRACTICE (THEORY + 30-QUESTION QUIZ)
+  // -------------------------------------------------------------
+  app.get('/api/learn/topic', async (req, res) => {
+    try {
+      const topic = req.query.topic as string;
+      if (!topic || topic.trim().length === 0) {
+        return res.status(400).json({ error: 'Query parameter "topic" is required.' });
+      }
+
+      const courseContext = (req.query.courseContext as string) || 'Computer Science / Engineering';
+      const learningModule = await getOrGenerateTopicModule(topic.trim(), courseContext);
+
+      // Return questions without disclosing correctAnswer if client requests blind exam mode
+      const isBlind = req.query.blind === 'true';
+      const safeQuestions = learningModule.questions.map(q => ({
+        id: q.id,
+        question: q.question,
+        options: q.options,
+        difficulty: q.difficulty,
+        category: q.category,
+        ...(isBlind ? {} : { correctAnswer: q.correctAnswer, explanation: q.explanation })
+      }));
+
+      res.json({
+        status: 'success',
+        topic: learningModule.topic,
+        topicTitle: learningModule.topicTitle,
+        theory: learningModule.theory,
+        questionsCount: learningModule.questions.length,
+        questions: safeQuestions,
+        source: learningModule.source
+      });
+    } catch (err: any) {
+      console.error('Error fetching topic learning module:', err);
+      res.status(500).json({ error: 'Failed to generate topic module: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.post('/api/learn/submit-quiz', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const { topic, answers, time_spent_seconds } = req.body;
+
+      if (!topic || typeof topic !== 'string') {
+        return res.status(400).json({ error: 'Topic name is required.' });
+      }
+
+      if (!Array.isArray(answers) || answers.length !== 30) {
+        return res.status(400).json({ error: 'Answers must contain exactly 30 entries (0, 1, 2, 3 or null).' });
+      }
+
+      // Fetch official module to evaluate actual responses against truth
+      const moduleData = await getOrGenerateTopicModule(topic);
+      const questions = moduleData.questions;
+
+      let correctCount = 0;
+      let incorrectCount = 0;
+      let unansweredCount = 0;
+
+      const questionReview = questions.map((q, idx) => {
+        const studentAns = answers[idx];
+        const isAnswered = studentAns !== null && studentAns !== undefined && [0, 1, 2, 3].includes(studentAns);
+        const isCorrect = isAnswered && studentAns === q.correctAnswer;
+
+        if (!isAnswered) {
+          unansweredCount++;
+        } else if (isCorrect) {
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+
+        return {
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          studentAnswer: isAnswered ? studentAns : null,
+          correctAnswer: q.correctAnswer,
+          isCorrect,
+          explanation: q.explanation,
+          difficulty: q.difficulty,
+          category: q.category
+        };
+      });
+
+      const percentage = Number(((correctCount / 30) * 100).toFixed(1));
+
+      // Calculate difficulty breakdown
+      const difficultyBreakdown = {
+        easy: { total: 0, correct: 0 },
+        medium: { total: 0, correct: 0 },
+        hard: { total: 0, correct: 0 }
+      };
+
+      questionReview.forEach(q => {
+        const d = (q.difficulty.toLowerCase() as 'easy' | 'medium' | 'hard') || 'medium';
+        if (difficultyBreakdown[d]) {
+          difficultyBreakdown[d].total++;
+          if (q.isCorrect) difficultyBreakdown[d].correct++;
+        }
+      });
+
+      // Save attempt in database
+      const attemptId = await saveQuizAttempt({
+        user_id: targetUserId,
+        topic: moduleData.topicTitle || topic,
+        score: correctCount,
+        total_questions: 30,
+        percentage,
+        answers,
+        questions: questionReview,
+        time_spent_seconds: Number(time_spent_seconds) || 0,
+        completed_at: new Date().toISOString()
+      });
+
+      // Generate actionable revision feedback based on genuine mistakes
+      const incorrectQuestions = questionReview.filter(q => !q.isCorrect);
+      const weakSubcategories = Array.from(new Set(incorrectQuestions.map(q => q.category)));
+
+      let masteryVerdict: string;
+      if (percentage >= 85) masteryVerdict = 'Mastery Demonstrated — Outstanding Performance!';
+      else if (percentage >= 70) masteryVerdict = 'Good Understanding — Minor Revision Needed';
+      else if (percentage >= 50) masteryVerdict = 'Moderate Grasp — Key Concepts Require Review';
+      else masteryVerdict = 'Foundational Gap Detected — Recommend Re-reading Theory';
+
+      res.json({
+        status: 'success',
+        attempt_id: attemptId,
+        topic: moduleData.topicTitle || topic,
+        score: correctCount,
+        total_questions: 30,
+        percentage,
+        correct_count: correctCount,
+        incorrect_count: incorrectCount,
+        unanswered_count: unansweredCount,
+        mastery_verdict: masteryVerdict,
+        difficulty_breakdown: difficultyBreakdown,
+        weak_categories: weakSubcategories,
+        detailed_review: questionReview,
+        recommended_action: {
+          review_mistakes: `Review the ${incorrectCount} questions you answered incorrectly, particularly in ${weakSubcategories.slice(0, 2).join(' & ')}.`,
+          next_step: percentage < 70 ? 'Re-read the fundamental definitions and retake the quiz to verify improvement.' : 'Well done! Move on to your next examination syllabus topic.'
+        }
+      });
+    } catch (err: any) {
+      console.error('Error evaluating quiz submission:', err);
+      res.status(500).json({ error: 'Failed to process quiz submission: ' + (err?.message || 'Internal error') });
+    }
+  });
+
+  app.get('/api/learn/attempts', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const targetUserId = user ? user.id : 'demo-student';
+      const attempts = await getQuizAttempts(targetUserId, 20);
+      res.json({ status: 'success', attempts });
+    } catch (err: any) {
+      console.error('Error fetching quiz attempts:', err);
+      res.status(500).json({ error: 'Failed to retrieve quiz attempts' });
+    }
   });
 
   // 2. Course catalogue

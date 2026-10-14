@@ -22,13 +22,15 @@ interface HeaderProps {
   onNavigate: (section: SectionId) => void;
   onOpenMobileMenu: () => void;
   studentName?: string;
+  onOpenProfileSetup?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentSection,
   onNavigate,
   onOpenMobileMenu,
-  studentName
+  studentName,
+  onOpenProfileSetup
 }) => {
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
   const { theme } = useTheme();
@@ -50,16 +52,19 @@ export const Header: React.FC<HeaderProps> = ({
   const sectionTitles: Record<SectionId, string> = {
     home: 'Public Home Page',
     login: 'Student Sign In & Portal',
-    dashboard: 'Dashboard Overview',
-    predict: 'Student Assessment & Predictor',
-    whatif: 'What-If Scenario Simulator',
+    analysis: 'Academic Analysis & Trajectory',
+    scheduler: 'Exam Scheduler & Study Planner',
+    learn: 'Learn & Practice Studio',
+    dashboard: 'Academic Analysis & Trajectory',
+    predict: 'Academic Assessment & Predictor',
+    whatif: 'What-If Sensitivity Simulator',
     students: 'Students Directory',
     progress: 'Academic Progress Trajectory',
-    subjects: 'Subject-Wise Diagnostics',
-    planner: 'AI Exam Scheduler & Study Planner',
+    subjects: 'Subject Diagnostics',
+    planner: 'Exam Scheduler & Timetable',
     roadmap: 'Academic Learning Roadmap',
-    courses: 'Verified Course Recommendations',
-    counselor: 'AI Academic Counselor',
+    courses: 'Verified Curricula',
+    counselor: 'AI Academic Coach',
     readiness: 'Examination Readiness Index',
     goals: 'Goals & Achievements',
     history: 'Prediction History Logs',
@@ -83,8 +88,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header
       className={`py-2 sm:py-2.5 shrink-0 sticky top-0 z-20 transition-colors border-b backdrop-blur-md ${
         isLight
-          ? 'bg-white/95 border-slate-200 text-slate-900 shadow-xs'
-          : 'bg-[#111827]/95 border-slate-800 text-slate-100 shadow-xs'
+          ? 'bg-white/95 border-[#E1E6EF] text-[#172033] shadow-xs'
+          : 'bg-[#131926]/95 border-[#1E2B42] text-[#F7F8FC] shadow-xs'
       }`}
     >
       <div className="site-container flex items-center justify-between gap-2 sm:gap-3 w-full">
@@ -94,8 +99,8 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onOpenMobileMenu}
             className={`md:hidden p-1.5 rounded-xl border transition shrink-0 min-h-[38px] min-w-[38px] flex items-center justify-center cursor-pointer ${
               isLight
-                ? 'text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border-slate-300'
-                : 'text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border-slate-700'
+                ? 'text-[#526078] hover:text-[#172033] bg-[#F0F3F9] hover:bg-[#E1E6EF] border-[#CBD3E1]'
+                : 'text-slate-300 hover:text-white bg-[#182236] hover:bg-[#1F2C46] border-[#2D3E5E]'
             }`}
             aria-label="Open navigation menu"
           >
@@ -106,35 +111,41 @@ export const Header: React.FC<HeaderProps> = ({
           <nav
             aria-label="Breadcrumb"
             className={`flex items-center text-xs gap-1 sm:gap-1.5 font-medium min-w-0 ${
-              isLight ? 'text-slate-600' : 'text-slate-300'
+              isLight ? 'text-[#526078]' : 'text-slate-300'
             }`}
           >
             <button
               onClick={() => onNavigate('home')}
               className={`transition font-semibold flex items-center gap-1 cursor-pointer shrink-0 ${
-                isLight ? 'text-slate-900 hover:text-purple-700' : 'text-slate-100 hover:text-purple-300'
+                isLight ? 'text-[#172033] hover:text-[#7000E8]' : 'text-slate-100 hover:text-[#C4B5FD]'
               }`}
               title="Return to Public Home Page"
             >
               <Home className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Home</span>
             </button>
-            <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+            <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-[#667085]' : 'text-slate-500'}`} />
             <button
               onClick={() => onNavigate('dashboard')}
-              className={`transition font-semibold hidden sm:inline shrink-0 ${
-                isLight ? 'text-slate-700 hover:text-slate-900' : 'text-slate-300 hover:text-white'
+              className={`transition font-semibold hidden sm:inline-flex items-center gap-1.5 shrink-0 ${
+                isLight ? 'text-[#526078] hover:text-[#172033]' : 'text-slate-300 hover:text-white'
               }`}
             >
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI"
+                className="w-4 h-4 rounded-full object-cover shrink-0"
+                referrerPolicy="no-referrer"
+              />
               EduPredict AI
             </button>
-            <ChevronRight className={`w-3.5 h-3.5 hidden sm:inline shrink-0 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+            <ChevronRight className={`w-3.5 h-3.5 hidden sm:inline shrink-0 ${isLight ? 'text-[#667085]' : 'text-slate-500'}`} />
             <span
               className={`font-bold truncate max-w-[130px] sm:max-w-none ${
-                isLight ? 'text-purple-700' : 'text-purple-300'
+                isLight ? 'text-[#7000E8]' : 'text-[#C4B5FD]'
               }`}
             >
-              {sectionTitles[currentSection] || 'Dashboard'}
+              {sectionTitles[currentSection] || 'Academic Analysis'}
             </span>
           </nav>
         </div>
@@ -148,12 +159,12 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => onNavigate('home')}
             className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-xl border transition cursor-pointer ${
               isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border-slate-700'
+                ? 'bg-[#F0F3F9] hover:bg-[#E1E6EF] text-[#172033] border-[#CBD3E1]'
+                : 'bg-[#182236] hover:bg-[#1F2C46] text-slate-100 border-[#2D3E5E]'
             }`}
             title="Return to Public Website"
           >
-            <Globe className={`w-3.5 h-3.5 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
+            <Globe className={`w-3.5 h-3.5 ${isLight ? 'text-[#7000E8]' : 'text-[#C4B5FD]'}`} />
             <span className="hidden md:inline">Public Website</span>
           </button>
 
@@ -161,22 +172,47 @@ export const Header: React.FC<HeaderProps> = ({
           <div
             className={`hidden xl:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl font-semibold border ${
               isLight
-                ? 'bg-slate-100 text-slate-700 border-slate-200'
-                : 'text-slate-300 bg-slate-800/80 border-slate-700'
+                ? 'bg-[#F0F3F9] text-[#526078] border-[#E1E6EF]'
+                : 'text-slate-300 bg-[#182236] border-[#1E2B42]'
             }`}
           >
-            <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
+            <Calendar className={`w-3.5 h-3.5 ${isLight ? 'text-[#7000E8]' : 'text-[#C4B5FD]'}`} />
             <span>AY 2024–2025</span>
           </div>
 
-          {/* New Prediction Shortcut */}
-          <button
-            onClick={() => onNavigate('predict')}
-            className="btn-primary text-xs !py-1.5 !px-3.5 gap-1.5 hidden sm:inline-flex"
-          >
-            <Plus className="w-3.5 h-3.5 text-white" />
-            <span className="text-white">New Prediction</span>
-          </button>
+          {/* 3 Core Workflow Navigation Controls */}
+          <div className="hidden lg:flex items-center gap-1 p-1 rounded-xl bg-[#F0F3F9] dark:bg-[#182236] border border-[#E1E6EF] dark:border-[#1E2B42] text-xs font-semibold">
+            <button
+              onClick={() => onNavigate('analysis')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                ['analysis', 'dashboard', 'predict', 'whatif', 'subjects', 'progress'].includes(currentSection)
+                  ? 'bg-[#7000E8] text-white shadow-xs font-bold'
+                  : 'text-[#526078] dark:text-slate-300 hover:text-[#172033] dark:hover:text-white hover:bg-white dark:hover:bg-[#131926]'
+              }`}
+            >
+              Academic Analysis
+            </button>
+            <button
+              onClick={() => onNavigate('scheduler')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                ['scheduler', 'planner', 'readiness'].includes(currentSection)
+                  ? 'bg-[#7000E8] text-white shadow-xs font-bold'
+                  : 'text-[#526078] dark:text-slate-300 hover:text-[#172033] dark:hover:text-white hover:bg-white dark:hover:bg-[#131926]'
+              }`}
+            >
+              Exam Scheduler
+            </button>
+            <button
+              onClick={() => onNavigate('learn')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                ['learn', 'courses', 'counselor', 'roadmap'].includes(currentSection)
+                  ? 'bg-[#7000E8] text-white shadow-xs font-bold'
+                  : 'text-[#526078] dark:text-slate-300 hover:text-[#172033] dark:hover:text-white hover:bg-white dark:hover:bg-[#131926]'
+              }`}
+            >
+              Learn &amp; Practice
+            </button>
+          </div>
 
           {/* Authenticated User Menu or Sign In Button */}
           {isAuthenticated ? (
@@ -185,8 +221,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className={`flex items-center gap-2 p-1 pl-2 rounded-xl border transition cursor-pointer min-h-[36px] ${
                   isLight
-                    ? 'border-slate-300 bg-white hover:bg-slate-100'
-                    : 'border-slate-700 bg-slate-800/90 hover:bg-slate-700'
+                    ? 'border-[#CBD3E1] bg-white hover:bg-[#F0F3F9]'
+                    : 'border-[#2D3E5E] bg-[#182236] hover:bg-[#1F2C46]'
                 }`}
                 aria-expanded={isUserMenuOpen}
                 aria-haspopup="true"
@@ -194,14 +230,14 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="text-left hidden md:block">
                   <span
                     className={`block text-xs font-bold truncate max-w-[120px] ${
-                      isLight ? 'text-slate-900' : 'text-white'
+                      isLight ? 'text-[#172033]' : 'text-[#F7F8FC]'
                     }`}
                   >
                     {displayName}
                   </span>
                   <span
                     className={`block text-[10px] font-medium capitalize ${
-                      isLight ? 'text-slate-600' : 'text-slate-300'
+                      isLight ? 'text-[#526078]' : 'text-slate-300'
                     }`}
                   >
                     {user?.education_level || 'Student'}
@@ -212,40 +248,40 @@ export const Header: React.FC<HeaderProps> = ({
                   <img
                     src={user.picture}
                     alt={displayName}
-                    className="w-7 h-7 rounded-lg object-cover ring-1 ring-purple-600/40"
+                    className="w-7 h-7 rounded-lg object-cover ring-1 ring-[#7000E8]/40"
                   />
                 ) : (
                   <div
-                    className="w-7 h-7 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs bg-purple-700"
+                    className="w-7 h-7 rounded-lg text-white flex items-center justify-center font-bold text-xs shadow-xs bg-[#7000E8]"
                   >
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
 
-                <ChevronDown className={`w-3.5 h-3.5 mr-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`} />
+                <ChevronDown className={`w-3.5 h-3.5 mr-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-300'}`} />
               </button>
 
               {/* User Dropdown */}
               {isUserMenuOpen && (
                 <div
-                  className={`absolute right-0 mt-2 w-64 rounded-2xl border shadow-2xl py-2 z-50 text-xs animate-in fade-in ${
+                  className={`absolute right-0 mt-2 w-64 rounded-2xl border shadow-xl py-2 z-50 text-xs animate-in fade-in ${
                     isLight
-                      ? 'bg-white border-slate-200 text-slate-900'
-                      : 'bg-[#161F33] border-slate-700 text-slate-100'
+                      ? 'bg-white border-[#E1E6EF] text-[#172033]'
+                      : 'bg-[#131926] border-[#1E2B42] text-[#F7F8FC]'
                   }`}
                 >
-                  <div className={`px-4 py-2.5 border-b ${isLight ? 'border-slate-200' : 'border-slate-700'}`}>
-                    <p className={`font-bold truncate text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <div className={`px-4 py-2.5 border-b ${isLight ? 'border-[#E1E6EF]' : 'border-[#1E2B42]'}`}>
+                    <p className={`font-bold truncate text-sm ${isLight ? 'text-[#172033]' : 'text-white'}`}>
                       {displayName}
                     </p>
-                    <p className={`text-xs truncate mt-0.5 font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    <p className={`text-xs truncate mt-0.5 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
                       {displayEmail}
                     </p>
                     <div
                       className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${
                         isLight
-                          ? 'bg-purple-50 text-purple-800 border-purple-200'
-                          : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                          ? 'bg-[#EEE7FF] text-[#7000E8] border-[#D1B8FC]'
+                          : 'bg-[#7000E8]/20 text-[#C4B5FD] border-[#8E30FF]/40'
                       }`}
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
@@ -257,25 +293,80 @@ export const Header: React.FC<HeaderProps> = ({
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
+                        onNavigate('analysis');
+                      }}
+                      className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
+                        isLight
+                          ? 'hover:bg-[#F0F3F9] text-[#526078] hover:text-[#172033]'
+                          : 'hover:bg-[#182236] text-slate-200 hover:text-white'
+                      }`}
+                    >
+                      <span>Academic Analysis</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onNavigate('scheduler');
+                      }}
+                      className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
+                        isLight
+                          ? 'hover:bg-[#F0F3F9] text-[#526078] hover:text-[#172033]'
+                          : 'hover:bg-[#182236] text-slate-200 hover:text-white'
+                      }`}
+                    >
+                      <span>Exam Scheduler</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onNavigate('learn');
+                      }}
+                      className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
+                        isLight
+                          ? 'hover:bg-[#F0F3F9] text-[#526078] hover:text-[#172033]'
+                          : 'hover:bg-[#182236] text-slate-200 hover:text-white'
+                      }`}
+                    >
+                      <span>Learn &amp; Practice</span>
+                    </button>
+                    {onOpenProfileSetup && (
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          onOpenProfileSetup();
+                        }}
+                        className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
+                          isLight
+                            ? 'hover:bg-[#EEE7FF] text-[#7000E8]'
+                            : 'hover:bg-[#7000E8]/20 text-[#C4B5FD]'
+                        }`}
+                      >
+                        <ShieldCheck className="w-4 h-4 text-[#7000E8] dark:text-[#C4B5FD]" />
+                        <span>Academic Onboarding (5-Step)</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
                         onNavigate('settings');
                       }}
                       className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
                         isLight
-                          ? 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
-                          : 'hover:bg-slate-800 text-slate-200 hover:text-white'
+                          ? 'hover:bg-[#F0F3F9] text-[#526078] hover:text-[#172033]'
+                          : 'hover:bg-[#182236] text-slate-200 hover:text-white'
                       }`}
                     >
-                      <Settings className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span>Profile & Academic Settings</span>
+                      <Settings className="w-4 h-4 text-[#7000E8] dark:text-[#C4B5FD]" />
+                      <span>Profile &amp; Academic Settings</span>
                     </button>
                   </div>
 
-                  <div className={`pt-1 border-t ${isLight ? 'border-slate-200' : 'border-slate-700'}`}>
+                  <div className={`pt-1 border-t ${isLight ? 'border-[#E1E6EF]' : 'border-[#1E2B42]'}`}>
                     <button
                       onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 hover:bg-rose-500/10 flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold cursor-pointer"
+                      className="w-full text-left px-4 py-2 hover:bg-[#FEECEC] dark:hover:bg-[rgba(180,35,24,0.15)] flex items-center gap-2 text-[#B42318] dark:text-[#FCA5A5] font-semibold cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                      <LogOut className="w-4 h-4 text-[#B42318] dark:text-[#FCA5A5]" />
                       <span>Sign Out</span>
                     </button>
                   </div>

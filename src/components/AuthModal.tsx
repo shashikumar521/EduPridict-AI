@@ -235,8 +235,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 flex items-center justify-center text-white font-extrabold shadow-md shadow-purple-600/25 shrink-0">
-              <GraduationCap className="w-6 h-6 text-white" />
+            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-md shrink-0 bg-[#0B132B] flex items-center justify-center border border-teal-500/30">
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI Logo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">

@@ -152,14 +152,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             onClick={() => onNavigateToDashboard('home')}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none text-left min-w-0 shrink-0"
           >
-            <div
-              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-white flex items-center justify-center font-extrabold shadow-lg transition shrink-0 ${
-                isLight
-                  ? 'bg-gradient-to-tr from-[#8000E8] via-[#8000E8] to-[#633BFF] shadow-[#8000E8]/25 group-hover:shadow-[#8000E8]/40'
-                  : 'bg-gradient-to-tr from-[#8000E8] to-[#633BFF] shadow-[#8000E8]/30 group-hover:shadow-[#8000E8]/45'
-              }`}
-            >
-              <GraduationCap className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-lg transition shrink-0 bg-[#0B132B] flex items-center justify-center border border-teal-500/30 group-hover:scale-105">
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI Logo"
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <div className="flex flex-col justify-center text-left leading-tight min-w-0">
               <span

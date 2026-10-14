@@ -6,15 +6,27 @@ export const AboutView: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold mb-2">
-          Platform Architecture &amp; Ethics
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-[#0B132B] flex items-center justify-center border border-teal-500/30 shadow-md shrink-0">
+            <img
+              src="/edupredict-ai-logo.png"
+              alt="EduPredict AI Logo"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold mb-1.5">
+              Platform Architecture &amp; Ethics
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              About EduPredict AI
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-3xl leading-relaxed font-medium">
+              Mission, multi-level supervised machine learning methodology, datasets, verified course integrations, and responsible academic governance.
+            </p>
+          </div>
         </div>
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          About EduPredict AI
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-3xl leading-relaxed font-medium">
-          Mission, multi-level supervised machine learning methodology, datasets, verified course integrations, and responsible academic governance.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

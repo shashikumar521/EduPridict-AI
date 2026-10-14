@@ -773,3 +773,138 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   }
   return res.json();
 }
+
+// -------------------------------------------------------------
+// CORE WORKFLOW 1: ACADEMIC PROFILE & ANALYSIS
+// -------------------------------------------------------------
+export async function fetchAcademicProfile(): Promise<{ status: string; profile: any }> {
+  const res = await fetch(`${API_BASE}/academic-profile`, { headers: getAuthHeaders() });
+  if (!res.ok) {
+    throw new Error('Failed to load academic profile');
+  }
+  return res.json();
+}
+
+export async function saveAcademicProfile(profile: any): Promise<{ status: string; profile: any }> {
+  const res = await fetch(`${API_BASE}/academic-profile`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(profile)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to save academic profile');
+  }
+  return res.json();
+}
+
+export async function fetchAcademicAnalysis(): Promise<any> {
+  const res = await fetch(`${API_BASE}/academic-analysis`, { headers: getAuthHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to generate academic analysis');
+  }
+  return res.json();
+}
+
+// -------------------------------------------------------------
+// CORE WORKFLOW 2: EXAMS MANAGEMENT
+// -------------------------------------------------------------
+export async function fetchExamsList(): Promise<{ status: string; exams: any[] }> {
+  const res = await fetch(`${API_BASE}/exams`, { headers: getAuthHeaders() });
+  if (!res.ok) {
+    throw new Error('Failed to load exams');
+  }
+  return res.json();
+}
+
+export async function createExamRecord(examData: {
+  subject_name: string;
+  exam_date: string;
+  exam_time?: string;
+  priority?: string;
+  syllabus_completion_percent?: number;
+  notes?: string;
+}): Promise<{ status: string; exam: any; exams: any[] }> {
+  const res = await fetch(`${API_BASE}/exams`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(examData)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create exam');
+  }
+  return res.json();
+}
+
+export async function updateExamRecord(examId: string, updates: any): Promise<{ status: string; exam: any; exams: any[] }> {
+  const res = await fetch(`${API_BASE}/exams/${encodeURIComponent(examId)}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update exam');
+  }
+  return res.json();
+}
+
+export async function deleteExamRecord(examId: string): Promise<{ status: string; message: string; exams: any[] }> {
+  const res = await fetch(`${API_BASE}/exams/${encodeURIComponent(examId)}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to delete exam');
+  }
+  return res.json();
+}
+
+// -------------------------------------------------------------
+// CORE WORKFLOW 3: LEARN & PRACTICE (THEORY & 30-QUESTION QUIZZES)
+// -------------------------------------------------------------
+export async function fetchLearnTopic(topic: string, courseContext?: string, blind = false): Promise<{
+  status: string;
+  topic: string;
+  topicTitle: string;
+  theory: any;
+  questionsCount: number;
+  questions: any[];
+  source: string;
+}> {
+  const params = new URLSearchParams({ topic });
+  if (courseContext) params.append('courseContext', courseContext);
+  if (blind) params.append('blind', 'true');
+
+  const res = await fetch(`${API_BASE}/learn/topic?${params.toString()}`);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to retrieve topic theory & quiz');
+  }
+  return res.json();
+}
+
+export async function submitLearnQuiz(topic: string, answers: (number | null)[], timeSpentSeconds = 0): Promise<any> {
+  const res = await fetch(`${API_BASE}/learn/submit-quiz`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ topic, answers, time_spent_seconds: timeSpentSeconds })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to evaluate quiz submission');
+  }
+  return res.json();
+}
+
+export async function fetchQuizAttempts(): Promise<{ status: string; attempts: any[] }> {
+  const res = await fetch(`${API_BASE}/learn/attempts`, { headers: getAuthHeaders() });
+  if (!res.ok) {
+    throw new Error('Failed to load past quiz attempts');
+  }
+  return res.json();
+}
+

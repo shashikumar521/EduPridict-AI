@@ -41,8 +41,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (body) {
           body.classList.add('dark');
           body.classList.remove('light');
-          body.style.backgroundColor = '#090a0f';
-          body.style.color = '#f4f4f5';
+          body.style.backgroundColor = '#0C101A';
+          body.style.color = '#F7F8FC';
         }
       } else {
         root.classList.remove('dark');
@@ -51,8 +51,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (body) {
           body.classList.remove('dark');
           body.classList.add('light');
-          body.style.backgroundColor = '#F7F9FC';
-          body.style.color = '#11182E';
+          body.style.backgroundColor = '#F7F8FC';
+          body.style.color = '#172033';
         }
       }
       try {

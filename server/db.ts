@@ -372,6 +372,56 @@ export async function getDb(): Promise<Database> {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS student_academic_profiles (
+      user_id TEXT PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      institution TEXT DEFAULT '',
+      course_degree TEXT DEFAULT '',
+      department_branch TEXT DEFAULT '',
+      academic_year TEXT DEFAULT '',
+      semester TEXT DEFAULT '',
+      grading_system TEXT DEFAULT 'percentage',
+      preferred_language TEXT DEFAULT 'English',
+      subjects_json TEXT NOT NULL DEFAULT '[]',
+      overall_attendance REAL DEFAULT 0,
+      daily_study_hours_weekday REAL DEFAULT 3,
+      daily_study_hours_weekend REAL DEFAULT 5,
+      upcoming_exams_json TEXT NOT NULL DEFAULT '[]',
+      weak_topics_json TEXT NOT NULL DEFAULT '[]',
+      target_goals_json TEXT NOT NULL DEFAULT '[]',
+      onboarding_completed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS quiz_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      topic TEXT NOT NULL,
+      score INTEGER NOT NULL,
+      total_questions INTEGER NOT NULL DEFAULT 30,
+      percentage REAL NOT NULL,
+      answers_json TEXT NOT NULL,
+      questions_json TEXT NOT NULL,
+      time_spent_seconds INTEGER DEFAULT 0,
+      completed_at TEXT NOT NULL
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS topic_modules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      topic_normalized TEXT UNIQUE,
+      topic_title TEXT NOT NULL,
+      theory_json TEXT NOT NULL,
+      questions_json TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+  `);
+
   // Seed default students if empty
   const countResult = db.exec("SELECT COUNT(*) as count FROM students");
   const count = countResult[0]?.values[0]?.[0] as number || 0;
@@ -1395,6 +1445,286 @@ export async function updateExamPlanFullDays(
 export async function deleteExamStudyPlan(planId: number): Promise<void> {
   const db = await getDb();
   db.run("DELETE FROM exam_study_plans WHERE id = ?", [planId]);
+  saveDbToFile(db);
+}
+
+// -------------------------------------------------------------
+// STUDENT COMPLETE ACADEMIC PROFILES
+// -------------------------------------------------------------
+export interface SubjectScoreItem {
+  id: string;
+  name: string;
+  marks_obtained: number;
+  max_marks: number;
+  percentage: number;
+  previous_marks?: number;
+  internal_marks?: number;
+  assignment_marks?: number;
+  practical_marks?: number;
+  attendance_percent?: number;
+  difficult_topics?: string[];
+  topics_to_improve?: string[];
+}
+
+export interface UpcomingExamItem {
+  id: string;
+  subject_name: string;
+  exam_date: string; // YYYY-MM-DD
+  exam_time?: string;
+  priority: 'high' | 'medium' | 'low';
+  syllabus_completion_percent: number;
+  notes?: string;
+  status: 'upcoming' | 'completed';
+}
+
+export interface StudentAcademicProfile {
+  user_id: string;
+  full_name: string;
+  institution: string;
+  course_degree: string;
+  department_branch: string;
+  academic_year: string;
+  semester: string;
+  grading_system: 'percentage' | 'gpa_10' | 'gpa_4' | 'letter';
+  preferred_language: string;
+  subjects: SubjectScoreItem[];
+  overall_attendance: number;
+  daily_study_hours_weekday: number;
+  daily_study_hours_weekend: number;
+  upcoming_exams: UpcomingExamItem[];
+  weak_topics: string[];
+  target_goals: string[];
+  onboarding_completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getStudentAcademicProfile(userId: string): Promise<StudentAcademicProfile | null> {
+  const db = await getDb();
+  const res = db.exec("SELECT * FROM student_academic_profiles WHERE user_id = ?", [userId]);
+  if (!res || res.length === 0 || !res[0].values || res[0].values.length === 0) {
+    return null;
+  }
+  const row = res[0].values[0];
+  const cols = res[0].columns;
+  const get = (col: string) => row[cols.indexOf(col)];
+
+  return {
+    user_id: String(get('user_id')),
+    full_name: String(get('full_name') || ''),
+    institution: String(get('institution') || ''),
+    course_degree: String(get('course_degree') || ''),
+    department_branch: String(get('department_branch') || ''),
+    academic_year: String(get('academic_year') || ''),
+    semester: String(get('semester') || ''),
+    grading_system: (get('grading_system') as any) || 'percentage',
+    preferred_language: String(get('preferred_language') || 'English'),
+    subjects: JSON.parse(String(get('subjects_json') || '[]')),
+    overall_attendance: Number(get('overall_attendance') || 0),
+    daily_study_hours_weekday: Number(get('daily_study_hours_weekday') || 3),
+    daily_study_hours_weekend: Number(get('daily_study_hours_weekend') || 5),
+    upcoming_exams: JSON.parse(String(get('upcoming_exams_json') || '[]')),
+    weak_topics: JSON.parse(String(get('weak_topics_json') || '[]')),
+    target_goals: JSON.parse(String(get('target_goals_json') || '[]')),
+    onboarding_completed: Boolean(Number(get('onboarding_completed') || 0)),
+    created_at: String(get('created_at')),
+    updated_at: String(get('updated_at'))
+  };
+}
+
+export async function upsertStudentAcademicProfile(
+  data: Partial<StudentAcademicProfile> & { user_id: string; full_name: string }
+): Promise<StudentAcademicProfile> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const existing = await getStudentAcademicProfile(data.user_id);
+
+  const subjects = data.subjects || (existing ? existing.subjects : []);
+  // Calculate normalized overall attendance if subjects have attendance
+  let overallAttendance = data.overall_attendance ?? (existing ? existing.overall_attendance : 75);
+  if (subjects.length > 0) {
+    const withAtt = subjects.filter(s => typeof s.attendance_percent === 'number');
+    if (withAtt.length > 0) {
+      const avg = withAtt.reduce((sum, s) => sum + (s.attendance_percent || 0), 0) / withAtt.length;
+      overallAttendance = Number(avg.toFixed(1));
+    }
+  }
+
+  const profile: StudentAcademicProfile = {
+    user_id: data.user_id,
+    full_name: data.full_name || (existing ? existing.full_name : 'Student'),
+    institution: data.institution ?? (existing ? existing.institution : ''),
+    course_degree: data.course_degree ?? (existing ? existing.course_degree : 'B.Tech'),
+    department_branch: data.department_branch ?? (existing ? existing.department_branch : 'Computer Science'),
+    academic_year: data.academic_year ?? (existing ? existing.academic_year : 'Year 2'),
+    semester: data.semester ?? (existing ? existing.semester : 'Semester 4'),
+    grading_system: data.grading_system ?? (existing ? existing.grading_system : 'percentage'),
+    preferred_language: data.preferred_language ?? (existing ? existing.preferred_language : 'English'),
+    subjects,
+    overall_attendance: overallAttendance,
+    daily_study_hours_weekday: data.daily_study_hours_weekday ?? (existing ? existing.daily_study_hours_weekday : 3),
+    daily_study_hours_weekend: data.daily_study_hours_weekend ?? (existing ? existing.daily_study_hours_weekend : 5),
+    upcoming_exams: data.upcoming_exams ?? (existing ? existing.upcoming_exams : []),
+    weak_topics: data.weak_topics ?? (existing ? existing.weak_topics : []),
+    target_goals: data.target_goals ?? (existing ? existing.target_goals : []),
+    onboarding_completed: data.onboarding_completed ?? (existing ? existing.onboarding_completed : true),
+    created_at: existing ? existing.created_at : now,
+    updated_at: now
+  };
+
+  db.run(
+    `INSERT INTO student_academic_profiles (
+      user_id, full_name, institution, course_degree, department_branch, academic_year, semester,
+      grading_system, preferred_language, subjects_json, overall_attendance,
+      daily_study_hours_weekday, daily_study_hours_weekend, upcoming_exams_json,
+      weak_topics_json, target_goals_json, onboarding_completed, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      full_name = excluded.full_name,
+      institution = excluded.institution,
+      course_degree = excluded.course_degree,
+      department_branch = excluded.department_branch,
+      academic_year = excluded.academic_year,
+      semester = excluded.semester,
+      grading_system = excluded.grading_system,
+      preferred_language = excluded.preferred_language,
+      subjects_json = excluded.subjects_json,
+      overall_attendance = excluded.overall_attendance,
+      daily_study_hours_weekday = excluded.daily_study_hours_weekday,
+      daily_study_hours_weekend = excluded.daily_study_hours_weekend,
+      upcoming_exams_json = excluded.upcoming_exams_json,
+      weak_topics_json = excluded.weak_topics_json,
+      target_goals_json = excluded.target_goals_json,
+      onboarding_completed = excluded.onboarding_completed,
+      updated_at = excluded.updated_at`,
+    [
+      profile.user_id,
+      profile.full_name,
+      profile.institution,
+      profile.course_degree,
+      profile.department_branch,
+      profile.academic_year,
+      profile.semester,
+      profile.grading_system,
+      profile.preferred_language,
+      JSON.stringify(profile.subjects),
+      profile.overall_attendance,
+      profile.daily_study_hours_weekday,
+      profile.daily_study_hours_weekend,
+      JSON.stringify(profile.upcoming_exams),
+      JSON.stringify(profile.weak_topics),
+      JSON.stringify(profile.target_goals),
+      profile.onboarding_completed ? 1 : 0,
+      profile.created_at,
+      profile.updated_at
+    ]
+  );
+
+  saveDbToFile(db);
+  return profile;
+}
+
+// -------------------------------------------------------------
+// LEARN & PRACTICE: QUIZ ATTEMPTS & MODULE CACHE
+// -------------------------------------------------------------
+export interface QuizAttemptRecord {
+  id?: number;
+  user_id: string;
+  topic: string;
+  score: number;
+  total_questions: number;
+  percentage: number;
+  answers: number[];
+  questions: any[];
+  time_spent_seconds: number;
+  completed_at: string;
+}
+
+export async function saveQuizAttempt(attempt: QuizAttemptRecord): Promise<number> {
+  const db = await getDb();
+  const now = attempt.completed_at || new Date().toISOString();
+
+  db.run(
+    `INSERT INTO quiz_attempts (
+      user_id, topic, score, total_questions, percentage, answers_json, questions_json, time_spent_seconds, completed_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      attempt.user_id,
+      attempt.topic,
+      attempt.score,
+      attempt.total_questions || 30,
+      attempt.percentage,
+      JSON.stringify(attempt.answers),
+      JSON.stringify(attempt.questions),
+      attempt.time_spent_seconds || 0,
+      now
+    ]
+  );
+
+  const res = db.exec("SELECT last_insert_rowid() as id");
+  const insertId = res[0]?.values[0]?.[0] as number || 1;
+  saveDbToFile(db);
+  return insertId;
+}
+
+export async function getQuizAttempts(userId: string, limit = 20): Promise<QuizAttemptRecord[]> {
+  const db = await getDb();
+  const res = db.exec(
+    "SELECT * FROM quiz_attempts WHERE user_id = ? ORDER BY completed_at DESC LIMIT ?",
+    [userId, limit]
+  );
+
+  if (!res || res.length === 0 || !res[0].values) return [];
+  const cols = res[0].columns;
+
+  return res[0].values.map(row => {
+    const get = (c: string) => row[cols.indexOf(c)];
+    return {
+      id: Number(get('id')),
+      user_id: String(get('user_id')),
+      topic: String(get('topic')),
+      score: Number(get('score')),
+      total_questions: Number(get('total_questions') || 30),
+      percentage: Number(get('percentage')),
+      answers: JSON.parse(String(get('answers_json') || '[]')),
+      questions: JSON.parse(String(get('questions_json') || '[]')),
+      time_spent_seconds: Number(get('time_spent_seconds') || 0),
+      completed_at: String(get('completed_at'))
+    };
+  });
+}
+
+export async function getCachedTopicModule(topicNormalized: string): Promise<{ theory: any; questions: any[] } | null> {
+  const db = await getDb();
+  const res = db.exec("SELECT * FROM topic_modules WHERE topic_normalized = ?", [topicNormalized]);
+  if (!res || res.length === 0 || !res[0].values || res[0].values.length === 0) return null;
+  const row = res[0].values[0];
+  const cols = res[0].columns;
+  const get = (c: string) => row[cols.indexOf(c)];
+
+  return {
+    theory: JSON.parse(String(get('theory_json'))),
+    questions: JSON.parse(String(get('questions_json')))
+  };
+}
+
+export async function cacheTopicModule(
+  topicNormalized: string,
+  topicTitle: string,
+  theory: any,
+  questions: any[]
+): Promise<void> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  db.run(
+    `INSERT INTO topic_modules (topic_normalized, topic_title, theory_json, questions_json, created_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(topic_normalized) DO UPDATE SET
+       topic_title = excluded.topic_title,
+       theory_json = excluded.theory_json,
+       questions_json = excluded.questions_json`,
+    [topicNormalized, topicTitle, JSON.stringify(theory), JSON.stringify(questions), now]
+  );
   saveDbToFile(db);
 }
 

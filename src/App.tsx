@@ -38,6 +38,9 @@ import { HomeView } from './components/HomeView';
 import { LoginView } from './components/LoginView';
 import { AuthModal } from './components/AuthModal';
 import { ProfileSetupModal } from './components/ProfileSetupModal';
+import { AcademicAnalysisView } from './components/AcademicAnalysisView';
+import { ExamSchedulerView } from './components/ExamSchedulerView';
+import { LearnPracticeView } from './components/LearnPracticeView';
 import {
   fetchStudents,
   fetchPredictions,
@@ -48,6 +51,9 @@ import {
 const ALL_SECTIONS: SectionId[] = [
   'home',
   'login',
+  'analysis',
+  'scheduler',
+  'learn',
   'dashboard',
   'predict',
   'whatif',
@@ -65,8 +71,8 @@ const ALL_SECTIONS: SectionId[] = [
   'reports',
   'notifications',
   'settings',
-  'about'
 ];
+
 
 // Sections open to public visitors without authentication
 const PUBLIC_SECTIONS: SectionId[] = ['home', 'about', 'login'];
@@ -113,6 +119,12 @@ function AppContent() {
 
   // Predictor prefill state (e.g. when advisor clicks "Load into Predictor" on a student)
   const [prefillData, setPrefillData] = useState<Partial<PredictionInput> | null>(null);
+
+  // Workflow bridge states
+  const [selectedLearnTopic, setSelectedLearnTopic] = useState<string>('Binary Trees');
+  const [selectedLearnCourse, setSelectedLearnCourse] = useState<string>('Computer Science & Engineering');
+  const [selectedScheduleSubject, setSelectedScheduleSubject] = useState<string>('');
+  const [selectedScheduleTopic, setSelectedScheduleTopic] = useState<string>('');
 
   // Navigation handler with protection checks
   const handleNavigate = useCallback(
@@ -260,7 +272,7 @@ function AppContent() {
     if (isNewUser) {
       setShowProfileSetup(true);
     } else {
-      const dest = pendingRedirectSection || 'dashboard';
+      const dest = pendingRedirectSection || 'analysis';
       setPendingRedirectSection(null);
       handleNavigate(dest);
     }
@@ -269,10 +281,40 @@ function AppContent() {
   // First-time profile setup completion
   const handleProfileSetupComplete = () => {
     setShowProfileSetup(false);
-    const dest = pendingRedirectSection || 'predict';
+    const dest = pendingRedirectSection || 'analysis';
     setPendingRedirectSection(null);
     handleNavigate(dest);
   };
+
+  // 0. Initial Session Hydration Screen with Official Logo
+  if (isAuthLoading) {
+    return (
+      <div
+        className={`h-[100dvh] w-full flex flex-col items-center justify-center transition-colors ${
+          isLight ? 'bg-[#F8FAFC] text-slate-900' : 'bg-[#0B132B] text-slate-100'
+        }`}
+      >
+        <div className="relative flex items-center justify-center">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-2xl bg-[#0B132B] flex items-center justify-center border-2 border-teal-500/40 animate-pulse">
+            <img
+              src="/edupredict-ai-logo.png"
+              alt="EduPredict AI"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        </div>
+        <div className="mt-5 text-center space-y-1">
+          <p className={`text-base font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            EduPredict AI
+          </p>
+          <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-widest animate-pulse">
+            Academic Intelligence Platform
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // 1. PUBLIC LOGIN & REGISTER PAGE
   if (currentSection === 'login') {
@@ -343,6 +385,7 @@ function AppContent() {
           onNavigate={handleNavigate}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           studentName={studentDisplayName}
+          onOpenProfileSetup={() => setShowProfileSetup(true)}
         />
 
         {/* Viewport: Renders ONLY the active section; ONLY this container scrolls vertically */}
@@ -351,89 +394,55 @@ function AppContent() {
           className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-6 w-full"
         >
           <div className="site-container pb-10">
-            {/* 1. Dashboard Overview */}
-            {currentSection === 'dashboard' && (
-              <DashboardView
+            {/* CORE WORKFLOW 1: Academic Analysis & Performance Trajectory */}
+            {(currentSection === 'analysis' ||
+              currentSection === 'dashboard' ||
+              currentSection === 'predict' ||
+              currentSection === 'whatif' ||
+              currentSection === 'subjects' ||
+              currentSection === 'progress' ||
+              currentSection === 'students') && (
+              <AcademicAnalysisView
                 onNavigate={handleNavigate}
-                summary={dashboardSummary}
-                isLoading={isLoadingSummary}
-                studentName={user?.name || 'Student'}
-                students={students}
-                predictions={predictions}
+                onSelectTopicForLearn={(t, c) => {
+                  setSelectedLearnTopic(t);
+                  if (c) setSelectedLearnCourse(c);
+                  handleNavigate('learn');
+                }}
+                onSelectExamForSchedule={(s, t) => {
+                  setSelectedScheduleSubject(s);
+                  setSelectedScheduleTopic(t || '');
+                  handleNavigate('scheduler');
+                }}
               />
             )}
 
-            {/* 2. Predict Performance */}
-            {currentSection === 'predict' && (
-              <PredictView
+            {/* CORE WORKFLOW 2: Exam Scheduler & Intelligent Study Planner */}
+            {(currentSection === 'scheduler' ||
+              currentSection === 'planner' ||
+              currentSection === 'readiness') && (
+              <ExamSchedulerView
                 onNavigate={handleNavigate}
-                prefillData={prefillData}
-                onPredictionSaved={handlePredictionSaved}
+                prefillSubject={selectedScheduleSubject}
+                prefillTopic={selectedScheduleTopic}
               />
             )}
 
-            {/* 3. What-If Scenario Analysis */}
-            {currentSection === 'whatif' && (
-              <WhatIfView
-                students={students}
-                onNavigateToGoals={() => handleNavigate('goals')}
+            {/* CORE WORKFLOW 3: Learn & Practice Studio (Theory & Diagnostic Quizzes) */}
+            {(currentSection === 'learn' ||
+              currentSection === 'courses' ||
+              currentSection === 'counselor' ||
+              currentSection === 'roadmap') && (
+              <LearnPracticeView
+                onNavigate={handleNavigate}
+                initialTopic={selectedLearnTopic}
+                initialCourseContext={selectedLearnCourse}
               />
             )}
 
-            {/* 4. Students Directory */}
-            {currentSection === 'students' && (
-              <StudentsView
-                students={students}
-                isLoading={isLoadingStudents}
-                onRefresh={loadStudents}
-                onSelectForPrediction={handleSelectStudentForPrediction}
-              />
-            )}
+            {/* Secondary Workflows & Utility Screens */}
+            {currentSection === 'goals' && <GoalsAchievementsView />}
 
-            {/* 5. Academic Progress */}
-            {currentSection === 'progress' && (
-              <ProgressView
-                students={students}
-                onNavigateToPredict={() => handleNavigate('predict')}
-              />
-            )}
-
-            {/* 6. Subject Analysis */}
-            {currentSection === 'subjects' && (
-              <SubjectAnalysisView />
-            )}
-
-            {/* 7. Study Planner */}
-            {currentSection === 'planner' && (
-              <StudyPlannerView />
-            )}
-
-            {/* 8. Learning Roadmap */}
-            {currentSection === 'roadmap' && (
-              <RoadmapView />
-            )}
-
-            {/* 9. Course Recommendations */}
-            {currentSection === 'courses' && (
-              <CourseRecommendationsView />
-            )}
-
-            {/* 10. Examination Readiness */}
-            {currentSection === 'readiness' && (
-              <ExamReadinessView />
-            )}
-
-            {/* 11. AI Academic Counselor */}
-            {currentSection === 'counselor' && (
-              <CounselorView />
-            )}
-
-            {/* 12. Goals and Achievements */}
-            {currentSection === 'goals' && (
-              <GoalsAchievementsView />
-            )}
-
-            {/* 13. Prediction History */}
             {currentSection === 'history' && (
               <HistoryView
                 predictions={predictions}
@@ -443,7 +452,6 @@ function AppContent() {
               />
             )}
 
-            {/* 14. Model Analytics */}
             {currentSection === 'analytics' && (
               <AnalyticsView
                 metrics={modelMetrics}
@@ -451,25 +459,17 @@ function AppContent() {
               />
             )}
 
-            {/* 15. Reports */}
             {currentSection === 'reports' && (
               <ReportsView students={students} predictions={predictions} />
             )}
 
-            {/* 16. Notifications */}
-            {currentSection === 'notifications' && (
-              <NotificationsView />
-            )}
+            {currentSection === 'notifications' && <NotificationsView />}
 
-            {/* 17. Settings */}
             {currentSection === 'settings' && (
-              <SettingsView />
+              <SettingsView onOpenProfileSetup={() => setShowProfileSetup(true)} />
             )}
 
-            {/* 18. About the Project */}
-            {currentSection === 'about' && (
-              <AboutView />
-            )}
+            {currentSection === 'about' && <AboutView />}
           </div>
         </main>
       </div>

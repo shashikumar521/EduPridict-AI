@@ -1,6 +1,9 @@
 export type SectionId =
   | 'home'
   | 'login'
+  | 'analysis'
+  | 'scheduler'
+  | 'learn'
   | 'dashboard'
   | 'predict'
   | 'whatif'
@@ -429,3 +432,208 @@ export interface DashboardSummary {
   hasStudyPlan?: boolean;
   academicRecordsCount?: number;
 }
+
+// -------------------------------------------------------------
+// CORE ACADEMIC PROFILE & ONBOARDING TYPES
+// -------------------------------------------------------------
+export interface SubjectScoreItem {
+  id: string;
+  name: string;
+  marks_obtained: number;
+  max_marks: number;
+  percentage: number;
+  previous_marks?: number;
+  internal_marks?: number;
+  assignment_marks?: number;
+  practical_marks?: number;
+  attendance_percent?: number;
+  difficult_topics?: string[];
+  topics_to_improve?: string[];
+}
+
+export interface UpcomingExamItem {
+  id: string;
+  subject_name: string;
+  exam_date: string; // YYYY-MM-DD
+  exam_time?: string;
+  priority: 'high' | 'medium' | 'low';
+  syllabus_completion_percent: number;
+  notes?: string;
+  status: 'upcoming' | 'completed';
+}
+
+export interface StudentAcademicProfile {
+  user_id: string;
+  full_name: string;
+  institution: string;
+  course_degree: string;
+  department_branch: string;
+  academic_year: string;
+  semester: string;
+  grading_system: 'percentage' | 'gpa_10' | 'gpa_4' | 'letter';
+  preferred_language: string;
+  subjects: SubjectScoreItem[];
+  overall_attendance: number;
+  daily_study_hours_weekday: number;
+  daily_study_hours_weekend: number;
+  upcoming_exams: UpcomingExamItem[];
+  weak_topics: string[];
+  target_goals: string[];
+  onboarding_completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// -------------------------------------------------------------
+// CORE ACADEMIC ANALYSIS TYPES
+// -------------------------------------------------------------
+export interface AcademicRecommendationItem {
+  subject_name: string;
+  weak_topic: string;
+  current_percentage: number;
+  what_needs_improvement: string;
+  why_it_matters: string;
+  what_to_study: string;
+  learning_resource: {
+    title: string;
+    provider: string;
+    url: string;
+  };
+  practical_activity: {
+    type: string;
+    topic: string;
+    label: string;
+  };
+  suggested_time_allocation: string;
+  measurement_metric: string;
+}
+
+export interface AcademicAnalysisResponse {
+  status: 'success' | 'needs_onboarding';
+  message?: string;
+  profile?: {
+    full_name: string;
+    institution: string;
+    course_degree: string;
+    academic_year: string;
+    semester: string;
+    grading_system: string;
+  };
+  overview?: {
+    academic_score: number;
+    standing: string;
+    standing_tier: 'distinction' | 'good' | 'moderate' | 'critical';
+    subject_average: number;
+    overall_attendance: number;
+    total_subjects: number;
+    strong_subjects_count: number;
+    subjects_needing_attention_count: number;
+  };
+  scoring_methodology?: {
+    scale: string;
+    formula: string;
+    weights: {
+      subject_marks: string;
+      attendance: string;
+      assignments_and_practicals: string;
+    };
+    explanation: string;
+  };
+  subjects?: Array<{
+    id: string;
+    name: string;
+    marks_obtained: number;
+    max_marks: number;
+    percentage: number;
+    attendance: number;
+    status: 'Strong' | 'Good' | 'Needs Attention' | 'Critical';
+    difficult_topics: string[];
+    topics_to_improve: string[];
+  }>;
+  strongest_subjects?: Array<any>;
+  subjects_needing_attention?: Array<any>;
+  personalized_recommendations?: AcademicRecommendationItem[];
+  improvement_plan?: Array<{
+    id: string;
+    day: string;
+    topic: string;
+    subject: string;
+    duration_minutes: number;
+    resource_url: string;
+    action: string;
+    status: 'pending' | 'completed';
+  }>;
+  recent_quiz_progress?: Array<any>;
+}
+
+// -------------------------------------------------------------
+// CORE LEARN & PRACTICE TYPES
+// -------------------------------------------------------------
+export interface QuizQuestion {
+  id: number;
+  question: string;
+  options: [string, string, string, string];
+  correctAnswer?: number;
+  explanation?: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  category: 'Fundamentals' | 'Definition' | 'Conceptual' | 'Application' | 'Problem-Solving' | 'Advanced';
+}
+
+export interface TopicTheory {
+  title: string;
+  introduction: string;
+  fundamental_concepts: Array<{ title: string; explanation: string }>;
+  definitions: Array<{ term: string; definition: string }>;
+  detailed_explanations: Array<{ heading: string; body: string; codeOrFormula?: string }>;
+  step_by_step_examples: Array<{ problem: string; steps: string[]; solution: string }>;
+  applications: string[];
+  common_mistakes: Array<{ mistake: string; correction: string }>;
+  revision_key_points: string[];
+  resources: Array<{ title: string; type: string; url: string; note: string }>;
+}
+
+export interface QuizSubmissionResult {
+  status: 'success';
+  attempt_id: number;
+  topic: string;
+  score: number;
+  total_questions: number;
+  percentage: number;
+  correct_count: number;
+  incorrect_count: number;
+  unanswered_count: number;
+  mastery_verdict: string;
+  difficulty_breakdown: {
+    easy: { total: number; correct: number };
+    medium: { total: number; correct: number };
+    hard: { total: number; correct: number };
+  };
+  weak_categories: string[];
+  detailed_review: Array<{
+    id: number;
+    question: string;
+    options: [string, string, string, string];
+    studentAnswer: number | null;
+    correctAnswer: number;
+    isCorrect: boolean;
+    explanation: string;
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+    category: string;
+  }>;
+  recommended_action: {
+    review_mistakes: string;
+    next_step: string;
+  };
+}
+
+export interface QuizAttemptRecord {
+  id: number;
+  user_id: string;
+  topic: string;
+  score: number;
+  total_questions: number;
+  percentage: number;
+  time_spent_seconds: number;
+  completed_at: string;
+}
+

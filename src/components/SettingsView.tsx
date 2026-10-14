@@ -18,7 +18,11 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
 import { EDUCATION_LEVELS } from '../data/educationLevels';
 
-export const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  onOpenProfileSetup?: () => void;
+}
+
+export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenProfileSetup }) => {
   const { user, isAuthenticated, updateProfile } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -85,8 +89,8 @@ export const SettingsView: React.FC = () => {
       <div
         className={`rounded-2xl p-6 border transition-colors shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 ${
           isLight
-            ? 'bg-white border-[#E9E5F2] text-[#11182E]'
-            : 'bg-[#0d0f17] border-zinc-800/80 text-zinc-100'
+            ? 'bg-white border-[#E1E6EF] text-[#172033]'
+            : 'bg-[#131926] border-[#1E2B42] text-[#F7F8FC]'
         }`}
       >
         <div>
@@ -94,26 +98,26 @@ export const SettingsView: React.FC = () => {
             <span
               className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                 isLight
-                  ? 'bg-[#8000E8]/10 text-[#8000E8] border-[#8000E8]/20'
-                  : 'bg-[#8B5CF6]/15 text-[#8B5CF6] border-[#8B5CF6]/30'
+                  ? 'bg-[#EEE7FF] text-[#7000E8] border-[#D1B8FC]'
+                  : 'bg-[#7000E8]/20 text-[#C4B5FD] border-[#8E30FF]/35'
               }`}
             >
               System &amp; Profile
             </span>
-            <span className={`text-xs ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`}>
+            <span className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
               Academic Configuration
             </span>
           </div>
           <h2
             className={`text-2xl font-extrabold mt-1 tracking-tight ${
-              isLight ? 'text-[#11182E]' : 'text-white'
+              isLight ? 'text-[#172033]' : 'text-white'
             }`}
           >
             Profile &amp; Academic Settings
           </h2>
           <p
             className={`text-sm mt-1 max-w-2xl ${
-              isLight ? 'text-[#526581]' : 'text-zinc-400'
+              isLight ? 'text-[#526078]' : 'text-slate-300'
             }`}
           >
             Update your student identity, educational degree program, institution compliance standards, and appearance preferences.
@@ -122,12 +126,42 @@ export const SettingsView: React.FC = () => {
 
         {/* Save button feedback */}
         {isSaved && (
-          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-400 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#087A55] bg-[#E8F7EF] dark:bg-[rgba(8,122,85,0.22)] dark:text-[#6EE7B7] px-3.5 py-2 rounded-xl border border-[#A3DEC0] dark:border-[rgba(16,185,129,0.35)] animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 text-[#087A55] dark:text-[#6EE7B7]" />
             <span>Profile &amp; Preferences Saved</span>
           </div>
         )}
-      </div>
+      {/* Complete Academic Onboarding Card */}
+      {onOpenProfileSetup && (
+        <div
+          className={`rounded-2xl p-5 sm:p-6 border transition-colors shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+            isLight
+              ? 'bg-[#F0F3F9] border-[#E1E6EF]'
+              : 'bg-[#182236] border-[#1E2B42]'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#7000E8] text-white flex items-center justify-center shrink-0 shadow-md">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Complete Academic Profile Wizard (5 Steps)
+              </h3>
+              <p className={`text-xs mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Configure degree, subjects, maximum marks, internal scores, practical marks, attendance, and upcoming exam dates.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenProfileSetup}
+            className="btn-primary text-xs"
+          >
+            Launch 5-Step Wizard
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 0: User Profile */}

@@ -43,8 +43,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               onClick={() => handleNav('home')}
               className="flex items-center gap-3 cursor-pointer group select-none"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#633BFF] to-[#8000E8] text-white flex items-center justify-center font-extrabold shadow-lg shadow-[#8000E8]/30 ring-2 ring-white/10 shrink-0 group-hover:shadow-[#8000E8]/50 transition-shadow">
-                <GraduationCap className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#0B132B] flex items-center justify-center shadow-lg shadow-[#8000E8]/30 ring-1 ring-white/15 shrink-0 group-hover:scale-105 transition-transform">
+                <img
+                  src="/edupredict-ai-logo.png"
+                  alt="EduPredict AI Logo"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div className="flex flex-col justify-center text-left leading-tight">
                 <span className="text-xl font-bold tracking-tight text-[#F8FAFC] select-none">
