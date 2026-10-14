@@ -72,6 +72,7 @@ import {
   getTopicAIAssistance
 } from './scheduler';
 import { VERIFIED_COURSES, getCoursesForEducationLevel } from './courses';
+import { generateChatResponse, checkRateLimit } from './chat';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -2118,6 +2119,60 @@ How can I assist you today? You can ask about:
     } catch (err: any) {
       console.error('Error loading dashboard stats:', err);
       res.status(500).json({ error: 'Failed to load dashboard summary' });
+    }
+  });
+
+  // 17. EduPredict AI Assistant (Real Conversational AI with Gemini 3.8 Flash & Grounding)
+  app.get('/api/chat/status', optionalAuthMiddleware, (req, res) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const user = (req as any).user;
+    res.json({
+      isConfigured: Boolean(apiKey && apiKey.trim().length > 0),
+      model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      provider: 'Google Gemini AI',
+      authenticated: Boolean(user),
+      studentName: user?.name || null
+    });
+  });
+
+  app.post('/api/chat', optionalAuthMiddleware, async (req, res) => {
+    try {
+      const clientIp =
+        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+        req.socket.remoteAddress ||
+        'unknown';
+      const user = (req as any).user;
+      const rateKey = user ? `user:${user.id}` : `ip:${clientIp}`;
+
+      if (!checkRateLimit(rateKey, 30, 60000)) {
+        return res.status(429).json({
+          error: 'Rate limit exceeded. Please wait a moment before sending another query.',
+          retryAfter: 15
+        });
+      }
+
+      const { messages, enableSearch } = req.body;
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'Messages array is required.' });
+      }
+
+      const responsePayload = await generateChatResponse({
+        messages,
+        user: user || null,
+        enableSearch: Boolean(enableSearch)
+      });
+
+      return res.json(responsePayload);
+    } catch (err: any) {
+      console.error('Error in /api/chat endpoint:', err);
+      const isMissingConfig = err?.message?.includes('GEMINI_API_KEY');
+      const status = isMissingConfig ? 503 : 500;
+      return res.status(status).json({
+        error:
+          err?.message ||
+          'An unexpected error occurred while communicating with EduPredict AI Assistant.',
+        missingConfig: Boolean(isMissingConfig)
+      });
     }
   });
 

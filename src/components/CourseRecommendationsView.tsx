@@ -375,13 +375,13 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {/* 1. Category */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300 block mb-1">
                 Discipline
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#7000E8] ${
+                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#6D28D9] ${
                   isLight
                     ? 'bg-slate-50 border-slate-300 text-slate-800'
                     : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -398,13 +398,13 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
 
             {/* 2. Difficulty */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300 block mb-1">
                 Difficulty
               </label>
               <select
                 value={selectedDifficulty}
                 onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#7000E8] ${
+                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#6D28D9] ${
                   isLight
                     ? 'bg-slate-50 border-slate-300 text-slate-800'
                     : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -419,13 +419,13 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
 
             {/* 3. Provider */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300 block mb-1">
                 Official Provider
               </label>
               <select
                 value={selectedProvider}
                 onChange={(e) => setSelectedProvider(e.target.value)}
-                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#7000E8] ${
+                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#6D28D9] ${
                   isLight
                     ? 'bg-slate-50 border-slate-300 text-slate-800'
                     : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -442,13 +442,13 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
 
             {/* 4. Pricing */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300 block mb-1">
                 Verified Pricing
               </label>
               <select
                 value={selectedPricing}
                 onChange={(e) => setSelectedPricing(e.target.value)}
-                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#7000E8] ${
+                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#6D28D9] ${
                   isLight
                     ? 'bg-slate-50 border-slate-300 text-slate-800'
                     : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -462,13 +462,13 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
 
             {/* 5. Duration */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300 block mb-1">
                 Course Duration
               </label>
               <select
                 value={selectedDuration}
                 onChange={(e) => setSelectedDuration(e.target.value)}
-                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#7000E8] ${
+                className={`w-full text-xs font-medium rounded-lg px-2.5 py-2 border cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#6D28D9] ${
                   isLight
                     ? 'bg-slate-50 border-slate-300 text-slate-800'
                     : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -483,7 +483,7 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
 
             {/* 6. Saved Status */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300 block mb-1">
                 Learning Status
               </label>
               <select

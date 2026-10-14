@@ -385,7 +385,7 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   studySubTab === 'theory'
                     ? 'bg-[#6D28D9] text-white shadow-xs'
-                    : 'text-[#526078] dark:text-slate-400 hover:text-[#172033] dark:hover:text-white'
+                    : 'text-[#475569] dark:text-slate-200 hover:text-[#0F172A] dark:hover:text-white'
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
@@ -396,7 +396,7 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   studySubTab === 'quiz'
                     ? 'bg-[#6D28D9] text-white shadow-xs'
-                    : 'text-[#526078] dark:text-slate-400 hover:text-[#172033] dark:hover:text-white'
+                    : 'text-[#475569] dark:text-slate-200 hover:text-[#0F172A] dark:hover:text-white'
                 }`}
               >
                 <BrainCircuit className="w-4 h-4" />
@@ -404,8 +404,8 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
               </button>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 text-xs text-[#526078] dark:text-slate-400">
-              <span>Course: <strong className="text-[#172033] dark:text-white">{courseContext}</strong></span>
+            <div className="hidden sm:flex items-center gap-2 text-xs text-[#475569] dark:text-slate-300">
+              <span>Course: <strong className="text-[#0F172A] dark:text-white">{courseContext}</strong></span>
             </div>
           </div>
 

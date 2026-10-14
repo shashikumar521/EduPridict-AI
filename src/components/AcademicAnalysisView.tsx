@@ -714,19 +714,19 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
                       {/* Weak Topics */}
                       {sub.difficult_topics && sub.difficult_topics.length > 0 && (
                         <div className="pt-2 flex items-center gap-2 flex-wrap">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#475569] dark:text-slate-300">
                             Friction Topics:
                           </span>
                           {sub.difficult_topics.map((t, idx) => (
                             <button
                               key={idx}
                               onClick={() => handleStartPractice(t)}
-                              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/40 transition cursor-pointer flex items-center gap-1"
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/40 transition cursor-pointer flex items-center gap-1"
                               title={`Practice ${t} in Learn & Practice`}
                             >
                               <BookOpen className="w-3 h-3 text-[#6D28D9] dark:text-[#DDD6FE]" />
                               {t}
-                              <ArrowRight className="w-2.5 h-2.5 opacity-60" />
+                              <ArrowRight className="w-2.5 h-2.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
                             </button>
                           ))}
                         </div>

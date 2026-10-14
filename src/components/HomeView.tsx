@@ -299,7 +299,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                 }`}
               >
                 <span>Features</span>
-                <ArrowRight className="w-4 h-4 opacity-40" />
+                <ArrowRight className="w-4 h-4 text-[#475569] dark:text-slate-300" />
               </button>
 
               <button
@@ -311,7 +311,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                 }`}
               >
                 <span>How It Works</span>
-                <ArrowRight className="w-4 h-4 opacity-40" />
+                <ArrowRight className="w-4 h-4 text-[#475569] dark:text-slate-300" />
               </button>
 
               <button
@@ -323,7 +323,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                 }`}
               >
                 <span>Platform Demo</span>
-                <ArrowRight className="w-4 h-4 opacity-40" />
+                <ArrowRight className="w-4 h-4 text-[#475569] dark:text-slate-300" />
               </button>
 
               <button
@@ -341,7 +341,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                   <Calendar className={`w-4 h-4 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
                   <span>AI Exam Planner</span>
                 </span>
-                <ArrowRight className="w-4 h-4 opacity-40" />
+                <ArrowRight className="w-4 h-4 text-[#475569] dark:text-slate-300" />
               </button>
 
               <button
@@ -356,7 +356,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                 }`}
               >
                 <span>About</span>
-                <ArrowRight className="w-4 h-4 opacity-40" />
+                <ArrowRight className="w-4 h-4 text-[#475569] dark:text-slate-300" />
               </button>
             </div>
 
@@ -603,7 +603,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                       {/* Supporting Description */}
                       <p
                         className={`text-sm leading-relaxed mb-6 ${
-                          isLight ? 'text-[#526581]' : 'text-zinc-400'
+                          isLight ? 'text-[#475569]' : 'text-slate-300'
                         }`}
                       >
                         {feature.description}
@@ -613,14 +613,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                     {/* Thin Divider & Action Link at Bottom */}
                     <div
                       className={`pt-4 border-t flex items-center justify-between transition-colors ${
-                        isLight ? 'border-[#E9E5F2]' : 'border-zinc-800'
+                        isLight ? 'border-[#CBD5E1]' : 'border-zinc-800'
                       }`}
                     >
                       <span
-                        className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors ${
+                        className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold transition-colors ${
                           isLight
-                            ? 'text-[#8000E8] group-hover:text-[#633BFF]'
-                            : 'text-purple-400 group-hover:text-purple-300'
+                            ? 'text-[#6D28D9] group-hover:text-[#4C1D95]'
+                            : 'text-[#DDD6FE] group-hover:text-white'
                         }`}
                       >
                         <span>{feature.linkText}</span>
@@ -628,8 +628,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                       </span>
 
                       <span
-                        className={`text-[11px] font-medium transition-colors ${
-                          isLight ? 'text-[#526581]/70' : 'text-zinc-500'
+                        className={`text-[11px] font-semibold transition-colors ${
+                          isLight ? 'text-[#475569]' : 'text-slate-300'
                         }`}
                       >
                         Instant Access

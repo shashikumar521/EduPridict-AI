@@ -395,19 +395,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/50">
                   Student Dashboard
                 </span>
-                <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155]">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#F1F5F9] text-[#334155] dark:bg-[#172033] dark:text-[#E2E8F0] border border-[#CBD5E1] dark:border-[#475569]">
                   {termLabel}
                 </span>
               </div>
 
-              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 Welcome, {displayName}
               </h1>
 
-              <p className={`text-xs sm:text-sm font-normal max-w-2xl leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              <p className={`text-xs sm:text-sm font-normal max-w-2xl leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                 Monitor verified academic standing, upcoming examination schedules, and prioritized revision topics across {degreeLabel}.
               </p>
             </div>
@@ -444,62 +444,62 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* CARD 1: Academic Performance */}
         <div
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
-            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
+            isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <span className={`font-bold uppercase tracking-wider ${isLight ? 'text-[#1E293B]' : 'text-slate-200'}`}>
                 Academic Performance
               </span>
-              <div className="p-1.5 rounded-lg bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/20 dark:text-[#93C5FD]">
-                <Award className="w-4 h-4" />
+              <div className="p-1.5 rounded-lg bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD]">
+                <Award className="w-4 h-4 text-[#1E40AF] dark:text-[#93C5FD]" />
               </div>
             </div>
 
             {academicScore !== null ? (
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2.5 flex-wrap">
-                  <span className={`text-3xl font-bold tracking-tight tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                  <span className={`text-3xl font-extrabold tracking-tight tabular-nums ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                     {academicScore}%
                   </span>
                   <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                    className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
                       standingTier === 'distinction'
-                        ? 'bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] dark:bg-[#15803D]/25 dark:text-[#86EFAC] dark:border-[#15803D]/40'
+                        ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
                         : standingTier === 'good'
-                        ? 'bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] dark:border-[#1D4ED8]/40'
+                        ? 'bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] dark:border-[#1D4ED8]/50'
                         : standingTier === 'moderate'
-                        ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[#B45309]/25 dark:text-[#FCD34D] dark:border-[#B45309]/40'
-                        : 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA] dark:bg-[#B91C1C]/25 dark:text-[#FCA5A5] dark:border-[#B91C1C]/40'
+                        ? 'bg-[#FEF3C7] text-[#92400E] border-[#FCD34D] dark:bg-[#B45309]/30 dark:text-[#FDE68A] dark:border-[#B45309]/50'
+                        : 'bg-[#FEE2E2] text-[#991B1B] border-[#FCA5A5] dark:bg-[#B91C1C]/30 dark:text-[#FCA5A5] dark:border-[#B91C1C]/50'
                     }`}
                   >
                     {standingLabel}
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                <p className={`text-xs font-medium ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                   Subject aggregate of {subjectAverage ?? 70}% across {totalSubjectsCount} enrolled courses.
                 </p>
               </div>
             ) : (
               <div className="space-y-1.5 py-1">
-                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                <p className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-slate-100'}`}>
                   Profile Incomplete
                 </p>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                <p className={`text-xs font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                   Enter semester subject marks to calculate verified standing.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+          <div className="pt-3.5 mt-3 border-t border-[#CBD5E1] dark:border-[#334155]">
             <button
               onClick={() => onNavigate('analysis')}
-              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:text-[#4C1D95] dark:hover:text-white hover:underline flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>View Trajectory &amp; Details</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
         </div>
@@ -507,68 +507,68 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* CARD 2: Subjects Needing Attention */}
         <div
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
-            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
+            isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <span className={`font-bold uppercase tracking-wider ${isLight ? 'text-[#1E293B]' : 'text-slate-200'}`}>
                 Subjects Needing Attention
               </span>
               <div className={`p-1.5 rounded-lg ${
                 weakSubjects.length > 0
-                  ? 'bg-[#FEF3C7] text-[#B45309] dark:bg-[#B45309]/20 dark:text-[#FCD34D]'
-                  : 'bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/20 dark:text-[#86EFAC]'
+                  ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#B45309]/30 dark:text-[#FDE68A]'
+                  : 'bg-[#DCFCE7] text-[#166534] dark:bg-[#15803D]/30 dark:text-[#86EFAC]'
               }`}>
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className={`w-4 h-4 ${weakSubjects.length > 0 ? 'text-[#92400E] dark:text-[#FDE68A]' : 'text-[#166534] dark:text-[#86EFAC]'}`} />
               </div>
             </div>
 
             {weakSubjects.length > 0 ? (
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-3xl font-bold tracking-tight tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                  <span className={`text-3xl font-extrabold tracking-tight tabular-nums ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                     {weakSubjects.length}
                   </span>
-                  <span className="text-xs font-semibold text-[#B45309] dark:text-[#FCD34D]">
+                  <span className="text-xs font-bold text-[#92400E] dark:text-[#FDE68A]">
                     {weakSubjects.length === 1 ? 'Course below target' : 'Courses below target'}
                   </span>
                 </div>
-                <p className={`text-xs truncate ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                <p className={`text-xs font-semibold truncate ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                   {weakSubjects.map((s: any) => s.name).join(', ')}
                 </p>
               </div>
             ) : totalSubjectsCount > 0 ? (
               <div className="space-y-1.5 py-1">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-[#15803D] dark:text-[#86EFAC]" />
-                  <span className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                  <CheckCircle2 className="w-5 h-5 text-[#166534] dark:text-[#86EFAC]" />
+                  <span className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                     All Subjects In Good Standing
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                <p className={`text-xs font-semibold ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                   All {totalSubjectsCount} enrolled courses are meeting or exceeding 60% baseline.
                 </p>
               </div>
             ) : (
               <div className="space-y-1.5 py-1">
-                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                <p className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-slate-100'}`}>
                   No Subjects Recorded
                 </p>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                <p className={`text-xs font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                   Add courses in your academic profile to diagnose focus areas.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+          <div className="pt-3.5 mt-3 border-t border-[#CBD5E1] dark:border-[#334155]">
             <button
               onClick={() => onNavigate('analysis')}
-              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:text-[#4C1D95] dark:hover:text-white hover:underline flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>Diagnose Syllabus Gaps</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
         </div>
@@ -576,37 +576,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* CARD 3: Next Examination */}
         <div
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
-            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
+            isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <span className={`font-bold uppercase tracking-wider ${isLight ? 'text-[#1E293B]' : 'text-slate-200'}`}>
                 Next Examination
               </span>
-              <div className="p-1.5 rounded-lg bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE]">
-                <Calendar className="w-4 h-4" />
+              <div className="p-1.5 rounded-lg bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
+                <Calendar className="w-4 h-4 text-[#5B21B6] dark:text-[#DDD6FE]" />
               </div>
             </div>
 
             {nextExam ? (
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-1">
-                  <span className={`text-base font-bold truncate ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                  <span className={`text-base font-bold truncate ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                     {nextExam.subject_name}
                   </span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/50">
                     {getExamCountdown(nextExam.exam_date)}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-[#526078] dark:text-slate-400">
+                  <div className={`flex items-center justify-between text-xs font-bold ${isLight ? 'text-[#1E293B]' : 'text-slate-100'}`}>
                     <span>Syllabus Coverage</span>
-                    <span className="font-semibold">{nextExam.syllabus_completion_percent || 0}%</span>
+                    <span className="font-extrabold text-[#0F172A] dark:text-white">{nextExam.syllabus_completion_percent || 0}%</span>
                   </div>
-                  <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-[#CBD5E1] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
                     <div
-                      className="bg-[#6D28D9] h-full rounded-full transition-all duration-300"
+                      className="bg-[#6D28D9] dark:bg-[#8B5CF6] h-full rounded-full transition-all duration-300"
                       style={{ width: `${Math.max(4, Math.min(100, nextExam.syllabus_completion_percent || 0))}%` }}
                     />
                   </div>
@@ -614,23 +614,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             ) : (
               <div className="space-y-1.5 py-1">
-                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                <p className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-slate-100'}`}>
                   No Exam Scheduled
                 </p>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                <p className={`text-xs font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                   Add target semester examination dates to generate a spaced timetable.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+          <div className="pt-3.5 mt-3 border-t border-[#CBD5E1] dark:border-[#334155]">
             <button
               onClick={() => onNavigate('scheduler')}
-              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:text-[#4C1D95] dark:hover:text-white hover:underline flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>Open Exam Scheduler</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
         </div>
@@ -638,53 +638,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* CARD 4: Learning Progress */}
         <div
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
-            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
+            isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <span className={`font-bold uppercase tracking-wider ${isLight ? 'text-[#1E293B]' : 'text-slate-200'}`}>
                 Learning Progress
               </span>
-              <div className="p-1.5 rounded-lg bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/20 dark:text-[#86EFAC]">
-                <BookOpen className="w-4 h-4" />
+              <div className="p-1.5 rounded-lg bg-[#DCFCE7] text-[#166534] dark:bg-[#15803D]/30 dark:text-[#86EFAC]">
+                <BookOpen className="w-4 h-4 text-[#166534] dark:text-[#86EFAC]" />
               </div>
             </div>
 
             {totalQuizzesTaken > 0 || timetableStats ? (
               <div className="space-y-2">
                 <div className="flex items-baseline gap-2">
-                  <span className={`text-3xl font-bold tracking-tight tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                  <span className={`text-3xl font-extrabold tracking-tight tabular-nums ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                     {totalQuizzesTaken}
                   </span>
-                  <span className="text-xs font-semibold text-[#526078] dark:text-slate-300">
+                  <span className={`text-xs font-bold ${isLight ? 'text-[#1E293B]' : 'text-slate-200'}`}>
                     {totalQuizzesTaken === 1 ? 'Quiz completed' : 'Quizzes completed'}
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                <p className={`text-xs font-semibold ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                   {avgQuizScore !== null ? `Average diagnostic accuracy: ${avgQuizScore}%` : 'Diagnostic practice active'}
                   {timetableStats ? ` • ${timetableStats.completed}/${timetableStats.total} study tasks finished` : ''}
                 </p>
               </div>
             ) : (
               <div className="space-y-1.5 py-1">
-                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                <p className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-slate-100'}`}>
                   No Quizzes Completed
                 </p>
-                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                <p className={`text-xs font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                   Take 30-question diagnostic quizzes with immediate explanation keys.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
+          <div className="pt-3.5 mt-3 border-t border-[#CBD5E1] dark:border-[#334155]">
             <button
               onClick={() => onNavigate('learn')}
-              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
+              className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:text-[#4C1D95] dark:hover:text-white hover:underline flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>Practice Diagnostic Quizzes</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
         </div>
@@ -696,20 +696,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div
         className={`p-6 rounded-2xl border transition-all ${
           isLight
-            ? 'bg-white border-[#E2E8F0] text-[#172033] shadow-xs'
+            ? 'bg-white border-[#E2E8F0] text-[#0F172A] shadow-xs'
             : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC] shadow-xs'
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/50 shadow-xs">
+              <Sparkles className="w-5 h-5 text-[#5B21B6] dark:text-[#DDD6FE]" />
             </div>
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#6D28D9] dark:text-[#DDD6FE]">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[#6D28D9] dark:text-[#DDD6FE]">
                 Recommended Study Action
               </span>
-              <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 {prioritizedNextStep.hasEvidence
                   ? `Focus Topic: ${prioritizedNextStep.topic}`
                   : 'Diagnostic Onboarding Recommendation'}
@@ -718,13 +718,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {prioritizedNextStep.hasEvidence && prioritizedNextStep.subject && (
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155] shrink-0 self-start md:self-auto">
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#F1F5F9] text-[#0F172A] dark:bg-[#172033] dark:text-[#E2E8F0] border border-[#CBD5E1] dark:border-[#475569] shrink-0 self-start md:self-auto shadow-xs">
               Course: {prioritizedNextStep.subject}
             </span>
           )}
         </div>
 
-        <p className={`text-xs sm:text-sm leading-relaxed mb-5 ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+        <p className={`text-xs sm:text-sm font-medium leading-relaxed mb-5 ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
           {prioritizedNextStep.reason}
         </p>
 
@@ -735,17 +735,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={handleReadTheory}
             className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
               isLight
-                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                ? 'bg-[#F8FAFC] border-[#CBD5E1] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9] text-[#0F172A]'
                 : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
             }`}
           >
             <div className="min-w-0">
               <p className="text-xs font-bold truncate">1. Read Theory</p>
-              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <p className={`text-[11px] font-medium truncate mt-0.5 ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                 Core concepts &amp; formulas
               </p>
             </div>
-            <ArrowRight className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
+            <ArrowRight className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#A78BFA]" />
           </button>
 
           {/* Path 2: Verified Resource Link */}
@@ -753,17 +753,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={handleOpenVerifiedResource}
             className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
               isLight
-                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                ? 'bg-[#F8FAFC] border-[#CBD5E1] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9] text-[#0F172A]'
                 : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
             }`}
           >
             <div className="min-w-0">
               <p className="text-xs font-bold truncate">2. Verified Lecture</p>
-              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <p className={`text-[11px] font-medium truncate mt-0.5 ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                 YouTube verified search
               </p>
             </div>
-            <ExternalLink className="w-4 h-4 shrink-0 text-[#1D4ED8] dark:text-[#93C5FD]" />
+            <ExternalLink className="w-4 h-4 shrink-0 text-[#1D4ED8] dark:text-[#60A5FA]" />
           </button>
 
           {/* Path 3: 30-Question Quiz */}
@@ -771,17 +771,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={handleTakeQuiz}
             className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
               isLight
-                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                ? 'bg-[#F8FAFC] border-[#CBD5E1] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9] text-[#0F172A]'
                 : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
             }`}
           >
             <div className="min-w-0">
               <p className="text-xs font-bold truncate">3. Diagnostic Quiz</p>
-              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <p className={`text-[11px] font-medium truncate mt-0.5 ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                 30-Question assessment
               </p>
             </div>
-            <Play className="w-4 h-4 shrink-0 text-[#15803D] dark:text-[#86EFAC]" />
+            <Play className="w-4 h-4 shrink-0 text-[#166534] dark:text-[#4ADE80]" />
           </button>
 
           {/* Path 4: Add to Study Plan */}
@@ -789,17 +789,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={handleScheduleRevision}
             className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
               isLight
-                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                ? 'bg-[#F8FAFC] border-[#CBD5E1] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9] text-[#0F172A]'
                 : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
             }`}
           >
             <div className="min-w-0">
               <p className="text-xs font-bold truncate">4. Schedule Revision</p>
-              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+              <p className={`text-[11px] font-medium truncate mt-0.5 ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
                 Spaced repetition session
               </p>
             </div>
-            <Calendar className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
+            <Calendar className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#A78BFA]" />
           </button>
         </div>
       </div>
@@ -870,16 +870,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="space-y-3">
                   {/* Top Header: Provider and Price */}
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155] flex items-center gap-1 line-clamp-1">
-                      <ShieldCheck className="w-3 h-3 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#F1F5F9] text-[#1E293B] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#CBD5E1] dark:border-[#334155] flex items-center gap-1 line-clamp-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#A78BFA] shrink-0" />
                       <span className="truncate">{course.provider}</span>
                     </span>
 
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
                         course.pricing === '100% Free'
-                          ? 'bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] dark:bg-[#15803D]/25 dark:text-[#86EFAC] dark:border-[#15803D]/40'
-                          : 'bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] dark:border-[#1D4ED8]/40'
+                          ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
+                          : 'bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] dark:border-[#1D4ED8]/50'
                       }`}
                     >
                       {course.pricing}
@@ -887,36 +887,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-sm font-bold tracking-tight text-[#172033] dark:text-white line-clamp-2 leading-snug group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] transition-colors">
+                  <h3 className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-white line-clamp-2 leading-snug group-hover:text-[#6D28D9] dark:group-hover:text-[#A78BFA] transition-colors">
                     {course.name}
                   </h3>
 
                   {/* Why recommended badge */}
                   {course.matchReason && (
-                    <div className="text-[11px] font-semibold text-[#6D28D9] dark:text-[#DDD6FE] bg-[#EDE9FE]/60 dark:bg-[#6D28D9]/20 px-2.5 py-1 rounded-lg border border-[#DDD6FE] dark:border-[#8B5CF6]/30 flex items-center gap-1.5 line-clamp-1">
-                      <Sparkles className="w-3 h-3 shrink-0" />
+                    <div className="text-[11px] font-bold text-[#5B21B6] dark:text-[#DDD6FE] bg-[#EDE9FE] dark:bg-[#6D28D9]/30 px-2.5 py-1 rounded-lg border border-[#DDD6FE] dark:border-[#8B5CF6]/50 flex items-center gap-1.5 line-clamp-1">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
                       <span className="truncate">{course.matchReason}</span>
                     </div>
                   )}
 
                   {/* Description */}
-                  <p className="text-xs text-[#526078] dark:text-slate-300 line-clamp-2 leading-relaxed">
+                  <p className="text-xs font-medium text-[#334155] dark:text-slate-200 line-clamp-2 leading-relaxed">
                     {course.outcome}
                   </p>
 
                   {/* Meta Chips: Subject, Difficulty, Duration */}
-                  <div className="flex items-center gap-2 flex-wrap text-[11px] text-[#526078] dark:text-slate-400 pt-1">
-                    <span className="bg-slate-100 dark:bg-[#172033] px-2 py-0.5 rounded font-medium text-[#172033] dark:text-slate-300 border border-[#E2E8F0] dark:border-[#334155]">
+                  <div className="flex items-center gap-2 flex-wrap text-[11px] text-[#475569] dark:text-slate-300 pt-1">
+                    <span className="bg-[#F1F5F9] dark:bg-[#172033] px-2 py-0.5 rounded font-bold text-[#1E293B] dark:text-slate-200 border border-[#CBD5E1] dark:border-[#334155]">
                       {course.category}
                     </span>
                     <span>•</span>
                     <span
-                      className={`font-semibold ${
+                      className={`font-bold ${
                         course.difficulty === 'Beginner'
-                          ? 'text-[#15803D] dark:text-[#86EFAC]'
+                          ? 'text-[#166534] dark:text-[#86EFAC]'
                           : course.difficulty === 'Intermediate'
-                          ? 'text-[#B45309] dark:text-[#FCD34D]'
-                          : 'text-[#6D28D9] dark:text-[#DDD6FE]'
+                          ? 'text-[#92400E] dark:text-[#FCD34D]'
+                          : 'text-[#5B21B6] dark:text-[#DDD6FE]'
                       }`}
                     >
                       {course.difficulty}
@@ -924,8 +924,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {course.duration && (
                       <>
                         <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-[#64748B]" />
+                        <span className="flex items-center gap-1 font-medium">
+                          <Clock className="w-3 h-3 text-[#475569] dark:text-slate-400" />
                           <span>{course.duration}</span>
                         </span>
                       </>
@@ -938,36 +938,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleToggleCourseSave(course.id)}
-                    className={`text-xs px-2.5 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
+                    className={`text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition cursor-pointer border ${
                       status === 'completed'
-                        ? 'bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] dark:bg-[#15803D]/25 dark:text-[#86EFAC] dark:border-[#15803D]/40'
+                        ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
                         : status === 'in_progress'
-                        ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[#B45309]/25 dark:text-[#FCD34D] dark:border-[#B45309]/40'
+                        ? 'bg-[#FEF3C7] text-[#92400E] border-[#FCD34D] dark:bg-[#B45309]/30 dark:text-[#FCD34D] dark:border-[#B45309]/50'
                         : status === 'saved'
-                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/40'
+                        ? 'bg-[#EDE9FE] text-[#5B21B6] border-[#DDD6FE] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/50'
                         : isLight
-                        ? 'bg-white text-[#526078] border-[#E2E8F0] hover:bg-[#F8FAFC]'
-                        : 'bg-[#172033] text-slate-300 border-[#334155] hover:bg-[#243248]'
+                        ? 'bg-white text-[#334155] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                        : 'bg-[#172033] text-slate-200 border-[#334155] hover:bg-[#243248]'
                     }`}
                   >
                     {status === 'completed' ? (
                       <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#15803D] dark:text-[#86EFAC]" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#166534] dark:text-[#86EFAC]" />
                         <span>Completed</span>
                       </>
                     ) : status === 'in_progress' ? (
                       <>
-                        <Clock className="w-3.5 h-3.5 text-[#B45309] dark:text-[#FCD34D]" />
+                        <Clock className="w-3.5 h-3.5 text-[#92400E] dark:text-[#FCD34D]" />
                         <span>In Progress</span>
                       </>
                     ) : status === 'saved' ? (
                       <>
-                        <BookmarkCheck className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                        <BookmarkCheck className="w-3.5 h-3.5 text-[#5B21B6] dark:text-[#DDD6FE]" />
                         <span>Saved</span>
                       </>
                     ) : (
                       <>
-                        <Bookmark className="w-3.5 h-3.5 text-[#64748B]" />
+                        <Bookmark className="w-3.5 h-3.5 text-[#475569] dark:text-slate-400" />
                         <span>Bookmark</span>
                       </>
                     )}
@@ -994,10 +994,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* ========================================================================= */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+          <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
             Academic Capabilities
           </h2>
-          <span className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+          <span className={`text-xs font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
             Direct access to full academic tools
           </span>
         </div>
@@ -1010,19 +1010,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }`}
           >
             <div className="space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] flex items-center justify-center">
                 <TrendingUp className="w-5 h-5" />
               </div>
-              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 1. Performance &amp; Progress
               </h3>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                 Review semester marks, attendance trends, and predictive grade distribution.
               </p>
             </div>
             <button
               onClick={() => onNavigate('analysis')}
-              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-bold text-[#6D28D9] dark:text-[#A78BFA] hover:text-[#5B21B6] dark:hover:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
             >
               <span>Open Academic Analysis</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1036,19 +1036,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }`}
           >
             <div className="space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-[#FEF3C7] text-[#B45309] dark:bg-[#B45309]/25 dark:text-[#FCD34D] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#FEF3C7] text-[#92400E] dark:bg-[#B45309]/30 dark:text-[#FCD34D] flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5" />
               </div>
-              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 2. Weak-Subject Diagnosis
               </h3>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                 Pinpoint syllabus chapters causing performance friction and view targeted intervention suggestions.
               </p>
             </div>
             <button
               onClick={() => onNavigate('analysis')}
-              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-bold text-[#6D28D9] dark:text-[#A78BFA] hover:text-[#5B21B6] dark:hover:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
             >
               <span>View Topic Diagnostics</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1062,19 +1062,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }`}
           >
             <div className="space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center">
                 <Calendar className="w-5 h-5" />
               </div>
-              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 3. Exam Scheduling &amp; Timetable
               </h3>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                 Manage upcoming examinations, track countdowns, and maintain a spaced revision timetable.
               </p>
             </div>
             <button
               onClick={() => onNavigate('scheduler')}
-              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-bold text-[#6D28D9] dark:text-[#A78BFA] hover:text-[#5B21B6] dark:hover:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
             >
               <span>Open Exam Scheduler</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1088,19 +1088,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }`}
           >
             <div className="space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/25 dark:text-[#86EFAC] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#DCFCE7] text-[#166534] dark:bg-[#15803D]/30 dark:text-[#86EFAC] flex items-center justify-center">
                 <BookOpen className="w-5 h-5" />
               </div>
-              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 4. Learn &amp; Practice Studio
               </h3>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                 Search any curriculum topic to study concise structured theory and take 30-question diagnostic quizzes.
               </p>
             </div>
             <button
               onClick={() => onNavigate('learn')}
-              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-bold text-[#6D28D9] dark:text-[#A78BFA] hover:text-[#5B21B6] dark:hover:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
             >
               <span>Open Learn &amp; Practice</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1114,19 +1114,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }`}
           >
             <div className="space-y-2">
-              <div className="w-9 h-9 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] flex items-center justify-center">
                 <Target className="w-5 h-5" />
               </div>
-              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
                 5. Personalized Improvement Plan
               </h3>
-              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
                 Set target score milestones, rebalance missed study sessions across remaining days, and track statutory attendance compliance.
               </p>
             </div>
             <button
               onClick={() => onNavigate('scheduler')}
-              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-bold text-[#6D28D9] dark:text-[#A78BFA] hover:text-[#5B21B6] dark:hover:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
             >
               <span>Build Revision Timetable</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1153,18 +1153,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E8ECF3] dark:border-[#334155]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center">
                   <Zap className="w-4 h-4 fill-current" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold tracking-tight">Quick Actions</h4>
-                  <p className="text-[11px] text-[#526078] dark:text-slate-400">Immediate access to core workflows</p>
+                  <h4 className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-white">Quick Actions</h4>
+                  <p className="text-[11px] font-medium text-[#475569] dark:text-slate-300">Immediate access to core workflows</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsQuickActionsOpen(false)}
-                className="p-1 rounded-lg text-[#526078] hover:text-[#172033] dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-[#475569] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 aria-label="Close Quick Actions"
               >
                 <X className="w-4 h-4" />
@@ -1179,27 +1179,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={handleQuickAddExam}
                 className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-1 ${
                   isLight
-                    ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#DBEAFE]/30 hover:border-[#1D4ED8]/40'
-                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#38BDF8]/40'
+                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#DBEAFE]/40 hover:border-[#1E40AF]/40'
+                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#3B82F6]/40'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <CalendarPlus className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold">Add New Exam</span>
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD]">
+                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>Add New Exam</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DBEAFE] text-[#1E40AF] border border-[#93C5FD] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD]">
                         Scheduler
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#526078] dark:text-slate-400 mt-0.5 line-clamp-1">
+                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
                       Schedule test date, syllabus chapters &amp; priority
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#526078] dark:text-slate-400 group-hover:text-[#1D4ED8] dark:group-hover:text-[#93C5FD] group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#1E40AF] dark:group-hover:text-[#93C5FD] group-hover:translate-x-0.5 transition-all" />
               </button>
 
               {/* Action 2: Start New Practice Quiz */}
@@ -1208,29 +1208,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={handleQuickPracticeQuiz}
                 className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-2 ${
                   isLight
-                    ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#DCFCE7]/30 hover:border-[#15803D]/40'
+                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#DCFCE7]/40 hover:border-[#166534]/40'
                     : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#10B981]/40'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/30 dark:text-[#6EE7B7] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-[#DCFCE7] text-[#166534] dark:bg-[#15803D]/30 dark:text-[#6EE7B7] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <BrainCircuit className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold">Start New Practice Quiz</span>
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/30 dark:text-[#6EE7B7]">
+                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>Start New Practice Quiz</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#6EE7B7]">
                         30 Questions
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#526078] dark:text-slate-400 mt-0.5 line-clamp-1">
+                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
                       {prioritizedNextStep.hasEvidence
                         ? `Practice ${prioritizedNextStep.topic} (${prioritizedNextStep.subject})`
                         : 'Interactive diagnostic quiz & curriculum mastery'}
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#526078] dark:text-slate-400 group-hover:text-[#15803D] dark:group-hover:text-[#6EE7B7] group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#166534] dark:group-hover:text-[#6EE7B7] group-hover:translate-x-0.5 transition-all" />
               </button>
 
               {/* Action 3: View Study Roadmap */}
@@ -1239,39 +1239,39 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={handleQuickStudyRoadmap}
                 className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-3 ${
                   isLight
-                    ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9]/40'
+                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9]/40'
                     : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#8B5CF6]/40'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <Layers className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold">View Study Roadmap</span>
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
+                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>View Study Roadmap</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
                         Daily Roadmap
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#526078] dark:text-slate-400 mt-0.5 line-clamp-1">
+                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
                       {nextExam
                         ? `${nextExam.subject_name} (${getExamCountdown(nextExam.exam_date)}) • Daily plan & timer`
                         : 'Day-by-day task distribution & focus sessions'}
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#526078] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
               </button>
             </div>
 
             {/* Quick Status / Keyboard Hint */}
-            <div className="mt-3 pt-2.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between text-[11px] text-[#526078] dark:text-slate-400">
+            <div className={`mt-3 pt-2.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between text-[11px] font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                 <span>Active intelligence hub</span>
               </span>
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 font-semibold">
                 ESC to close
               </kbd>
             </div>
@@ -1285,19 +1285,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           aria-expanded={isQuickActionsOpen}
           aria-haspopup="dialog"
           aria-label="Toggle Quick Actions Floating Menu"
-          className={`flex items-center gap-2.5 px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-full font-semibold shadow-2xl transition-all duration-200 cursor-pointer active:scale-95 focus:outline-hidden focus:ring-4 ${
+          className={`flex items-center gap-2.5 px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-full font-bold shadow-2xl transition-all duration-200 cursor-pointer active:scale-95 focus:outline-hidden focus:ring-4 ${
             isQuickActionsOpen
               ? isLight
-                ? 'bg-[#172033] text-white shadow-slate-900/30 focus:ring-[#172033]/25'
+                ? 'bg-[#0F172A] text-white shadow-slate-900/30 focus:ring-[#0F172A]/25'
                 : 'bg-white text-[#0B0F19] shadow-black/50 focus:ring-white/30'
               : 'bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-[#6D28D9]/40 hover:shadow-[#6D28D9]/60 focus:ring-[#6D28D9]/30 hover:-translate-y-0.5'
           }`}
         >
           <div className={`transition-transform duration-300 ${isQuickActionsOpen ? 'rotate-90' : 'rotate-0'}`}>
-            {isQuickActionsOpen ? <X className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+            {isQuickActionsOpen ? (
+              <X className={`w-5 h-5 ${isQuickActionsOpen && !isLight ? 'text-[#0B0F19]' : 'text-white'}`} />
+            ) : (
+              <Sparkles className="w-5 h-5 text-white" />
+            )}
           </div>
-          <span className="text-sm font-semibold tracking-wide">Quick Actions</span>
-          <span className="inline-flex items-center justify-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">
+          <span className={`text-sm font-bold tracking-wide ${isQuickActionsOpen && !isLight ? 'text-[#0B0F19]' : 'text-white'}`}>
+            Quick Actions
+          </span>
+          <span
+            className={`inline-flex items-center justify-center text-xs font-black px-2 py-0.5 rounded-full shadow-xs ${
+              isQuickActionsOpen && !isLight ? 'bg-[#0F172A] text-white' : 'bg-white text-[#6D28D9]'
+            }`}
+          >
             3
           </span>
         </button>

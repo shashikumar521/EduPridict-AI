@@ -173,8 +173,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div key={group.group}>
               {!isCollapsed && (
                 <p
-                  className={`px-3 text-[11px] font-bold uppercase tracking-wider mb-1.5 ${
-                    isLight ? 'text-[#64748B]' : 'text-slate-400'
+                  className={`px-3 text-[11px] font-extrabold uppercase tracking-wider mb-1.5 ${
+                    isLight ? 'text-[#334155]' : 'text-slate-200'
                   }`}
                 >
                   {group.group}
@@ -205,8 +205,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
                             : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
                           : isLight
-                          ? 'text-[#526078] hover:bg-[#F5F3FF] hover:text-[#172033] font-medium'
-                          : 'text-slate-300 hover:bg-[#172033] hover:text-white font-medium'
+                          ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                          : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
                       }`}
                     >
                       <Icon
@@ -216,8 +216,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               ? 'text-[#6D28D9]'
                               : 'text-[#DDD6FE]'
                             : isLight
-                            ? 'text-[#526078]'
-                            : 'text-slate-400'
+                            ? 'text-[#475569]'
+                            : 'text-slate-300'
                         }`}
                       />
                       {!isCollapsed && (

@@ -540,14 +540,14 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                       onClick={() => setCurrentStep(s.step as AssessmentStep)}
                       className={`text-left p-2.5 sm:p-3 rounded-xl border transition cursor-pointer ${
                         isActive
-                          ? 'bg-[#7000E8] text-white border-[#7000E8] shadow-sm'
+                          ? 'bg-[#6D28D9] text-white border-[#6D28D9] shadow-sm'
                           : isCompleted
                           ? isLight
-                            ? 'bg-[#E8F7EF] border-[#A3DEC0] text-[#087A55] hover:bg-[#E8F7EF]/80'
-                            : 'bg-[rgba(8,122,85,0.22)] border-[rgba(16,185,129,0.35)] text-[#6EE7B7]'
+                            ? 'bg-[#DCFCE7] border-[#86EFAC] text-[#166534] hover:bg-[#DCFCE7]/80'
+                            : 'bg-[#14532D]/30 border-[#16A34A]/40 text-[#86EFAC]'
                           : isLight
-                          ? 'bg-white border-[#E1E6EF] text-[#526078] hover:bg-[#F0F3F9]'
-                          : 'bg-[#131926] border-[#1E2B42] text-slate-400 hover:bg-[#182236]'
+                          ? 'bg-white border-[#CBD5E1] text-[#334155] hover:bg-[#F8FAFC]'
+                          : 'bg-[#131926] border-[#334155] text-slate-200 hover:bg-[#182236]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -555,12 +555,12 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                           {s.title}
                         </span>
                         {isCompleted && (
-                          <Check className={`w-3.5 h-3.5 shrink-0 hidden sm:block ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                          <Check className={`w-3.5 h-3.5 shrink-0 hidden sm:block ${isLight ? 'text-[#166534]' : 'text-[#86EFAC]'}`} />
                         )}
                       </div>
                       <span
-                        className={`text-[10px] hidden sm:block truncate mt-0.5 ${
-                          isActive ? 'text-purple-100' : isLight ? 'text-[#526581]' : 'text-zinc-500'
+                        className={`text-[10px] hidden sm:block truncate mt-0.5 font-medium ${
+                          isActive ? 'text-purple-100' : isLight ? 'text-[#475569]' : 'text-slate-300'
                         }`}
                       >
                         {s.desc}
