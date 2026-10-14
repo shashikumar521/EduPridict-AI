@@ -53,7 +53,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ metrics, isLoading
               Cross-validated benchmark metrics, multi-class confusion matrix, and feature importances evaluated on legitimate datasets.
             </p>
           </div>
-          <div className="text-xs text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-900 px-3 py-1.5 rounded-xl font-semibold self-start sm:self-auto">
+          <div className="text-xs text-[#7000E8] dark:text-[#C4B5FD] bg-[#EEE7FF] dark:bg-[rgba(112,0,232,0.18)] border border-[#D1B8FC] dark:border-[rgba(142,48,255,0.35)] px-3 py-1.5 rounded-xl font-semibold self-start sm:self-auto">
             10-Fold Stratified Cross-Validation
           </div>
         </div>
@@ -81,14 +81,14 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ metrics, isLoading
           <span className="text-[10px] text-slate-500 dark:text-slate-400">Equal category weighting</span>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-xs">
-          <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider block truncate">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-[#D1B8FC] dark:border-[rgba(142,48,255,0.35)] bg-[#EEE7FF]/30 dark:bg-[rgba(112,0,232,0.18)] shadow-xs">
+          <span className="text-[11px] font-semibold text-[#7000E8] dark:text-[#C4B5FD] uppercase tracking-wider block truncate">
             Recall (At-Risk)
           </span>
-          <div className="text-xl font-extrabold text-indigo-700 dark:text-indigo-400 mt-1">
+          <div className="text-xl font-extrabold text-[#7000E8] dark:text-[#C4B5FD] mt-1">
             {evalMetrics ? `${(evalMetrics.at_risk_recall * 100).toFixed(1)}%` : '92.6%'}
           </div>
-          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">Primary Priority KPI</span>
+          <span className="text-[10px] text-[#7000E8] dark:text-[#C4B5FD] font-semibold">Primary Priority KPI</span>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">

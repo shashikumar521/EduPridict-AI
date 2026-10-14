@@ -539,7 +539,7 @@ export async function generateExamStudyPlan(payload: {
 export async function updateExamSessionStatus(
   planId: number,
   sessionId: string,
-  status: 'pending' | 'completed' | 'needs_review'
+  status: 'pending' | 'completed' | 'partially_completed' | 'skipped' | 'needs_review'
 ): Promise<any> {
   const res = await fetch(`${API_BASE}/planner/exam-session/${encodeURIComponent(sessionId)}`, {
     method: 'PATCH',
@@ -556,12 +556,19 @@ export async function updateExamSessionStatus(
 export async function rebalanceExamSchedule(
   planId: number,
   plan: ExamStudyPlan,
-  availability: StudyAvailability
+  availability: StudyAvailability,
+  options?: { missedDate?: string; unplannedBreak?: boolean }
 ): Promise<ExamStudyPlan> {
   const res = await fetch(`${API_BASE}/planner/rebalance`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ plan_id: planId, plan, availability })
+    body: JSON.stringify({
+      plan_id: planId,
+      plan,
+      availability,
+      missedDate: options?.missedDate,
+      unplannedBreak: options?.unplannedBreak
+    })
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

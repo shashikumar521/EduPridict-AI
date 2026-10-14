@@ -103,6 +103,19 @@ export interface VerifiedCourse {
   url: string;
   pricing: '100% Free' | 'Free to Audit' | 'Free Official Courseware';
   savedStatus?: 'not_saved' | 'saved' | 'in_progress' | 'completed';
+  duration?: string;
+  skills?: string[];
+  verifiedProvider?: boolean;
+  providerType?: 'university' | 'industry' | 'open_learning';
+  matchReason?: string;
+}
+
+export interface CoursePreferences {
+  targetSkills: string[];
+  preferredDuration: 'all' | 'short' | 'medium' | 'comprehensive';
+  preferredProviderType: 'all' | 'university' | 'tech_industry';
+  learningGoal: string;
+  focusSubjects: string[];
 }
 
 export interface PersonalizedStudyPlan {
@@ -241,21 +254,31 @@ export interface ExamTopic {
   confidence: TopicConfidence;
   weightage: TopicWeightage;
   estimatedMinutes: number;
+  isCompleted?: boolean;
 }
 
 export interface ExamSubject {
   id: string;
   name: string;
+  examType?: string;
   examDate: string; // YYYY-MM-DD
+  examTime?: string;
   topics: ExamTopic[];
 }
 
 export interface StudyAvailability {
   dailyHoursWeekday: number;
   dailyHoursWeekend: number;
+  dailyHours?: number;
+  dailyMinutes?: number;
   preferredTimeSlot: 'morning' | 'afternoon' | 'evening' | 'night' | 'flexible';
+  startTime?: string; // e.g. "09:00 AM" or "09:00"
+  endTime?: string;   // e.g. "09:30 PM" or "21:30"
+  sessionDurationMinutes?: number; // e.g. 25, 40, 50, 60
+  breakDurationMinutes?: number;   // e.g. 5, 10, 15
   restDays: string[];
   revisionBufferDays: number;
+  commitmentsNote?: string;
 }
 
 export interface ScheduledStudySession {
@@ -268,9 +291,12 @@ export interface ScheduledStudySession {
   date: string; // YYYY-MM-DD
   dayOfWeek: string;
   durationMinutes: number;
+  startTime?: string;
+  endTime?: string;
+  timeSlot?: string;
   sessionType: SessionType;
   priority: 'high' | 'medium' | 'low';
-  status: 'pending' | 'completed' | 'needs_review';
+  status: 'pending' | 'completed' | 'partially_completed' | 'skipped' | 'needs_review';
   completedAt?: string;
   aiTip?: string;
 }
@@ -286,6 +312,15 @@ export interface DaySchedule {
   };
 }
 
+export interface WorkloadDeficitInfo {
+  hasDeficit: boolean;
+  totalRequiredMinutes: number;
+  totalAvailableMinutes: number;
+  deficitMinutes: number;
+  unscheduledTopicsCount: number;
+  priorityNotice: string;
+}
+
 export interface ExamStudyPlan {
   id?: number;
   studentId: string;
@@ -296,6 +331,7 @@ export interface ExamStudyPlan {
   availability: StudyAvailability;
   days: DaySchedule[];
   aiStrategyTips: string[];
+  workloadDeficit?: WorkloadDeficitInfo;
   totalTopics: number;
   completedTopics: number;
   totalHoursPlanned: number;

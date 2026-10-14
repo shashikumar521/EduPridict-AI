@@ -287,7 +287,7 @@ export const StudyPlannerView: React.FC = () => {
   // 5. Interactive Session Status Toggle (Checkbox / Needs Review)
   const handleToggleSessionStatus = async (
     sessionId: string,
-    currentStatus: 'pending' | 'completed' | 'needs_review'
+    currentStatus: ScheduledStudySession['status']
   ) => {
     if (!plan || !plan.id) return;
 

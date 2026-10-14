@@ -11,12 +11,17 @@ import {
   Sun,
   Moon,
   GraduationCap,
-  Building
+  Building,
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
 import { EDUCATION_LEVELS } from '../data/educationLevels';
+import { loadUserCoursePreferences } from '../data/courseCatalogue';
+import { CoursePreferencesModal } from './CoursePreferencesModal';
+import { CoursePreferences } from '../types';
 
 interface SettingsViewProps {
   onOpenProfileSetup?: () => void;
@@ -53,6 +58,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenProfileSetup }
   const [autoSavePredictions, setAutoSavePredictions] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [coursePrefs, setCoursePrefs] = useState<CoursePreferences>(() => loadUserCoursePreferences());
+  const [isCoursePrefsOpen, setIsCoursePrefsOpen] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +138,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenProfileSetup }
             <span>Profile &amp; Preferences Saved</span>
           </div>
         )}
+      </div>
+
       {/* Complete Academic Onboarding Card */}
       {onOpenProfileSetup && (
         <div
@@ -419,6 +428,53 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenProfileSetup }
           </div>
         </div>
 
+        {/* Section 3: Course Recommendation & Learning Preferences */}
+        <div
+          className={`rounded-2xl p-6 border transition-colors shadow-xs space-y-4 ${
+            isLight
+              ? 'bg-white border-[#E9E5F2] text-[#11182E]'
+              : 'bg-[#0d0f17] border-zinc-800/80 text-zinc-100'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E9E5F2] dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-[#8000E8] dark:text-[#8B5CF6]" />
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#11182E]' : 'text-white'}`}>
+                Course Recommendation &amp; Learning Preferences
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsCoursePrefsOpen(true)}
+              className="btn-secondary text-xs px-3.5 py-1.5 gap-1.5 cursor-pointer font-semibold self-start sm:self-auto"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#7000E8] dark:text-[#C4B5FD]" />
+              <span>Customize Preferences</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-[#F7F9FC] dark:bg-zinc-900/60 space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Skills</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-2">
+                {coursePrefs.targetSkills.join(', ') || 'Curriculum Foundations'}
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-[#F7F9FC] dark:bg-zinc-900/60 space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Preferred Pace</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                {coursePrefs.preferredDuration === 'all' ? 'Flexible / Any Duration' : `${coursePrefs.preferredDuration} duration`}
+              </p>
+            </div>
+            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-[#F7F9FC] dark:bg-zinc-900/60 space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Provider Scope</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 capitalize">
+                {coursePrefs.preferredProviderType === 'all' ? 'All Verified Providers' : coursePrefs.preferredProviderType.replace('_', ' ')}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Submit & Reset Bar */}
         <div className="flex items-center justify-between pt-2">
           <button
@@ -440,6 +496,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onOpenProfileSetup }
           </button>
         </div>
       </form>
+
+      {/* Preferences Modal */}
+      {isCoursePrefsOpen && (
+        <CoursePreferencesModal
+          isOpen={isCoursePrefsOpen}
+          onClose={() => setIsCoursePrefsOpen(false)}
+          onSaved={(newPrefs) => setCoursePrefs(newPrefs)}
+        />
+      )}
     </div>
   );
 };

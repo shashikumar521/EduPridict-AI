@@ -6,8 +6,41 @@ import {
   ScheduledStudySession,
   DaySchedule,
   ExamStudyPlan,
-  SessionType
+  SessionType,
+  WorkloadDeficitInfo
 } from '../src/types';
+
+/**
+ * Time utility functions for realistic session scheduling with non-overlapping slots and breaks
+ */
+function parseTimeToMinutes(timeStr?: string, defaultHour: number = 9): number {
+  if (!timeStr) return defaultHour * 60;
+  const trimmed = timeStr.trim().toUpperCase();
+  const match12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/);
+  if (match12) {
+    let hours = parseInt(match12[1], 10);
+    const mins = parseInt(match12[2], 10);
+    const meridiem = match12[3];
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + mins;
+  }
+  const match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24) {
+    return parseInt(match24[1], 10) * 60 + parseInt(match24[2], 10);
+  }
+  return defaultHour * 60;
+}
+
+function formatMinutesToTime(totalMins: number): string {
+  const normalized = ((totalMins % 1440) + 1440) % 1440;
+  const h = Math.floor(normalized / 60);
+  const m = normalized % 60;
+  const meridiem = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 === 0 ? 12 : h % 12;
+  const displayM = m < 10 ? `0${m}` : `${m}`;
+  return `${displayH}:${displayM} ${meridiem}`;
+}
 
 /**
  * Intelligent Algorithm to generate realistic, personalized, day-wise exam study schedule.
@@ -62,12 +95,18 @@ export function generateIntelligentSchedule(params: {
   }
 
   const topicPool: PrioritizedTopic[] = [];
+  let totalRequiredMinutes = 0;
+  let alreadyCompletedCount = 0;
 
   for (const sub of subjects) {
     const examDateObj = sub.examDate ? new Date(sub.examDate) : maxExamDate;
     examDateObj.setHours(0, 0, 0, 0);
 
     for (const top of sub.topics) {
+      if (top.isCompleted) {
+        alreadyCompletedCount++;
+      }
+
       // Weightage score
       const weightScore = top.weightage === 'High' ? 3 : (top.weightage === 'Medium' ? 2 : 1);
       // Confidence score (Weak needs highest urgency)
@@ -82,7 +121,13 @@ export function generateIntelligentSchedule(params: {
       if (priorityScore >= 6.5) priorityLabel = 'high';
       else if (priorityScore <= 4.0) priorityLabel = 'low';
 
-      const estMins = Math.max(30, Math.min(120, top.estimatedMinutes || 60));
+      // Preferred block duration respect
+      const defaultBlock = availability.sessionDurationMinutes || 45;
+      const estMins = top.estimatedMinutes || (top.difficulty === 'Hard' ? defaultBlock * 1.5 : defaultBlock);
+
+      if (!top.isCompleted) {
+        totalRequiredMinutes += estMins;
+      }
 
       topicPool.push({
         subjectId: sub.id,
@@ -92,7 +137,7 @@ export function generateIntelligentSchedule(params: {
         priorityScore,
         estimatedMinutes: estMins,
         priority: priorityLabel,
-        scheduledInitial: false,
+        scheduledInitial: Boolean(top.isCompleted),
         scheduledReview: false
       });
     }
@@ -111,6 +156,14 @@ export function generateIntelligentSchedule(params: {
   const daySchedules: DaySchedule[] = [];
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+  const sessionBlockMinutes = availability.sessionDurationMinutes || 45;
+  const breakMinutes = availability.breakDurationMinutes !== undefined ? availability.breakDurationMinutes : 10;
+  const startDayMinute = parseTimeToMinutes(availability.startTime, 9); // default 09:00 AM
+
+  const weekdayMinutes = (availability.dailyHoursWeekday || availability.dailyHours || 3) * 60 + (availability.dailyMinutes || 0);
+  const weekendMinutes = (availability.dailyHoursWeekend || availability.dailyHours || 4) * 60 + (availability.dailyMinutes || 0);
+
+  let totalAvailableMinutes = 0;
   const curr = new Date(startDateObj);
   let sessionCounter = 1;
 
@@ -123,16 +176,52 @@ export function generateIntelligentSchedule(params: {
     // Check if any subject has an exam on this exact day
     const examToday = subjects.find(s => s.examDate === dateStr);
 
-    let dailyCapacityMinutes = isWeekend
-      ? (availability.dailyHoursWeekend || 4) * 60
-      : (availability.dailyHoursWeekday || 3) * 60;
-
+    let dailyCapacityMinutes = isWeekend ? weekendMinutes : weekdayMinutes;
     if (isRestDay) {
-      dailyCapacityMinutes = 0; // Pure rest or light review
+      dailyCapacityMinutes = 0;
+    } else {
+      totalAvailableMinutes += dailyCapacityMinutes;
     }
 
     const daySessions: ScheduledStudySession[] = [];
     let allocatedMinutesToday = 0;
+    let currentSessionMinute = startDayMinute;
+
+    // Helper to push session with calculated realistic start and end time
+    const addSession = (
+      subId: string,
+      subName: string,
+      topId: string,
+      topName: string,
+      unitOrChapter: string,
+      dur: number,
+      sType: SessionType,
+      prio: 'high' | 'medium' | 'low',
+      tip: string
+    ) => {
+      const sStart = formatMinutesToTime(currentSessionMinute);
+      const sEnd = formatMinutesToTime(currentSessionMinute + dur);
+      daySessions.push({
+        id: `sess-${sessionCounter++}`,
+        subjectId: subId,
+        subjectName: subName,
+        topicId: topId,
+        topicName: topName,
+        unitOrChapter,
+        date: dateStr,
+        dayOfWeek: dayName,
+        durationMinutes: dur,
+        startTime: sStart,
+        endTime: sEnd,
+        timeSlot: `${sStart} – ${sEnd}`,
+        sessionType: sType,
+        priority: prio,
+        status: 'pending',
+        aiTip: tip
+      });
+      allocatedMinutesToday += dur;
+      currentSessionMinute += dur + breakMinutes;
+    };
 
     // Check subjects having exams within buffer days
     const bufferDays = availability.revisionBufferDays || 2;
@@ -140,78 +229,59 @@ export function generateIntelligentSchedule(params: {
       if (!sub.examDate) return false;
       const exD = new Date(sub.examDate);
       exD.setHours(0, 0, 0, 0);
-      const diffDays = Math.round((exD.getTime() - curr.getTime()) / (86400000));
+      const diffDays = Math.round((exD.getTime() - curr.getTime()) / 86400000);
       return diffDays >= 0 && diffDays <= bufferDays;
     });
 
     if (subjectsInBuffer.length > 0 && !isRestDay && dailyCapacityMinutes > 0) {
-      // Prioritize revision & mock test for subjects in buffer
       for (const buffSub of subjectsInBuffer) {
         const exD = new Date(buffSub.examDate);
         exD.setHours(0, 0, 0, 0);
-        const daysUntilExam = Math.round((exD.getTime() - curr.getTime()) / (86400000));
+        const daysUntilExam = Math.round((exD.getTime() - curr.getTime()) / 86400000);
 
         if (daysUntilExam === 0) {
-          // Exam day! Light 30-min formula & formula sheet warmup
           if (allocatedMinutesToday + 30 <= dailyCapacityMinutes) {
-            daySessions.push({
-              id: `sess-${sessionCounter++}`,
-              subjectId: buffSub.id,
-              subjectName: buffSub.name,
-              topicId: 'exam-warmup',
-              topicName: `${buffSub.name} - Pre-Exam Key Formulas & Mind-Map Review`,
-              unitOrChapter: 'Final Review',
-              date: dateStr,
-              dayOfWeek: dayName,
-              durationMinutes: 30,
-              sessionType: 'revision',
-              priority: 'high',
-              status: 'pending',
-              aiTip: 'Stay calm, focus on key definitions and diagrams, avoid learning new concepts right now.'
-            });
-            allocatedMinutesToday += 30;
+            addSession(
+              buffSub.id,
+              buffSub.name,
+              'exam-warmup',
+              `${buffSub.name} - Pre-Exam Key Formulas & Mind-Map Review`,
+              'Final Exam Review',
+              30,
+              'revision',
+              'high',
+              'Stay calm, review flash formulas and core definitions. Avoid cramming new topics today.'
+            );
           }
         } else if (daysUntilExam === 1) {
-          // 1 Day before: Mock Test or Full Revision Drill
-          const sessionDur = Math.min(90, dailyCapacityMinutes - allocatedMinutesToday);
-          if (sessionDur >= 45) {
-            daySessions.push({
-              id: `sess-${sessionCounter++}`,
-              subjectId: buffSub.id,
-              subjectName: buffSub.name,
-              topicId: 'mock-test',
-              topicName: `${buffSub.name} - Timed Full-Length Mock Paper / PYQs`,
-              unitOrChapter: 'Exam Simulation',
-              date: dateStr,
-              dayOfWeek: dayName,
-              durationMinutes: sessionDur,
-              sessionType: 'mock_test',
-              priority: 'high',
-              status: 'pending',
-              aiTip: 'Simulate exact exam conditions with no reference sheets to test exam endurance.'
-            });
-            allocatedMinutesToday += sessionDur;
+          const sessionDur = Math.min(Math.max(45, sessionBlockMinutes), dailyCapacityMinutes - allocatedMinutesToday);
+          if (sessionDur >= 30) {
+            addSession(
+              buffSub.id,
+              buffSub.name,
+              'mock-test',
+              `${buffSub.name} - Timed Full-Length Mock Paper / PYQs`,
+              'Exam Simulation',
+              sessionDur,
+              'mock_test',
+              'high',
+              'Simulate exact examination conditions with a strict timer to sharpen your exam endurance.'
+            );
           }
         } else {
-          // 2 days before: High weightage formulas & tricky concept blitz
-          const sessionDur = Math.min(60, dailyCapacityMinutes - allocatedMinutesToday);
+          const sessionDur = Math.min(Math.max(40, sessionBlockMinutes), dailyCapacityMinutes - allocatedMinutesToday);
           if (sessionDur >= 30) {
-            daySessions.push({
-              id: `sess-${sessionCounter++}`,
-              subjectId: buffSub.id,
-              subjectName: buffSub.name,
-              topicId: 'buffer-revision',
-              topicName: `${buffSub.name} - High-Yield Question Bank & Error Log Drill`,
-              unitOrChapter: 'Intensive Review',
-              date: dateStr,
-              dayOfWeek: dayName,
-              durationMinutes: sessionDur,
-              sessionType: 'revision',
-              priority: 'high',
-              status: 'pending',
-              aiTip: 'Review questions you previously struggled with or got wrong in homework.'
-            });
-            allocatedMinutesToday += sessionDur;
+            addSession(
+              buffSub.id,
+              buffSub.name,
+              'buffer-revision',
+              `${buffSub.name} - High-Yield Question Bank & Error Log Drill`,
+              'Spaced Revision',
+              sessionDur,
+              'revision',
+              'high',
+              'Review questions you previously struggled with or got wrong during past assessments.'
+            );
           }
         }
       }
@@ -219,66 +289,52 @@ export function generateIntelligentSchedule(params: {
 
     // Now fill remaining time with unassigned core topics
     if (!isRestDay && allocatedMinutesToday < dailyCapacityMinutes) {
-      // Filter topics that:
-      // 1. Have exam date strictly AFTER this date
-      // 2. Haven't been scheduled initially
       for (const item of topicPool) {
         if (allocatedMinutesToday >= dailyCapacityMinutes) break;
 
         // Ensure this topic's exam hasn't already passed
         if (item.subjectExamDate <= curr) continue;
 
-        // Determine session duration (e.g. 45 or 60 min blocks)
-        const blockMins = Math.min(item.estimatedMinutes, dailyCapacityMinutes - allocatedMinutesToday);
-        if (blockMins < 30) continue; // Skip if less than 30 mins available
+        const remainingCapacity = dailyCapacityMinutes - allocatedMinutesToday;
+        const blockMins = Math.min(item.estimatedMinutes, sessionBlockMinutes, remainingCapacity);
+        if (blockMins < 20) continue;
 
         if (!item.scheduledInitial) {
-          // Initial study session
-          const sessionType: SessionType = item.topic.difficulty === 'Hard' || item.topic.confidence === 'Weak'
-            ? 'concept'
-            : 'problem_solving';
+          const sessionType: SessionType =
+            item.topic.difficulty === 'Hard' || item.topic.confidence === 'Weak'
+              ? 'concept'
+              : 'problem_solving';
 
-          daySessions.push({
-            id: `sess-${sessionCounter++}`,
-            subjectId: item.subjectId,
-            subjectName: item.subjectName,
-            topicId: item.topic.id,
-            topicName: item.topic.name,
-            unitOrChapter: item.topic.unitOrChapter || 'Core Module',
-            date: dateStr,
-            dayOfWeek: dayName,
-            durationMinutes: blockMins,
+          addSession(
+            item.subjectId,
+            item.subjectName,
+            item.topic.id,
+            item.topic.name,
+            item.topic.unitOrChapter || 'Core Module',
+            blockMins,
             sessionType,
-            priority: item.priority,
-            status: 'pending',
-            aiTip: item.topic.confidence === 'Weak'
+            item.priority,
+            item.topic.confidence === 'Weak'
               ? 'Focus on first principles: solve 2 sample questions with pen and paper right after reading.'
-              : 'Summarize key takeaways in bullet points before concluding.'
-          });
+              : 'Summarize key takeaways and note down any friction points for quick revision.'
+          );
 
-          allocatedMinutesToday += blockMins;
           item.scheduledInitial = true;
         } else if (!item.scheduledReview && (item.priority === 'high' || item.topic.confidence === 'Weak')) {
-          // Schedule a spaced repetition review 3+ days after initial study
-          // Only if this day is at least 3 days after startDate
           const daysFromStart = Math.round((curr.getTime() - startDateObj.getTime()) / 86400000);
-          if (daysFromStart >= 3 && blockMins >= 30) {
-            daySessions.push({
-              id: `sess-${sessionCounter++}`,
-              subjectId: item.subjectId,
-              subjectName: item.subjectName,
-              topicId: `${item.topic.id}-rev`,
-              topicName: `${item.topic.name} (Active Recall & Formula Verification)`,
-              unitOrChapter: item.topic.unitOrChapter || 'Spaced Review',
-              date: dateStr,
-              dayOfWeek: dayName,
-              durationMinutes: Math.min(45, blockMins),
-              sessionType: 'spaced_recall',
-              priority: 'high',
-              status: 'pending',
-              aiTip: 'Active Recall test: Write down all key formulas from memory without looking at notes!'
-            });
-            allocatedMinutesToday += Math.min(45, blockMins);
+          if (daysFromStart >= 3 && remainingCapacity >= 25) {
+            const revDur = Math.min(30, remainingCapacity);
+            addSession(
+              item.subjectId,
+              item.subjectName,
+              `${item.topic.id}-rev`,
+              `${item.topic.name} (Active Recall & Formula Verification)`,
+              item.topic.unitOrChapter || 'Spaced Recall',
+              revDur,
+              'spaced_recall',
+              'high',
+              'Active Recall Drill: Write down all key formulas from memory without checking reference notes!'
+            );
             item.scheduledReview = true;
           }
         }
@@ -294,8 +350,22 @@ export function generateIntelligentSchedule(params: {
       examOnThisDay: examToday ? { subjectName: examToday.name } : undefined
     });
 
-    // Advance to next day
     curr.setDate(curr.getDate() + 1);
+  }
+
+  // Workload analysis: check if required exceeds capacity
+  let workloadDeficit: WorkloadDeficitInfo | undefined;
+  const unscheduledTopics = topicPool.filter(t => !t.scheduledInitial && !t.topic.isCompleted);
+  if (totalRequiredMinutes > totalAvailableMinutes || unscheduledTopics.length > 0) {
+    const deficitMins = Math.max(0, totalRequiredMinutes - totalAvailableMinutes);
+    workloadDeficit = {
+      hasDeficit: true,
+      totalRequiredMinutes,
+      totalAvailableMinutes,
+      deficitMinutes: deficitMins,
+      unscheduledTopicsCount: unscheduledTopics.length,
+      priorityNotice: `Workload Alert: ${Math.round(totalRequiredMinutes / 60)}h required for remaining syllabus vs ${Math.round(totalAvailableMinutes / 60)}h available before exams. High-priority and weak-confidence modules have been prioritized first; ${unscheduledTopics.length} lower-priority topic(s) flagged for rapid review.`
+    };
   }
 
   // Calculate high-level metrics
@@ -315,8 +385,9 @@ export function generateIntelligentSchedule(params: {
     availability,
     days: daySchedules,
     aiStrategyTips,
+    workloadDeficit,
     totalTopics,
-    completedTopics: 0,
+    completedTopics: alreadyCompletedCount,
     totalHoursPlanned,
     completedHours: 0,
     streakDays: 1,
@@ -326,15 +397,19 @@ export function generateIntelligentSchedule(params: {
 }
 
 /**
- * Rebalances schedule when a student marks items as needing review or misses days.
+ * Rebalances schedule when a student marks items as needing review, partially completed, or reports missed days.
  */
 export function rebalanceSchedule(
   currentPlan: ExamStudyPlan,
-  availability: StudyAvailability
+  availability: StudyAvailability,
+  options?: { missedDate?: string; unplannedBreak?: boolean }
 ): ExamStudyPlan {
   // Collect all uncompleted topics
-  const uncompletedTopics: ScheduledStudySession[] = [];
   const completedTopics: ScheduledStudySession[] = [];
+  const uncompletedTopics: ScheduledStudySession[] = [];
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const targetCutoff = options?.missedDate || todayStr;
 
   for (const day of currentPlan.days) {
     for (const sess of day.sessions) {
@@ -346,16 +421,30 @@ export function rebalanceSchedule(
     }
   }
 
+  // Update subjects' topic completion status based on completed sessions
+  const updatedSubjects: ExamSubject[] = currentPlan.subjects.map(sub => {
+    const subCompletedTopics = new Set(
+      completedTopics.filter(c => c.subjectId === sub.id).map(c => c.topicId.replace('-rev', ''))
+    );
+    return {
+      ...sub,
+      topics: sub.topics.map(t => ({
+        ...t,
+        isCompleted: t.isCompleted || subCompletedTopics.has(t.id)
+      }))
+    };
+  });
+
   // Re-run scheduler with remaining uncompleted topics from today forward
   const updated = generateIntelligentSchedule({
     studentId: currentPlan.studentId,
     examName: currentPlan.examName,
-    startDate: new Date().toISOString().slice(0, 10),
-    subjects: currentPlan.subjects,
+    startDate: targetCutoff,
+    subjects: updatedSubjects,
     availability
   });
 
-  // Preserve completed count
+  // Preserve completed count & hours
   updated.id = currentPlan.id;
   updated.completedTopics = completedTopics.length;
   const completedMins = completedTopics.reduce((acc, s) => acc + (s.durationMinutes || 0), 0);

@@ -472,16 +472,16 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
         <div
           className={`rounded-2xl border transition-all overflow-hidden shadow-xs print:hidden ${
             isLight
-              ? 'bg-white border-[#E9E5F2]'
-              : 'bg-[#0d0f17] border-zinc-800/80 text-zinc-100'
+              ? 'bg-white border-[#E1E6EF]'
+              : 'bg-[#131926] border-[#1E2B42] text-zinc-100'
           }`}
         >
           {/* Header of Section 1 */}
           <div
             className={`p-5 sm:p-6 border-b transition-colors ${
               isLight
-                ? 'bg-gradient-to-r from-white via-[#F7F9FC] to-[#8000E8]/5 border-[#E9E5F2]'
-                : 'bg-zinc-900/60 border-zinc-800'
+                ? 'bg-[#F0F3F9] border-[#E1E6EF]'
+                : 'bg-[#182236] border-[#1E2B42]'
             }`}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -489,8 +489,8 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                 <div
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold uppercase tracking-wider mb-2 ${
                     isLight
-                      ? 'bg-[#8000E8]/10 border-[#8000E8]/20 text-[#8000E8]'
-                      : 'bg-[#8B5CF6]/15 border-[#8B5CF6]/30 text-[#8B5CF6]'
+                      ? 'bg-[#EEE7FF] border-[#D1B8FC] text-[#7000E8]'
+                      : 'bg-[rgba(112,0,232,0.18)] border-[rgba(142,48,255,0.35)] text-[#C4B5FD]'
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5" />
@@ -498,14 +498,14 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                 </div>
                 <h2
                   className={`text-xl sm:text-2xl font-bold tracking-tight ${
-                    isLight ? 'text-[#11182E]' : 'text-white'
+                    isLight ? 'text-[#172033]' : 'text-white'
                   }`}
                 >
                   Student Academic Assessment
                 </h2>
                 <p
                   className={`text-xs sm:text-sm mt-1 max-w-2xl ${
-                    isLight ? 'text-[#526581]' : 'text-zinc-400'
+                    isLight ? 'text-[#526078]' : 'text-zinc-400'
                   }`}
                 >
                   Follow the 4-step intake process to compute predicted academic performance and identify learning gaps using machine learning models.
@@ -515,11 +515,7 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
               {prediction && (
                 <button
                   onClick={() => setShowAssessmentForm(false)}
-                  className={`self-start sm:self-auto text-xs font-semibold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
-                    isLight
-                      ? 'bg-white hover:bg-[#F0F3F8] text-[#526581] border-[#E9E5F2]'
-                      : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border-zinc-700'
-                  }`}
+                  className="btn-secondary text-xs px-3 py-1.5"
                 >
                   Minimize Form
                 </button>
@@ -544,14 +540,14 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
                       onClick={() => setCurrentStep(s.step as AssessmentStep)}
                       className={`text-left p-2.5 sm:p-3 rounded-xl border transition cursor-pointer ${
                         isActive
-                          ? 'bg-[#8000E8] text-white border-[#8000E8] shadow-sm'
+                          ? 'bg-[#7000E8] text-white border-[#7000E8] shadow-sm'
                           : isCompleted
                           ? isLight
-                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900 hover:bg-emerald-100/60'
-                            : 'bg-emerald-950/40 border-emerald-800 text-emerald-300'
+                            ? 'bg-[#E8F7EF] border-[#A3DEC0] text-[#087A55] hover:bg-[#E8F7EF]/80'
+                            : 'bg-[rgba(8,122,85,0.22)] border-[rgba(16,185,129,0.35)] text-[#6EE7B7]'
                           : isLight
-                          ? 'bg-white border-[#E9E5F2] text-[#526581] hover:bg-[#F7F9FC]'
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                          ? 'bg-white border-[#E1E6EF] text-[#526078] hover:bg-[#F0F3F9]'
+                          : 'bg-[#131926] border-[#1E2B42] text-slate-400 hover:bg-[#182236]'
                       }`}
                     >
                       <div className="flex items-center justify-between">

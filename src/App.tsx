@@ -125,6 +125,9 @@ function AppContent() {
   const [selectedLearnCourse, setSelectedLearnCourse] = useState<string>('Computer Science & Engineering');
   const [selectedScheduleSubject, setSelectedScheduleSubject] = useState<string>('');
   const [selectedScheduleTopic, setSelectedScheduleTopic] = useState<string>('');
+  const [schedulerInitialTab, setSchedulerInitialTab] = useState<'roadmap' | 'exams' | 'availability' | 'timer'>('roadmap');
+  const [schedulerAutoOpenAdd, setSchedulerAutoOpenAdd] = useState<boolean>(false);
+  const [learnInitialSubTab, setLearnInitialSubTab] = useState<'theory' | 'quiz'>('theory');
 
   // Navigation handler with protection checks
   const handleNavigate = useCallback(
@@ -272,7 +275,7 @@ function AppContent() {
     if (isNewUser) {
       setShowProfileSetup(true);
     } else {
-      const dest = pendingRedirectSection || 'analysis';
+      const dest = pendingRedirectSection || 'dashboard';
       setPendingRedirectSection(null);
       handleNavigate(dest);
     }
@@ -281,7 +284,7 @@ function AppContent() {
   // First-time profile setup completion
   const handleProfileSetupComplete = () => {
     setShowProfileSetup(false);
-    const dest = pendingRedirectSection || 'analysis';
+    const dest = pendingRedirectSection || 'dashboard';
     setPendingRedirectSection(null);
     handleNavigate(dest);
   };
@@ -291,24 +294,24 @@ function AppContent() {
     return (
       <div
         className={`h-[100dvh] w-full flex flex-col items-center justify-center transition-colors ${
-          isLight ? 'bg-[#F8FAFC] text-slate-900' : 'bg-[#0B132B] text-slate-100'
+          isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0F172A] text-slate-100'
         }`}
       >
         <div className="relative flex items-center justify-center">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-2xl bg-[#0B132B] flex items-center justify-center border-2 border-teal-500/40 animate-pulse">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-[#1E293B] flex items-center justify-center border-2 border-[#6D28D9]/40 dark:border-[#8B5CF6]/40 animate-pulse p-2">
             <img
               src="/edupredict-ai-logo.png"
               alt="EduPredict AI"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-2xl"
               referrerPolicy="no-referrer"
             />
           </div>
         </div>
         <div className="mt-5 text-center space-y-1">
-          <p className={`text-base font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+          <p className={`text-base font-black tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
             EduPredict AI
           </p>
-          <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-widest animate-pulse">
+          <p className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] uppercase tracking-widest animate-pulse">
             Academic Intelligence Platform
           </p>
         </div>
@@ -365,7 +368,7 @@ function AppContent() {
   return (
     <div
       className={`h-[100dvh] max-h-[100dvh] w-full flex flex-col md:flex-row overflow-hidden antialiased transition-colors ${
-        isLight ? 'bg-[#F7F9FC] text-[#11182E]' : 'bg-[#090a0f] text-zinc-100'
+        isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0F172A] text-slate-100'
       }`}
     >
       {/* Sidebar Navigation - Fixed & stationary on desktop */}
@@ -394,9 +397,51 @@ function AppContent() {
           className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-6 w-full"
         >
           <div className="site-container pb-10">
+            {/* DASHBOARD: Executive Student Overview & Priority Action Hub */}
+            {currentSection === 'dashboard' && (
+              <DashboardView
+                onNavigate={handleNavigate}
+                onOpenProfileSetup={() => setShowProfileSetup(true)}
+                onSelectTopicForLearn={(t, c) => {
+                  setSelectedLearnTopic(t);
+                  if (c) setSelectedLearnCourse(c);
+                  setLearnInitialSubTab('theory');
+                  handleNavigate('learn');
+                }}
+                onSelectExamForSchedule={(s, t) => {
+                  setSelectedScheduleSubject(s);
+                  setSelectedScheduleTopic(t || '');
+                  setSchedulerInitialTab('exams');
+                  setSchedulerAutoOpenAdd(true);
+                  handleNavigate('scheduler');
+                }}
+                onOpenAddExam={() => {
+                  setSelectedScheduleSubject('');
+                  setSelectedScheduleTopic('');
+                  setSchedulerInitialTab('exams');
+                  setSchedulerAutoOpenAdd(true);
+                  handleNavigate('scheduler');
+                }}
+                onOpenPracticeQuiz={(topic?: string) => {
+                  if (topic) setSelectedLearnTopic(topic);
+                  setLearnInitialSubTab('quiz');
+                  handleNavigate('learn');
+                }}
+                onOpenStudyRoadmap={() => {
+                  setSchedulerInitialTab('roadmap');
+                  setSchedulerAutoOpenAdd(false);
+                  handleNavigate('scheduler');
+                }}
+                summary={dashboardSummary}
+                isLoading={isLoadingSummary}
+                studentName={studentDisplayName}
+                students={students}
+                predictions={predictions}
+              />
+            )}
+
             {/* CORE WORKFLOW 1: Academic Analysis & Performance Trajectory */}
             {(currentSection === 'analysis' ||
-              currentSection === 'dashboard' ||
               currentSection === 'predict' ||
               currentSection === 'whatif' ||
               currentSection === 'subjects' ||
@@ -407,11 +452,14 @@ function AppContent() {
                 onSelectTopicForLearn={(t, c) => {
                   setSelectedLearnTopic(t);
                   if (c) setSelectedLearnCourse(c);
+                  setLearnInitialSubTab('theory');
                   handleNavigate('learn');
                 }}
                 onSelectExamForSchedule={(s, t) => {
                   setSelectedScheduleSubject(s);
                   setSelectedScheduleTopic(t || '');
+                  setSchedulerInitialTab('exams');
+                  setSchedulerAutoOpenAdd(true);
                   handleNavigate('scheduler');
                 }}
               />
@@ -420,24 +468,31 @@ function AppContent() {
             {/* CORE WORKFLOW 2: Exam Scheduler & Intelligent Study Planner */}
             {(currentSection === 'scheduler' ||
               currentSection === 'planner' ||
-              currentSection === 'readiness') && (
+              currentSection === 'readiness' ||
+              currentSection === 'roadmap') && (
               <ExamSchedulerView
                 onNavigate={handleNavigate}
                 prefillSubject={selectedScheduleSubject}
                 prefillTopic={selectedScheduleTopic}
+                initialTab={currentSection === 'roadmap' ? 'roadmap' : schedulerInitialTab}
+                autoOpenAddModal={schedulerAutoOpenAdd}
               />
             )}
 
             {/* CORE WORKFLOW 3: Learn & Practice Studio (Theory & Diagnostic Quizzes) */}
             {(currentSection === 'learn' ||
-              currentSection === 'courses' ||
-              currentSection === 'counselor' ||
-              currentSection === 'roadmap') && (
+              currentSection === 'counselor') && (
               <LearnPracticeView
                 onNavigate={handleNavigate}
                 initialTopic={selectedLearnTopic}
                 initialCourseContext={selectedLearnCourse}
+                initialSubTab={learnInitialSubTab}
               />
+            )}
+
+            {/* RECOMMENDED COURSES & CURRICULUM DISCOVERY */}
+            {currentSection === 'courses' && (
+              <CourseRecommendationsView onNavigate={handleNavigate} />
             )}
 
             {/* Secondary Workflows & Utility Screens */}

@@ -138,12 +138,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
           : 'bg-[#090a0f] text-zinc-100 selection:bg-[#8000E8]/30 selection:text-purple-200'
       }`}
     >
-      {/* 1. Header (Follow Screenshot 1) */}
+      {/* 1. Header */}
       <header
         className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${
           isLight
-            ? 'bg-white/95 border-[#E9E5F2] text-[#11182E]'
-            : 'bg-[#090a0f]/90 border-zinc-800/80 text-zinc-100'
+            ? 'bg-white/95 border-[#E1E6EF] text-[#172033]'
+            : 'bg-[#131926]/95 border-[#1E2B42] text-[#F7F8FC]'
         }`}
       >
         <div className="site-container h-16 sm:h-[72px] flex items-center justify-between gap-3 sm:gap-4">
@@ -152,7 +152,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             onClick={() => onNavigateToDashboard('home')}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none text-left min-w-0 shrink-0"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-lg transition shrink-0 bg-[#0B132B] flex items-center justify-center border border-teal-500/30 group-hover:scale-105">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-sm transition shrink-0 bg-[#0B132B] flex items-center justify-center border border-[#7000E8]/30 group-hover:scale-105">
               <img
                 src="/edupredict-ai-logo.png"
                 alt="EduPredict AI Logo"
@@ -164,15 +164,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               <span
                 className={`text-base sm:text-lg font-bold tracking-tight transition truncate ${
                   isLight
-                    ? 'text-[#11182E] group-hover:text-[#8000E8]'
-                    : 'text-white group-hover:text-purple-300'
+                    ? 'text-[#172033] group-hover:text-[#7000E8]'
+                    : 'text-white group-hover:text-[#C4B5FD]'
                 }`}
               >
                 EduPredict AI
               </span>
               <span
                 className={`text-[10px] font-medium tracking-normal truncate ${
-                  isLight ? 'text-[#526581]' : 'text-zinc-400'
+                  isLight ? 'text-[#526078]' : 'text-slate-300'
                 }`}
               >
                 Academic Intelligence Platform
@@ -183,13 +183,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
           {/* Primary Navigation Links in the Center (Desktop) */}
           <nav
             className={`hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium ${
-              isLight ? 'text-[#526581]' : 'text-zinc-400'
+              isLight ? 'text-[#526078]' : 'text-slate-300'
             }`}
           >
             <button
               onClick={() => scrollToSection('features')}
               className={`transition-colors cursor-pointer py-1.5 ${
-                isLight ? 'hover:text-[#8000E8]' : 'hover:text-white'
+                isLight ? 'hover:text-[#7000E8]' : 'hover:text-white'
               }`}
             >
               Features
@@ -197,7 +197,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             <button
               onClick={() => scrollToSection('how-it-works')}
               className={`transition-colors cursor-pointer py-1.5 ${
-                isLight ? 'hover:text-[#8000E8]' : 'hover:text-white'
+                isLight ? 'hover:text-[#7000E8]' : 'hover:text-white'
               }`}
             >
               How It Works
@@ -205,7 +205,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             <button
               onClick={() => scrollToSection('demo')}
               className={`transition-colors cursor-pointer py-1.5 ${
-                isLight ? 'hover:text-[#8000E8]' : 'hover:text-white'
+                isLight ? 'hover:text-[#7000E8]' : 'hover:text-white'
               }`}
             >
               Platform Demo
@@ -213,7 +213,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             <button
               onClick={() => onNavigateToDashboard('planner')}
               className={`transition-colors cursor-pointer py-1.5 ${
-                isLight ? 'hover:text-[#8000E8]' : 'hover:text-white'
+                isLight ? 'hover:text-[#7000E8]' : 'hover:text-white'
               }`}
             >
               AI Exam Planner
@@ -221,7 +221,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             <button
               onClick={() => onNavigateToDashboard('about')}
               className={`transition-colors cursor-pointer py-1.5 ${
-                isLight ? 'hover:text-[#8000E8]' : 'hover:text-white'
+                isLight ? 'hover:text-[#7000E8]' : 'hover:text-white'
               }`}
             >
               About
@@ -236,14 +236,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             {/* Dashboard Button */}
             <button
               onClick={() => onNavigateToDashboard('dashboard')}
-              className={`inline-flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-full shadow-lg transition active:scale-95 cursor-pointer whitespace-nowrap ${
-                isLight
-                  ? 'bg-[#8000E8] hover:bg-[#6a00c2] shadow-[#8000E8]/25 hover:shadow-[#8000E8]/35'
-                  : 'bg-[#8000E8] hover:bg-[#9226ff] shadow-[#8000E8]/30 hover:shadow-[#8000E8]/40'
-              }`}
+              className="btn-primary text-sm px-5 py-2.5 rounded-full"
             >
-              <span>Dashboard</span>
-              <ArrowRight className="w-4 h-4" />
+              <span className="text-white">Dashboard</span>
+              <ArrowRight className="w-4 h-4 text-white" />
             </button>
           </div>
 
@@ -433,55 +429,48 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col">
-        {/* 2. Hero Section (Follow Screenshot 1) */}
+        {/* 2. Hero Section */}
         <section
           className={`pt-12 pb-14 sm:pt-16 sm:pb-20 md:pt-20 md:pb-24 relative overflow-hidden transition-colors ${
-            isLight ? 'bg-[#F7F9FC]' : 'bg-[#090a0f]'
+            isLight ? 'bg-[#F7F8FC]' : 'bg-[#0C101A]'
           }`}
         >
           {/* Subtle Ambient Glow */}
           <div
             className={`absolute top-0 right-1/4 w-[480px] h-[480px] rounded-full blur-3xl pointer-events-none ${
-              isLight ? 'bg-[#8000E8]/5' : 'bg-[#8000E8]/10'
+              isLight ? 'bg-[#7000E8]/5' : 'bg-[#7000E8]/10'
             }`}
           />
           <div
             className={`absolute -bottom-20 left-10 w-[420px] h-[420px] rounded-full blur-3xl pointer-events-none ${
-              isLight ? 'bg-[#633BFF]/5' : 'bg-[#633BFF]/10'
+              isLight ? 'bg-[#5B00C4]/5' : 'bg-[#5B00C4]/10'
             }`}
           />
 
           <div className="site-container relative z-10">
             <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
-              {/* Small Label Pill */}
+              {/* Category Lead-in */}
               <div
                 className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold mb-6 shadow-xs ${
                   isLight
-                    ? 'bg-white border-[#E9E5F2] text-[#526581]'
-                    : 'bg-zinc-900/90 border-zinc-800 text-zinc-300'
+                    ? 'bg-white border-[#E1E6EF] text-[#526078]'
+                    : 'bg-[#182236] border-[#1E2B42] text-slate-300'
                 }`}
               >
-                <span
-                  className={`w-2 h-2 rounded-full ring-4 ${
-                    isLight
-                      ? 'bg-[#8000E8] ring-[#8000E8]/20'
-                      : 'bg-[#8000E8] ring-[#8000E8]/30'
-                  }`}
-                />
-                <span className="uppercase tracking-wider text-[11px] sm:text-xs font-semibold">
-                  AI-POWERED STUDENT PERFORMANCE
+                <span className="uppercase tracking-wider text-[11px] font-bold text-[#7000E8] dark:text-[#C4B5FD]">
+                  AI-Powered Student Performance
                 </span>
               </div>
 
               {/* Main Heading */}
               <h1
-                className={`text-3xl sm:text-5xl lg:text-[54px] xl:text-[58px] font-black tracking-tight leading-[1.15] sm:leading-[1.16] mb-5 max-w-2xl sm:max-w-3xl text-balance ${
-                  isLight ? 'text-[#11182E]' : 'text-white'
+                className={`text-3xl sm:text-5xl lg:text-[52px] font-extrabold tracking-tight leading-[1.15] sm:leading-[1.16] mb-5 max-w-2xl sm:max-w-3xl text-balance ${
+                  isLight ? 'text-[#172033]' : 'text-[#F7F8FC]'
                 }`}
               >
                 Understand Your Performance.{' '}
                 <span
-                  className="text-transparent bg-clip-text inline-block bg-gradient-to-r from-[#8000E8] via-[#633BFF] to-[#8000E8]"
+                  className="text-transparent bg-clip-text inline-block bg-gradient-to-r from-[#7000E8] via-[#5B00C4] to-[#7000E8]"
                 >
                   Plan Your Success.
                 </span>
@@ -490,7 +479,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               {/* Supporting Description */}
               <p
                 className={`text-base sm:text-lg lg:text-xl max-w-xl sm:max-w-2xl leading-relaxed mb-8 sm:mb-9 font-normal text-balance ${
-                  isLight ? 'text-[#526581]' : 'text-zinc-400'
+                  isLight ? 'text-[#526078]' : 'text-slate-300'
                 }`}
               >
                 Predict your academic performance, discover learning gaps, and build a personalized study plan.
@@ -500,25 +489,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <button
                   onClick={() => onNavigateToDashboard('dashboard')}
-                  className={`h-12 sm:h-13 px-7 sm:px-8 inline-flex items-center justify-center gap-2.5 rounded-full text-white font-semibold text-base shadow-lg transition active:scale-95 cursor-pointer whitespace-nowrap ${
-                    isLight
-                      ? 'bg-[#8000E8] hover:bg-[#6a00c2] shadow-[#8000E8]/25 hover:shadow-[#8000E8]/35'
-                      : 'bg-[#8000E8] hover:bg-[#9226ff] shadow-[#8000E8]/30 hover:shadow-[#8000E8]/40'
-                  }`}
+                  className="btn-primary h-12 px-7 text-base rounded-full shadow-md"
                 >
-                  <span>Get Started</span>
-                  <ArrowRight className="w-4 h-4 shrink-0" />
+                  <span className="text-white">Get Started</span>
+                  <ArrowRight className="w-4 h-4 text-white shrink-0" />
                 </button>
 
                 <button
                   onClick={() => onNavigateToDashboard('planner')}
-                  className={`h-12 sm:h-13 px-6 sm:px-7 inline-flex items-center justify-center gap-2 rounded-full border font-medium text-base transition cursor-pointer whitespace-nowrap ${
-                    isLight
-                      ? 'bg-[#F0F3F8] hover:bg-white text-[#11182E] border-[#E9E5F2] hover:border-[#8000E8]/40 shadow-xs'
-                      : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white'
-                  }`}
+                  className="btn-secondary h-12 px-6 text-base rounded-full"
                 >
-                  <Calendar className={`w-4 h-4 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+                  <Calendar className="w-4 h-4 text-[#7000E8] dark:text-[#C4B5FD]" />
                   <span>Create Study Plan</span>
                 </button>
               </div>
@@ -526,13 +507,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
           </div>
         </section>
 
-        {/* 3. Feature Section — Follow Screenshot 2 */}
+        {/* 3. Feature Section */}
         <section
           id="features"
           className={`py-16 sm:py-20 lg:py-24 border-t transition-colors ${
             isLight
-              ? 'bg-[#F7F9FC] border-[#E9E5F2]'
-              : 'bg-[#0d0f17] border-zinc-800/80'
+              ? 'bg-[#F7F8FC] border-[#E1E6EF]'
+              : 'bg-[#0C101A] border-[#1E2B42]'
           }`}
         >
           <div className="site-container">
@@ -849,34 +830,34 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
           id="demo"
           className={`py-16 sm:py-20 border-t transition-colors ${
             isLight
-              ? 'bg-[#F7F9FC] border-[#E9E5F2]'
-              : 'bg-[#0d0f17] border-zinc-800/80'
+              ? 'bg-[#F7F8FC] border-[#E1E6EF]'
+              : 'bg-[#0C101A] border-[#1E2B42]'
           }`}
         >
           <div className="site-container">
             <div
               className={`max-w-5xl mx-auto rounded-3xl p-8 sm:p-12 border relative overflow-hidden text-center transition-all ${
                 isLight
-                  ? 'bg-white border-[#E9E5F2] shadow-xl shadow-[#8000E8]/5'
-                  : 'bg-[#121522] border-zinc-800 shadow-2xl'
+                  ? 'bg-white border-[#E1E6EF] shadow-sm'
+                  : 'bg-[#131926] border-[#1E2B42] shadow-xl'
               }`}
             >
               <div
                 className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold mb-4 shadow-xs ${
                   isLight
-                    ? 'bg-[#F0F3F8] border-[#E9E5F2] text-[#8000E8]'
-                    : 'bg-zinc-800 border-zinc-700 text-purple-300'
+                    ? 'bg-[#EEE7FF] border-[#D1B8FC] text-[#7000E8]'
+                    : 'bg-[rgba(112,0,232,0.18)] border-[rgba(142,48,255,0.35)] text-[#C4B5FD]'
                 }`}
               >
                 <Play className="w-3 h-3 fill-current" />
                 <span className="uppercase tracking-wider text-[11px] font-bold">
-                  PLATFORM DEMO
+                  Platform Demo
                 </span>
               </div>
 
               <h2
-                className={`text-2xl sm:text-4xl font-black tracking-tight mb-4 ${
-                  isLight ? 'text-[#11182E]' : 'text-white'
+                className={`text-2xl sm:text-4xl font-extrabold tracking-tight mb-4 ${
+                  isLight ? 'text-[#172033]' : 'text-white'
                 }`}
               >
                 Ready to Experience EduPredict AI?
@@ -884,7 +865,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
 
               <p
                 className={`text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed ${
-                  isLight ? 'text-[#526581]' : 'text-zinc-400'
+                  isLight ? 'text-[#526078]' : 'text-slate-300'
                 }`}
               >
                 Launch our interactive platform to explore real-time risk assessment, simulate what-if scenarios, and build a custom exam roadmap.
@@ -893,41 +874,33 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
                   onClick={() => onNavigateToDashboard('dashboard')}
-                  className={`h-12 px-7 inline-flex items-center justify-center gap-2 rounded-full text-white font-semibold text-sm shadow-lg transition active:scale-95 cursor-pointer whitespace-nowrap ${
-                    isLight
-                      ? 'bg-[#8000E8] hover:bg-[#6a00c2] shadow-[#8000E8]/25 hover:shadow-[#8000E8]/35'
-                      : 'bg-[#8000E8] hover:bg-[#9226ff] shadow-[#8000E8]/30 hover:shadow-[#8000E8]/40'
-                  }`}
+                  className="btn-primary h-12 px-7 text-sm rounded-full gap-2 shadow-md"
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Launch Platform Demo</span>
+                  <Play className="w-4 h-4 fill-current text-white" />
+                  <span className="text-white">Launch Platform Demo</span>
                 </button>
 
                 <button
                   onClick={() => onNavigateToDashboard('whatif')}
-                  className={`h-12 px-6 inline-flex items-center justify-center gap-2 rounded-full border font-medium text-sm transition cursor-pointer whitespace-nowrap ${
-                    isLight
-                      ? 'bg-[#F0F3F8] hover:bg-white text-[#11182E] border-[#E9E5F2] hover:border-[#8000E8]/40'
-                      : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800 text-zinc-300 hover:text-white'
-                  }`}
+                  className="btn-secondary h-12 px-6 text-sm rounded-full gap-2"
                 >
-                  <Sliders className={`w-4 h-4 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+                  <Sliders className="w-4 h-4 text-[#7000E8] dark:text-[#C4B5FD]" />
                   <span>Try What-If Simulator</span>
                 </button>
               </div>
 
               {/* Model Badges */}
-              <div className="mt-10 pt-6 border-t border-[#E9E5F2] dark:border-zinc-800 flex flex-wrap items-center justify-center gap-6 text-xs text-[#526581] dark:text-zinc-400 font-medium">
+              <div className="mt-10 pt-6 border-t border-[#E1E6EF] dark:border-[#1E2B42] flex flex-wrap items-center justify-center gap-6 text-xs text-[#526078] dark:text-slate-400 font-medium">
                 <span className="flex items-center gap-1.5">
-                  <Shield className={`w-3.5 h-3.5 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+                  <Shield className="w-3.5 h-3.5 text-[#7000E8] dark:text-[#C4B5FD]" />
                   <span>Supervised Ensemble Model</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className={`w-3.5 h-3.5 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#087A55] dark:text-[#6EE7B7]" />
                   <span>30+ Multi-Factor Metrics</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className={`w-3.5 h-3.5 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+                  <Zap className="w-3.5 h-3.5 text-[#7000E8] dark:text-[#C4B5FD]" />
                   <span>Real-Time Inference</span>
                 </span>
               </div>

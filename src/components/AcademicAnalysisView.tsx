@@ -326,13 +326,13 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
       <div
         className={`p-5 sm:p-6 rounded-2xl border transition-all ${
           isLight
-            ? 'bg-gradient-to-r from-teal-50/70 via-cyan-50/50 to-white border-teal-200/80 shadow-xs'
-            : 'bg-gradient-to-r from-[#0d1f2d] via-[#0B132B] to-[#111827] border-teal-500/30 shadow-md'
+            ? 'bg-white border-[#E2E8F0] text-[#172033] shadow-xs'
+            : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC] shadow-xs'
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border-2 border-teal-500/40 bg-[#0B132B] shadow-md flex items-center justify-center p-1">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-[#E2E8F0] dark:border-[#334155] bg-[#0B132B] shadow-sm flex items-center justify-center p-1">
               <img
                 src="/edupredict-ai-logo.png"
                 alt="EduPredict AI"
@@ -341,17 +341,17 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30">
-                  Core Workflow 1
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+                  Core Workflow
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155]">
                   {currentProfile.academic_year} • {currentProfile.semester}
                 </span>
               </div>
-              <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Academic Analysis & Trajectory
+              <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Academic Analysis &amp; Trajectory
               </h1>
-              <p className={`text-xs sm:text-sm mt-0.5 font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+              <p className={`text-xs sm:text-sm mt-0.5 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
                 {currentProfile.full_name} • {currentProfile.course_degree} ({currentProfile.institution || 'Verified Academy'})
               </p>
             </div>
@@ -360,19 +360,15 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
           <div className="flex items-center gap-2.5 flex-wrap">
             <button
               onClick={() => setIsEditProfileOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition shadow-sm cursor-pointer bg-teal-600 hover:bg-teal-700 text-white"
+              className="btn-primary text-xs sm:text-sm gap-2"
             >
-              <Edit3 className="w-4 h-4" />
-              Edit Academic Profile
+              <Edit3 className="w-4 h-4 text-white" />
+              <span className="text-white">Edit Academic Profile</span>
             </button>
             <button
               onClick={loadData}
               disabled={isLoading}
-              className={`p-2.5 rounded-xl border transition cursor-pointer ${
-                isLight
-                  ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700'
-                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
-              }`}
+              className="btn-secondary p-2.5 rounded-xl"
               title="Refresh Analysis"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -393,30 +389,30 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
         {/* Metric 1: Overall Academic Score */}
         <div
           className={`p-5 rounded-2xl border transition-all ${
-            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#111827] border-slate-800 shadow-xs'
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
               Academic Score
             </span>
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+            <div className="p-2 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE]">
               <Award className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className={`text-3xl font-extrabold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <span className={`text-3xl font-extrabold tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
               {overview.academic_score}%
             </span>
             <span
-              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
                 overview.standing_tier === 'distinction'
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  ? 'bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC] dark:border-[rgba(34,197,94,0.35)]'
                   : overview.standing_tier === 'good'
-                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                  ? 'bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE] dark:bg-[rgba(29,78,216,0.22)] dark:text-[#93C5FD] dark:border-[rgba(59,130,246,0.35)]'
                   : overview.standing_tier === 'moderate'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                  ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[rgba(180,83,9,0.22)] dark:text-[#FDE68A] dark:border-[rgba(245,158,11,0.35)]'
+                  : 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA] dark:bg-[rgba(185,28,28,0.22)] dark:text-[#FCA5A5] dark:border-[rgba(239,68,68,0.35)]'
               }`}
             >
               {overview.standing_tier === 'distinction'
@@ -428,7 +424,7 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
                 : 'At-Risk'}
             </span>
           </div>
-          <p className={`text-xs mt-2 font-medium truncate ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-2 font-medium truncate ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
             {overview.standing}
           </p>
         </div>
@@ -436,38 +432,38 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
         {/* Metric 2: Attendance */}
         <div
           className={`p-5 rounded-2xl border transition-all ${
-            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#111827] border-slate-800 shadow-xs'
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
               Overall Attendance
             </span>
             <div
               className={`p-2 rounded-xl ${
                 overview.overall_attendance >= 75
-                  ? 'bg-emerald-500/10 text-emerald-600'
-                  : 'bg-rose-500/10 text-rose-600'
+                  ? 'bg-[#DCFCE7] text-[#15803D] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC]'
+                  : 'bg-[#FEE2E2] text-[#B91C1C] dark:bg-[rgba(185,28,28,0.22)] dark:text-[#FCA5A5]'
               }`}
             >
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className={`text-3xl font-extrabold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <span className={`text-3xl font-extrabold tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
               {overview.overall_attendance}%
             </span>
             <span
-              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
                 overview.overall_attendance >= 75
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                  : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                  ? 'bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC] dark:border-[rgba(34,197,94,0.35)]'
+                  : 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA] dark:bg-[rgba(185,28,28,0.22)] dark:text-[#FCA5A5] dark:border-[rgba(239,68,68,0.35)]'
               }`}
             >
               {overview.overall_attendance >= 75 ? 'Above 75% Threshold' : 'Below 75% Threshold'}
             </span>
           </div>
-          <p className={`text-xs mt-2 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-2 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
             25% Weightage in university evaluation
           </p>
         </div>
@@ -475,26 +471,26 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
         {/* Metric 3: Subject Marks Average */}
         <div
           className={`p-5 rounded-2xl border transition-all ${
-            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#111827] border-slate-800 shadow-xs'
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
               Subject Average
             </span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <div className="p-2 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE]">
               <BookOpen className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className={`text-3xl font-extrabold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <span className={`text-3xl font-extrabold tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
               {overview.subject_average}%
             </span>
-            <span className={`text-xs font-semibold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
               across {overview.total_subjects} subjects
             </span>
           </div>
-          <p className={`text-xs mt-2 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-2 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
             60% Primary Weightage in Model
           </p>
         </div>
@@ -502,68 +498,106 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
         {/* Metric 4: Weak Subjects Requiring Action */}
         <div
           className={`p-5 rounded-2xl border transition-all ${
-            isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#111827] border-slate-800 shadow-xs'
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
               Focus Areas
             </span>
             <div
               className={`p-2 rounded-xl ${
                 overview.subjects_needing_attention_count > 0
-                  ? 'bg-amber-500/10 text-amber-600'
-                  : 'bg-emerald-500/10 text-emerald-600'
+                  ? 'bg-[#FEF3C7] text-[#B45309] dark:bg-[rgba(180,83,9,0.22)] dark:text-[#FDE68A]'
+                  : 'bg-[#DCFCE7] text-[#15803D] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC]'
               }`}
             >
               <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className={`text-3xl font-extrabold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <span className={`text-3xl font-extrabold tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
               {overview.subjects_needing_attention_count}
             </span>
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
+            <span className="text-xs font-bold text-[#B45309] dark:text-[#FDE68A]">
               Subjects Need Attention
             </span>
           </div>
-          <p className={`text-xs mt-2 font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-xs mt-2 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
             {overview.strong_subjects_count} subjects in strong standing
           </p>
         </div>
       </div>
 
-      {/* 3. Transparent Scoring Formula Card */}
+      {/* 3. Transparent Scoring Methodology & Data Category Distinction */}
       <div
-        className={`p-4 sm:p-5 rounded-2xl border text-xs sm:text-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${
+        className={`p-5 rounded-2xl border text-xs sm:text-sm ${
           isLight
-            ? 'bg-slate-50 border-slate-200 text-slate-700'
-            : 'bg-slate-900/60 border-slate-800 text-slate-300'
+            ? 'bg-white border-[#E1E6EF] text-[#172033] shadow-xs'
+            : 'bg-[#131926] border-[#1E2B42] text-[#F7F8FC] shadow-xs'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 shrink-0">
-            <Info className="w-5 h-5" />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#E1E6EF] dark:border-[#1E2B42]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-[#EAF2FF] text-[#2458A6] dark:bg-[rgba(36,88,166,0.2)] dark:text-[#93C5FD] shrink-0">
+              <Info className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-[#172033] dark:text-white">
+                Academic Score Methodology &amp; Distinction
+              </h3>
+              <p className="text-xs text-[#526078] dark:text-slate-300 mt-0.5">
+                We clearly separate your recorded raw marks, weighted institutional indicators, and predictive ML estimates.
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="font-bold text-slate-900 dark:text-white">
-              Transparent Calculation Formula:
-            </span>{' '}
-            <code className="font-mono text-teal-700 dark:text-teal-300 px-1 py-0.5 rounded bg-teal-50 dark:bg-teal-950/60 font-semibold">
-              Score = (Subject Marks × 60%) + (Attendance % × 25%) + (Coursework × 15%)
-            </code>
-            <p className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">
-              Calibrated against university engineering & collegiate accreditation rubrics. No synthetic inflation.
+
+          <button
+            onClick={() => setIsEditProfileOpen(true)}
+            className="text-xs font-semibold text-[#7000E8] dark:text-[#C4B5FD] hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            Update Subject Marks &amp; Attendance <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* 3 Clear Category Blocks */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-4">
+          <div className="p-3.5 rounded-xl bg-[#F0F3F9] dark:bg-[#182236] border border-[#E1E6EF] dark:border-[#1E2B42]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#526078] dark:text-slate-400 block mb-1">
+              1. Actual Marks
+            </span>
+            <p className="text-xs font-semibold text-[#172033] dark:text-white">
+              Raw Continuous Evaluation
+            </p>
+            <p className="text-[11px] text-[#526078] dark:text-slate-300 mt-1 leading-relaxed">
+              Direct marks recorded for assignments, midterms, and lab practicals. No synthetic adjustments applied.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#F0F3F9] dark:bg-[#182236] border border-[#E1E6EF] dark:border-[#1E2B42]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2458A6] dark:text-[#93C5FD] block mb-1">
+              2. Calculated Indicator
+            </span>
+            <p className="text-xs font-semibold text-[#172033] dark:text-white font-mono">
+              Score = (Marks × 60%) + (Att. × 25%) + (Coursework × 15%)
+            </p>
+            <p className="text-[11px] text-[#526078] dark:text-slate-300 mt-1 leading-relaxed">
+              Transparent, weighted academic standing calibrated to statutory university examination clearance rules.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#F0F3F9] dark:bg-[#182236] border border-[#E1E6EF] dark:border-[#1E2B42]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#7000E8] dark:text-[#C4B5FD] block mb-1">
+              3. ML Prediction
+            </span>
+            <p className="text-xs font-semibold text-[#172033] dark:text-white">
+              Validated Algorithmic Model
+            </p>
+            <p className="text-[11px] text-[#526078] dark:text-slate-300 mt-1 leading-relaxed">
+              Random Forest and Gradient Boosting models trained on academic datasets to project semester performance categories.
             </p>
           </div>
         </div>
-
-        <button
-          onClick={() => setIsEditProfileOpen(true)}
-          className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 flex items-center gap-1 cursor-pointer shrink-0"
-        >
-          Update Subject Marks <ArrowRight className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       {/* 4. Subject Diagnostics & Weak Topic Breakdown */}
@@ -582,16 +616,16 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
             </p>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 shrink-0">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F8FAFC] dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] shrink-0">
             {(['all', 'weak', 'moderate', 'strong'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition cursor-pointer ${
                   statusFilter === tab
-                    ? 'bg-white dark:bg-slate-700 text-teal-700 dark:text-teal-300 shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#1E293B] text-[#6D28D9] dark:text-[#DDD6FE] shadow-xs'
+                    : 'text-[#526078] dark:text-slate-400 hover:text-[#172033] dark:hover:text-white'
                 }`}
               >
                 {tab === 'all' ? 'All Subjects' : tab}
@@ -607,7 +641,7 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
               <p className="text-sm font-semibold">No subjects match the selected filter.</p>
               <button
                 onClick={() => setStatusFilter('all')}
-                className="mt-2 text-xs font-bold text-teal-600 hover:underline"
+                className="mt-2 text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline"
               >
                 View all subjects
               </button>
@@ -631,43 +665,43 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
                         ? 'bg-amber-50/30 border-amber-200'
                         : 'bg-amber-950/15 border-amber-900/40'
                       : isLight
-                      ? 'bg-white border-slate-200 hover:border-slate-300'
-                      : 'bg-slate-800/50 border-slate-700/60 hover:border-slate-600'
+                      ? 'bg-white border-[#E2E8F0] hover:border-slate-300'
+                      : 'bg-[#1E293B] border-[#334155] hover:border-slate-600'
                   }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     {/* Left: Subject Info */}
                     <div className="space-y-1.5 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        <h3 className={`text-base font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
                           {sub.name}
                         </h3>
                         <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
                             isStrong
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                              ? 'bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC] dark:border-[rgba(34,197,94,0.35)]'
                               : isModerate
-                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                              : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                              ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[rgba(180,83,9,0.22)] dark:text-[#FDE68A] dark:border-[rgba(245,158,11,0.35)]'
+                              : 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA] dark:bg-[rgba(185,28,28,0.22)] dark:text-[#FCA5A5] dark:border-[rgba(239,68,68,0.35)]'
                           }`}
                         >
                           {sub.percentage}% Score • {sub.status || (isStrong ? 'Strong' : isModerate ? 'Good' : 'Needs Attention')}
                         </span>
                         {sub.attendance < 75 && (
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500 text-white flex items-center gap-1">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#B91C1C] text-white flex items-center gap-1 shadow-xs">
                             <AlertTriangle className="w-3 h-3" /> Attendance Alert ({sub.attendance}%)
                           </span>
                         )}
                       </div>
 
                       {/* Marks details */}
-                      <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                        Marks: <span className="font-bold text-slate-800 dark:text-slate-200">{sub.marks_obtained}</span> / {sub.max_marks} • Class Attendance: <span className="font-bold text-slate-800 dark:text-slate-200">{sub.attendance}%</span>
+                      <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                        Marks: <span className="font-bold text-[#172033] dark:text-slate-200">{sub.marks_obtained}</span> / {sub.max_marks} • Class Attendance: <span className="font-bold text-[#172033] dark:text-slate-200">{sub.attendance}%</span>
                       </p>
 
                       {/* Root cause reason why */}
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
-                        <span className="font-semibold text-slate-700 dark:text-slate-300">Why this standing:</span>
+                      <div className="flex items-center gap-1.5 text-xs text-[#526078] dark:text-slate-300 pt-0.5">
+                        <span className="font-semibold text-[#172033] dark:text-slate-200">Why this standing:</span>
                         {sub.attendance < 75 ? (
                           <span>Class attendance is below the 75% threshold, significantly weighing down predicted examination tier.</span>
                         ) : sub.percentage < 60 ? (
@@ -680,17 +714,17 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
                       {/* Weak Topics */}
                       {sub.difficult_topics && sub.difficult_topics.length > 0 && (
                         <div className="pt-2 flex items-center gap-2 flex-wrap">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                             Friction Topics:
                           </span>
                           {sub.difficult_topics.map((t, idx) => (
                             <button
                               key={idx}
                               onClick={() => handleStartPractice(t)}
-                              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/20 transition cursor-pointer flex items-center gap-1"
+                              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/40 transition cursor-pointer flex items-center gap-1"
                               title={`Practice ${t} in Learn & Practice`}
                             >
-                              <BookOpen className="w-3 h-3 text-teal-600" />
+                              <BookOpen className="w-3 h-3 text-[#6D28D9] dark:text-[#DDD6FE]" />
                               {t}
                               <ArrowRight className="w-2.5 h-2.5 opacity-60" />
                             </button>
@@ -703,23 +737,19 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => handleScheduleExam(sub.name, sub.difficult_topics?.[0])}
-                        className={`px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
-                          isLight
-                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-                        }`}
+                        className="btn-secondary text-xs !py-2 !px-3"
                         title="Add study block or exam to scheduler"
                       >
-                        <Calendar className="w-3.5 h-3.5 text-teal-600" />
-                        Schedule Exam
+                        <Calendar className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                        <span>Schedule Exam</span>
                       </button>
 
                       <button
                         onClick={() => handleStartPractice(sub.difficult_topics?.[0] || `${sub.name} Core Principles`)}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer bg-teal-600 hover:bg-teal-700 text-white shadow-xs"
+                        className="btn-primary text-xs !py-2 !px-3.5"
                       >
-                        <BrainCircuit className="w-3.5 h-3.5" />
-                        Learn & Practice
+                        <BrainCircuit className="w-3.5 h-3.5 text-white" />
+                        <span>Learn &amp; Practice</span>
                       </button>
                     </div>
                   </div>
@@ -734,39 +764,39 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
       <div
         className={`p-5 sm:p-6 rounded-2xl border transition-all ${
           isLight
-            ? 'bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/40 border-indigo-200/80 shadow-xs'
-            : 'bg-gradient-to-br from-[#121626] via-[#111827] to-[#181a2e] border-indigo-900/50 shadow-md'
+            ? 'bg-white border-[#E2E8F0] shadow-xs'
+            : 'bg-[#1E293B] border-[#334155] shadow-xs'
         }`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <div className="p-2.5 rounded-2xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE]">
               <Sliders className="w-6 h-6" />
             </div>
             <div>
-              <h2 className={`text-lg sm:text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <h2 className={`text-lg sm:text-xl font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
                 What-If Sensitivity Simulator
               </h2>
-              <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-xs sm:text-sm mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
                 Simulate how changes in your daily study volume, attendance, and coursework directly boost your final grade band.
               </p>
             </div>
           </div>
 
           {simulatedScore && (
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 shadow-xs flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] shadow-xs flex items-center gap-3">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-500">Simulated Outcome</span>
+                <span className="text-[10px] uppercase font-bold text-[#64748B]">Simulated Outcome</span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                  <span className="text-xl font-black text-[#6D28D9] dark:text-[#DDD6FE] tabular-nums">
                     {simulatedScore.score}%
                   </span>
-                  <span className={`text-xs font-bold ${simulatedScore.delta >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <span className={`text-xs font-bold ${simulatedScore.delta >= 0 ? 'text-[#15803D] dark:text-[#86EFAC]' : 'text-[#B91C1C] dark:text-[#FCA5A5]'}`}>
                     ({simulatedScore.delta >= 0 ? `+${simulatedScore.delta}%` : `${simulatedScore.delta}%`})
                   </span>
                 </div>
               </div>
-              <span className="text-xs font-bold px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
+              <span className="text-xs font-bold px-2 py-1 rounded-md bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE]">
                 {simulatedScore.label}
               </span>
             </div>
@@ -778,11 +808,11 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
           {/* Slider 1: Weekly Study Hours */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="font-bold text-[#172033] dark:text-slate-300 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
                 Weekly Study Volume:
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+              <span className="font-mono font-bold text-[#6D28D9] dark:text-[#DDD6FE] text-sm tabular-nums">
                 {simStudyHours} hrs/week
               </span>
             </div>
@@ -793,9 +823,9 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
               step={1}
               value={simStudyHours}
               onChange={e => setSimStudyHours(Number(e.target.value))}
-              className="w-full accent-indigo-600 cursor-pointer"
+              className="w-full accent-[#6D28D9] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-slate-400">
+            <div className="flex justify-between text-[10px] text-[#64748B]">
               <span>Light (2 hrs)</span>
               <span>Balanced (14 hrs)</span>
               <span>Intensive (35 hrs)</span>
@@ -805,11 +835,11 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
           {/* Slider 2: Target Attendance */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="font-bold text-[#172033] dark:text-slate-300 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#15803D] dark:text-[#86EFAC]" />
                 Target Attendance %:
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+              <span className="font-mono font-bold text-[#6D28D9] dark:text-[#DDD6FE] text-sm tabular-nums">
                 {simAttendance}%
               </span>
             </div>
@@ -820,9 +850,9 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
               step={1}
               value={simAttendance}
               onChange={e => setSimAttendance(Number(e.target.value))}
-              className="w-full accent-emerald-600 cursor-pointer"
+              className="w-full accent-[#15803D] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-slate-400">
+            <div className="flex justify-between text-[10px] text-[#64748B]">
               <span>40% (Barred)</span>
               <span>75% (Min Req)</span>
               <span>100% (Perfect)</span>
@@ -832,11 +862,11 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
           {/* Slider 3: Coursework & Assignment Score */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-purple-500" />
-                Assignment & Practicals:
+              <span className="font-bold text-[#172033] dark:text-slate-300 flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                Assignment &amp; Practicals:
               </span>
-              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">
+              <span className="font-mono font-bold text-[#6D28D9] dark:text-[#DDD6FE] text-sm tabular-nums">
                 {simAssignmentScore}%
               </span>
             </div>
@@ -847,9 +877,9 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
               step={1}
               value={simAssignmentScore}
               onChange={e => setSimAssignmentScore(Number(e.target.value))}
-              className="w-full accent-purple-600 cursor-pointer"
+              className="w-full accent-[#6D28D9] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-slate-400">
+            <div className="flex justify-between text-[10px] text-[#64748B]">
               <span>30%</span>
               <span>70%</span>
               <span>100%</span>
@@ -858,7 +888,7 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
         </div>
 
         {/* Simulation Insight Box */}
-        <div className="mt-5 p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-200 dark:border-indigo-900/40 text-xs text-indigo-950 dark:text-indigo-200 flex items-center justify-between flex-wrap gap-2">
+        <div className="mt-5 p-3.5 rounded-xl bg-[#EDE9FE] dark:bg-[#6D28D9]/20 border border-[#DDD6FE] dark:border-[#8B5CF6]/35 text-xs text-[#172033] dark:text-[#DDD6FE] flex items-center justify-between flex-wrap gap-2">
           <p>
             💡 <strong>Actionable takeaway:</strong> Increasing your self-study volume to{' '}
             <strong>{simStudyHours} hrs/week</strong> and sustaining <strong>{simAttendance}%</strong> attendance can boost your trajectory by{' '}
@@ -866,9 +896,9 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
           </p>
           <button
             onClick={() => onNavigate('scheduler')}
-            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition cursor-pointer"
+            className="btn-primary text-xs !py-1.5 !px-3"
           >
-            Create Study Plan for this Goal
+            <span>Create Study Plan for this Goal</span>
           </button>
         </div>
       </div>

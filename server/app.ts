@@ -1750,12 +1750,12 @@ export function createExpressApp(): express.Application {
 
   app.post('/api/planner/rebalance', optionalAuthMiddleware, async (req, res) => {
     try {
-      const { plan_id, plan, availability } = req.body;
+      const { plan_id, plan, availability, missedDate, unplannedBreak } = req.body;
       if (!plan) {
         return res.status(400).json({ error: 'Current plan object is required for rebalancing.' });
       }
 
-      const updatedPlan = rebalanceSchedule(plan, availability || plan.availability);
+      const updatedPlan = rebalanceSchedule(plan, availability || plan.availability, { missedDate, unplannedBreak });
 
       if (plan_id) {
         await updateExamPlanFullDays(Number(plan_id), updatedPlan.days, updatedPlan.aiStrategyTips);

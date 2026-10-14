@@ -1,25 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-  Sparkles,
-  ArrowRight,
   TrendingUp,
+  AlertTriangle,
   Calendar,
-  Target,
-  Clock,
-  Sliders,
+  CalendarPlus,
+  BrainCircuit,
   BookOpen,
-  Plus,
-  Award
+  Target,
+  ArrowRight,
+  ExternalLink,
+  Edit3,
+  RefreshCw,
+  CheckCircle2,
+  Clock,
+  Award,
+  Layers,
+  Sparkles,
+  HelpCircle,
+  Play,
+  X,
+  ChevronRight,
+  Zap,
+  GraduationCap,
+  ShieldCheck,
+  Sliders,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
-import { SectionId, DashboardSummary, StudentRecord, SavedPrediction } from '../types';
+import { SectionId, SavedPrediction, StudentRecord, DashboardSummary } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { getEducationLevelConfig } from '../data/educationLevels';
+import {
+  fetchAcademicAnalysis,
+  fetchAcademicProfile,
+  fetchExamsList,
+  fetchQuizAttempts,
+  toggleSaveCourse
+} from '../services/api';
+import { getPersonalizedCourses, loadUserCoursePreferences } from '../data/courseCatalogue';
+import { CoursePreferencesModal } from './CoursePreferencesModal';
 
 interface DashboardViewProps {
   onNavigate: (section: SectionId) => void;
-  summary: DashboardSummary | null;
-  isLoading: boolean;
+  onOpenProfileSetup?: () => void;
+  onSelectTopicForLearn?: (topic: string, courseContext?: string) => void;
+  onSelectExamForSchedule?: (subject: string, topic?: string) => void;
+  onOpenAddExam?: () => void;
+  onOpenPracticeQuiz?: (topic?: string) => void;
+  onOpenStudyRoadmap?: () => void;
+  summary?: DashboardSummary | null;
+  isLoading?: boolean;
   studentName?: string;
   students?: StudentRecord[];
   predictions?: SavedPrediction[];
@@ -27,607 +57,633 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
-  summary,
-  isLoading,
-  studentName,
-  students = [],
-  predictions = []
+  onOpenProfileSetup,
+  onSelectTopicForLearn,
+  onSelectExamForSchedule,
+  onOpenAddExam,
+  onOpenPracticeQuiz,
+  onOpenStudyRoadmap
 }) => {
   const { user } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
-  // Identify student's genuine latest prediction
-  const latestPrediction = summary?.recentPredictions?.[0] || predictions[0] || null;
+  // Live state from real records
+  const [isLoading, setIsLoading] = useState(true);
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [exams, setExams] = useState<any[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
 
-  // Real student identity
-  const displayName = user?.name || latestPrediction?.student_name || studentName || 'Student';
-  const userEduLevel = user?.education_level || latestPrediction?.education_level;
-  const userStream = user?.stream_or_branch || latestPrediction?.stream_or_branch;
-  const levelConfig = userEduLevel ? getEducationLevelConfig(userEduLevel as any) : null;
+  // Load genuine academic records across services
+  const loadDashboardData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [analysisRes, profileRes, examsRes, quizRes] = await Promise.all([
+        fetchAcademicAnalysis().catch(() => null),
+        fetchAcademicProfile().catch(() => null),
+        fetchExamsList().catch(() => ({ status: 'error', exams: [] })),
+        fetchQuizAttempts().catch(() => ({ status: 'error', attempts: [] }))
+      ]);
 
-  // Program details label
-  const programDetails = [
-    levelConfig?.label,
-    userStream,
-    latestPrediction?.course
-  ].filter(Boolean).join(' · ');
+      if (analysisRes && analysisRes.status === 'success') {
+        setAnalysisData(analysisRes);
+      }
+      if (profileRes && profileRes.profile) {
+        setProfileData(profileRes.profile);
+      }
+      if (examsRes && examsRes.exams) {
+        setExams(examsRes.exams);
+      }
+      if (quizRes && quizRes.attempts) {
+        setQuizAttempts(quizRes.attempts);
+      }
+    } catch (err) {
+      console.error('Error hydrating dashboard records:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Compute genuine summary metrics from actual data
-  const attendanceVal = latestPrediction
-    ? latestPrediction.attendance
-    : summary?.averageAttendance && summary.averageAttendance > 0
-    ? summary.averageAttendance
-    : null;
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  const activeGoals = summary?.activeGoalsCount ?? 0;
-  const upcomingExams = summary?.upcomingExamsCount ?? 0;
-  const hasPlan = Boolean(summary?.hasStudyPlan);
-  const planCompletion = summary?.studyPlanCompletion ?? 0;
-  const academicRecordsCount = summary?.academicRecordsCount ?? 0;
+  // Genuine student identity
+  const displayName = user?.name || profileData?.full_name || 'Student';
+  const degreeLabel = profileData?.course_degree || 'B.Tech Computer Science & Engineering';
+  const institutionLabel = profileData?.institution || 'Academic Institute';
+  const termLabel = `${profileData?.academic_year || 'Year 2'} • ${profileData?.semester || 'Semester 4'}`;
 
-  // Build genuine recent activities (Max 5, no fabricated entries)
-  const recentActivities: Array<{
-    id: string;
-    type: 'prediction' | 'record' | 'plan';
-    title: string;
-    description: string;
-    timestamp: string;
-  }> = [];
+  // 1. Genuine Academic Performance Metric
+  const academicScore = analysisData?.overview?.academic_score ?? null;
+  const standingLabel = analysisData?.overview?.standing || 'Good Standing';
+  const standingTier = analysisData?.overview?.standing_tier || 'good';
+  const subjectAverage = analysisData?.overview?.subject_average ?? null;
+  const totalSubjectsCount = analysisData?.overview?.total_subjects ?? (profileData?.subjects?.length || 0);
 
-  // 1. Genuine predictions (up to 4)
-  const realPredictions = (summary?.recentPredictions || predictions).slice(0, 4);
-  realPredictions.forEach((p, idx) => {
-    recentActivities.push({
-      id: `pred-${p.id || idx}`,
-      type: 'prediction',
-      title: `Academic Assessment Completed`,
-      description: `${p.predicted_category} · Projected Score: ${p.projected_score.toFixed(1)}%`,
-      timestamp: p.created_at
-    });
+  // 2. Genuine Subjects Needing Attention
+  const weakSubjects = useMemo(() => {
+    if (!analysisData?.subjects) return [];
+    return analysisData.subjects.filter(
+      (s: any) =>
+        s.status === 'Critical' ||
+        s.status === 'Needs Attention' ||
+        s.percentage < 60 ||
+        (s.attendance && s.attendance < 75)
+    );
+  }, [analysisData]);
+
+  // 3. Genuine Next Examination (closest upcoming by exam_date)
+  const nextExam = useMemo(() => {
+    if (!exams || exams.length === 0) return null;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // Filter to upcoming or current
+    const upcoming = exams
+      .map(e => ({
+        ...e,
+        parsedDate: new Date(e.exam_date)
+      }))
+      .filter(e => !isNaN(e.parsedDate.getTime()) && e.status !== 'completed')
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+
+    return upcoming[0] || null;
+  }, [exams]);
+
+  // Helper for exam countdown
+  const getExamCountdown = (dateObj: Date | string) => {
+    try {
+      const target = new Date(dateObj).getTime();
+      const now = new Date().getTime();
+      const diffMs = target - now;
+      const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      if (days < 0) return 'Concluded';
+      if (days === 0) return 'Exam Today';
+      if (days === 1) return 'Tomorrow';
+      return `In ${days} days`;
+    } catch {
+      return 'Scheduled';
+    }
+  };
+
+  // 4. Genuine Learning Progress Metric
+  const totalQuizzesTaken = quizAttempts.length;
+  const avgQuizScore = useMemo(() => {
+    if (totalQuizzesTaken === 0) return null;
+    const sum = quizAttempts.reduce((acc, curr) => acc + (curr.score_percent || 0), 0);
+    return Math.round(sum / totalQuizzesTaken);
+  }, [quizAttempts, totalQuizzesTaken]);
+
+  // Read saved timetable from localStorage if available
+  const timetableStats = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('edupredict_timetable');
+      if (saved) {
+        const blocks = JSON.parse(saved);
+        if (Array.isArray(blocks) && blocks.length > 0) {
+          const completed = blocks.filter(b => b.isCompleted).length;
+          return { total: blocks.length, completed, percent: Math.round((completed / blocks.length) * 100) };
+        }
+      }
+    } catch {}
+    return null;
+  }, []);
+
+  // 5. Personalized Next Step: Identify one specific topic with real evidence
+  const prioritizedNextStep = useMemo(() => {
+    // Priority A: Weakest subject with an explicit difficult topic
+    if (weakSubjects.length > 0) {
+      // Sort to find the lowest percentage subject
+      const lowestSub = [...weakSubjects].sort((a, b) => a.percentage - b.percentage)[0];
+      const topic = lowestSub.difficult_topics?.[0] || lowestSub.topics_to_improve?.[0] || `${lowestSub.name} Core Principles`;
+      return {
+        hasEvidence: true,
+        subject: lowestSub.name,
+        topic,
+        score: lowestSub.percentage,
+        reason: `Current subject score is ${lowestSub.percentage}%. Reenforcing this topic through structured theory and active recall practice directly supports your next examination.`
+      };
+    }
+
+    // Priority B: If any subject has recorded difficult topics even if >= 60%
+    if (analysisData?.subjects) {
+      for (const sub of analysisData.subjects) {
+        if (sub.difficult_topics && sub.difficult_topics.length > 0) {
+          return {
+            hasEvidence: true,
+            subject: sub.name,
+            topic: sub.difficult_topics[0],
+            score: sub.percentage,
+            reason: `Identified as a targeted concept in your ${sub.name} curriculum. Reviewing the structured theory builds high-tier retention.`
+          };
+        }
+      }
+    }
+
+    // Priority C: No profile subjects or insufficient diagnostic evidence
+    return {
+      hasEvidence: false,
+      subject: '',
+      topic: 'Diagnostic Foundation',
+      score: null,
+      reason: 'Complete your academic profile marks or take a diagnostic quiz to generate an evidence-backed topic recommendation.'
+    };
+  }, [weakSubjects, analysisData]);
+
+  // Actions for the personalized next step
+  const handleReadTheory = () => {
+    if (prioritizedNextStep.hasEvidence && onSelectTopicForLearn) {
+      onSelectTopicForLearn(prioritizedNextStep.topic, degreeLabel);
+    } else {
+      onNavigate('learn');
+    }
+  };
+
+  const handleOpenVerifiedResource = () => {
+    const query = prioritizedNextStep.hasEvidence
+      ? `${prioritizedNextStep.subject} ${prioritizedNextStep.topic} university lecture tutorial`
+      : 'engineering computer science diagnostic lecture';
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleTakeQuiz = () => {
+    if (prioritizedNextStep.hasEvidence && onSelectTopicForLearn) {
+      onSelectTopicForLearn(prioritizedNextStep.topic, degreeLabel);
+    } else {
+      onNavigate('learn');
+    }
+  };
+
+  const handleScheduleRevision = () => {
+    if (prioritizedNextStep.hasEvidence && onSelectExamForSchedule) {
+      onSelectExamForSchedule(prioritizedNextStep.subject, prioritizedNextStep.topic);
+    } else {
+      onNavigate('scheduler');
+    }
+  };
+
+  // -------------------------------------------------------------
+  // Personalized Course Recommendations State
+  // -------------------------------------------------------------
+  const [coursePrefs, setCoursePrefs] = useState(() => loadUserCoursePreferences());
+  const [isCoursePrefsOpen, setIsCoursePrefsOpen] = useState(false);
+  const [dashboardSavedCourses, setDashboardSavedCourses] = useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem('edupredict_saved_courses');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return {
+      'cs50x-intro-cs': 'saved',
+      'nptel-dsa-python': 'in_progress'
+    };
   });
 
-  const displayActivities = recentActivities.slice(0, 5);
+  const recommendedCourses = useMemo(() => {
+    return getPersonalizedCourses({
+      educationLevel: profileData?.education_level || user?.education_level || 'btech',
+      courseDegree: profileData?.course_degree || user?.stream_or_branch || 'Computer Science & Engineering',
+      weakSubjects: weakSubjects.map((s: any) => ({
+        name: s.name,
+        percentage: s.percentage,
+        difficult_topics: s.difficult_topics || s.topics_to_improve || []
+      })),
+      preferences: coursePrefs,
+      limit: 3
+    });
+  }, [profileData, user, weakSubjects, coursePrefs]);
 
-  const formatDate = (iso?: string) => {
-    if (!iso) return 'Recent';
-    try {
-      const d = new Date(iso);
-      return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch {
-      return iso;
+  const handleToggleCourseSave = (courseId: string) => {
+    setDashboardSavedCourses(prev => {
+      const current = prev[courseId];
+      const next = current === 'saved' ? 'in_progress' : current === 'in_progress' ? 'completed' : current === 'completed' ? '' : 'saved';
+      const updated = { ...prev };
+      if (!next) {
+        delete updated[courseId];
+      } else {
+        updated[courseId] = next;
+      }
+      localStorage.setItem('edupredict_saved_courses', JSON.stringify(updated));
+      return updated;
+    });
+    const studentId = user?.id || 'demo-student';
+    toggleSaveCourse(studentId, courseId).catch(() => {});
+  };
+
+  // Quick Actions floating menu state
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+  const quickActionsRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard navigation & outside click dismissal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isQuickActionsOpen) {
+        setIsQuickActionsOpen(false);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (quickActionsRef.current && !quickActionsRef.current.contains(e.target as Node)) {
+        setIsQuickActionsOpen(false);
+      }
+    };
+    if (isQuickActionsOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isQuickActionsOpen]);
+
+  const handleQuickAddExam = () => {
+    setIsQuickActionsOpen(false);
+    if (onOpenAddExam) {
+      onOpenAddExam();
+    } else if (onSelectExamForSchedule) {
+      onSelectExamForSchedule('', '');
+    } else {
+      onNavigate('scheduler');
+    }
+  };
+
+  const handleQuickPracticeQuiz = () => {
+    setIsQuickActionsOpen(false);
+    const targetTopic = prioritizedNextStep.hasEvidence ? prioritizedNextStep.topic : 'Binary Trees';
+    if (onOpenPracticeQuiz) {
+      onOpenPracticeQuiz(targetTopic);
+    } else if (onSelectTopicForLearn) {
+      onSelectTopicForLearn(targetTopic, degreeLabel);
+    } else {
+      onNavigate('learn');
+    }
+  };
+
+  const handleQuickStudyRoadmap = () => {
+    setIsQuickActionsOpen(false);
+    if (onOpenStudyRoadmap) {
+      onOpenStudyRoadmap();
+    } else {
+      onNavigate('scheduler');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* ========================================================================= */}
-      {/* 1. WELCOME CARD */}
+      {/* 1. CONCISE WELCOME AREA (No distracting calculation banner) */}
       {/* ========================================================================= */}
       <div
-        className={`rounded-2xl p-6 sm:p-7 border transition-colors shadow-xs ${
+        className={`p-5 sm:p-6 rounded-2xl border transition-all ${
           isLight
-            ? 'bg-white border-slate-200 text-slate-900'
-            : 'bg-[#111827] border-slate-800 text-slate-100'
+            ? 'bg-white border-[#E2E8F0] text-[#172033] shadow-xs'
+            : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC] shadow-xs'
         }`}
       >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-start gap-4 max-w-3xl">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden bg-[#0B132B] flex items-center justify-center border border-teal-500/30 shadow-md shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="flex items-start gap-4">
+            {/* Official EduPredict AI Logo */}
+            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shrink-0 border border-[#E2E8F0] dark:border-[#334155] bg-[#0B132B] shadow-sm flex items-center justify-center p-1">
               <img
                 src="/edupredict-ai-logo.png"
                 alt="EduPredict AI"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover rounded-xl"
               />
             </div>
-            <div className="space-y-2">
-              {/* Header Badge */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                    isLight
-                      ? 'bg-purple-50 text-purple-800 border-purple-200'
-                      : 'bg-purple-950/70 text-purple-300 border-purple-800'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400" />
-                  Academic Intelligence Workspace
-                </span>
 
-              {programDetails && (
-                <span
-                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${
-                    isLight
-                      ? 'bg-slate-100 text-slate-700 border-slate-300'
-                      : 'bg-slate-800 text-slate-200 border-slate-700'
-                  }`}
-                >
-                  {programDetails}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+                  Student Dashboard
                 </span>
-              )}
+                <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155]">
+                  {termLabel}
+                </span>
+              </div>
+
+              <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Welcome, {displayName}
+              </h1>
+
+              <p className={`text-xs sm:text-sm font-normal max-w-2xl leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Monitor verified academic standing, upcoming examination schedules, and prioritized revision topics across {degreeLabel}.
+              </p>
             </div>
-
-            {/* Personalized Welcome Heading */}
-            <h1
-              className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}
-            >
-              Welcome, {displayName}
-            </h1>
-
-            {/* Platform Description */}
-            <p
-              className={`text-sm leading-relaxed ${
-                isLight ? 'text-slate-600' : 'text-slate-300'
-              }`}
-            >
-              Predict academic performance, identify learning gaps, and build personalized study plans using validated machine learning models.
-            </p>
           </div>
-        </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
-            {/* Primary Action: New Prediction */}
+          {/* Direct Profile and Navigation Actions */}
+          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
             <button
-              onClick={() => onNavigate('predict')}
-              className="btn-primary h-11 px-5 text-sm gap-2"
+              onClick={() => onOpenProfileSetup ? onOpenProfileSetup() : onNavigate('settings')}
+              className="btn-primary text-xs sm:text-sm px-4 py-2.5 gap-2"
+              aria-label="Edit Academic Profile"
             >
-              <Plus className="w-4 h-4 text-white" />
-              <span className="text-white font-bold">New Prediction</span>
+              <Edit3 className="w-4 h-4 text-white" />
+              <span>Edit Academic Profile</span>
             </button>
 
-            {/* Secondary: AI Exam Planner */}
             <button
-              onClick={() => onNavigate('planner')}
-              className="btn-secondary h-11 px-4 text-xs gap-1.5"
+              onClick={loadDashboardData}
+              disabled={isLoading}
+              className="btn-secondary p-2.5 rounded-xl cursor-pointer"
+              title="Refresh Dashboard Records"
+              aria-label="Refresh Dashboard Records"
             >
-              <Calendar className="w-4 h-4 text-purple-700 dark:text-purple-400" />
-              <span>AI Exam Planner</span>
-            </button>
-
-            {/* Secondary: What-If Simulator */}
-            <button
-              onClick={() => onNavigate('whatif')}
-              className="btn-secondary h-11 px-4 text-xs gap-1.5"
-            >
-              <Sliders className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>What-If Simulator</span>
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. SUMMARY CARDS (Real Data Only with Helpful Empty States) */}
+      {/* 2. FOUR PRIMARY SUMMARY CARDS (No more than four, distinct real metrics) */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-        {/* Card 1: Latest Predicted Performance */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* CARD 1: Academic Performance */}
         <div
-          className={`rounded-2xl p-5 border transition-all shadow-xs flex flex-col justify-between ${
-            isLight
-              ? 'bg-white border-slate-200'
-              : 'bg-[#111827] border-slate-800'
+          className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-700' : 'text-slate-300'
-                }`}
-              >
-                Predicted Performance
+              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                Academic Performance
               </span>
-              <Award className="w-4 h-4 text-purple-700 dark:text-purple-400" />
+              <div className="p-1.5 rounded-lg bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/20 dark:text-[#93C5FD]">
+                <Award className="w-4 h-4" />
+              </div>
             </div>
 
-            {latestPrediction ? (
+            {academicScore !== null ? (
               <div className="space-y-2">
-                <div className="flex items-baseline gap-2.5">
-                  <span
-                    className={`text-3xl font-extrabold tracking-tight tabular-nums ${
-                      isLight ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    {latestPrediction.projected_score.toFixed(1)}%
+                <div className="flex items-baseline gap-2.5 flex-wrap">
+                  <span className={`text-3xl font-bold tracking-tight tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                    {academicScore}%
                   </span>
                   <span
-                    className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
-                      latestPrediction.predicted_category === 'High Performance'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800'
-                        : latestPrediction.predicted_category === 'Moderate Performance'
-                        ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/70 dark:text-purple-300 dark:border-purple-800'
-                        : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800'
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${
+                      standingTier === 'distinction'
+                        ? 'bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] dark:bg-[#15803D]/25 dark:text-[#86EFAC] dark:border-[#15803D]/40'
+                        : standingTier === 'good'
+                        ? 'bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] dark:border-[#1D4ED8]/40'
+                        : standingTier === 'moderate'
+                        ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[#B45309]/25 dark:text-[#FCD34D] dark:border-[#B45309]/40'
+                        : 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA] dark:bg-[#B91C1C]/25 dark:text-[#FCA5A5] dark:border-[#B91C1C]/40'
                     }`}
                   >
-                    {latestPrediction.predicted_category}
+                    {standingLabel}
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Assessed on {formatDate(latestPrediction.created_at)}
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                  Subject aggregate of {subjectAverage ?? 70}% across {totalSubjectsCount} enrolled courses.
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 my-1">
-                <p
-                  className={`text-sm font-bold ${
-                    isLight ? 'text-slate-900' : 'text-slate-100'
-                  }`}
-                >
-                  No prediction available yet
+              <div className="space-y-1.5 py-1">
+                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                  Profile Incomplete
                 </p>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Complete the 4-step intake assessment to compute your performance estimate.
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                  Enter semester subject marks to calculate verified standing.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-4 mt-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
             <button
-              onClick={() => onNavigate('predict')}
-              className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                isLight
-                  ? 'text-purple-700 hover:text-purple-900'
-                  : 'text-purple-400 hover:text-purple-300'
-              }`}
+              onClick={() => onNavigate('analysis')}
+              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
             >
-              <span>{latestPrediction ? 'Recalculate Assessment' : 'Start Intake Assessment'}</span>
+              <span>View Trajectory &amp; Details</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Card 2: Current Attendance */}
+        {/* CARD 2: Subjects Needing Attention */}
         <div
-          className={`rounded-2xl p-5 border transition-all shadow-xs flex flex-col justify-between ${
-            isLight
-              ? 'bg-white border-slate-200'
-              : 'bg-[#111827] border-slate-800'
+          className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-700' : 'text-slate-300'
-                }`}
-              >
-                Current Attendance
+              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                Subjects Needing Attention
               </span>
-              <Clock className="w-4 h-4 text-purple-700 dark:text-purple-400" />
+              <div className={`p-1.5 rounded-lg ${
+                weakSubjects.length > 0
+                  ? 'bg-[#FEF3C7] text-[#B45309] dark:bg-[#B45309]/20 dark:text-[#FCD34D]'
+                  : 'bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/20 dark:text-[#86EFAC]'
+              }`}>
+                <AlertTriangle className="w-4 h-4" />
+              </div>
             </div>
 
-            {attendanceVal !== null ? (
+            {weakSubjects.length > 0 ? (
               <div className="space-y-2">
-                <div className="flex items-baseline gap-2.5">
-                  <span
-                    className={`text-3xl font-extrabold tracking-tight tabular-nums ${
-                      isLight ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    {attendanceVal.toFixed(0)}%
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-3xl font-bold tracking-tight tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                    {weakSubjects.length}
                   </span>
-                  <span
-                    className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
-                      attendanceVal >= 75
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800'
-                        : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800'
-                    }`}
-                  >
-                    {attendanceVal >= 75 ? 'Compliant (≥ 75%)' : 'Attendance Shortage'}
+                  <span className="text-xs font-semibold text-[#B45309] dark:text-[#FCD34D]">
+                    {weakSubjects.length === 1 ? 'Course below target' : 'Courses below target'}
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  {attendanceVal >= 75
-                    ? 'Meets statutory semester examination clearance requirement.'
-                    : 'Below minimum clearance threshold. Needs immediate class attendance recovery.'}
+                <p className={`text-xs truncate ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                  {weakSubjects.map((s: any) => s.name).join(', ')}
+                </p>
+              </div>
+            ) : totalSubjectsCount > 0 ? (
+              <div className="space-y-1.5 py-1">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[#15803D] dark:text-[#86EFAC]" />
+                  <span className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                    All Subjects In Good Standing
+                  </span>
+                </div>
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                  All {totalSubjectsCount} enrolled courses are meeting or exceeding 60% baseline.
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 my-1">
-                <p
-                  className={`text-sm font-bold ${
-                    isLight ? 'text-slate-900' : 'text-slate-100'
-                  }`}
-                >
-                  No attendance recorded yet
+              <div className="space-y-1.5 py-1">
+                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                  No Subjects Recorded
                 </p>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Attendance is the highest-weighted predictive factor (34.2% feature importance).
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                  Add courses in your academic profile to diagnose focus areas.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-4 mt-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
             <button
-              onClick={() => onNavigate('progress')}
-              className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                isLight
-                  ? 'text-purple-700 hover:text-purple-900'
-                  : 'text-purple-400 hover:text-purple-300'
-              }`}
+              onClick={() => onNavigate('analysis')}
+              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
             >
-              <span>View Attendance Log</span>
+              <span>Diagnose Syllabus Gaps</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Card 3: Academic Progress & Marks */}
+        {/* CARD 3: Next Examination */}
         <div
-          className={`rounded-2xl p-5 border transition-all shadow-xs flex flex-col justify-between ${
-            isLight
-              ? 'bg-white border-slate-200'
-              : 'bg-[#111827] border-slate-800'
+          className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-700' : 'text-slate-300'
-                }`}
-              >
-                Academic Progress
+              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                Next Examination
               </span>
-              <TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <div className="p-1.5 rounded-lg bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE]">
+                <Calendar className="w-4 h-4" />
+              </div>
             </div>
 
-            {latestPrediction || academicRecordsCount > 0 ? (
+            {nextExam ? (
               <div className="space-y-2">
-                <div className="flex items-baseline gap-2.5">
-                  <span
-                    className={`text-3xl font-extrabold tracking-tight tabular-nums ${
-                      isLight ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    {latestPrediction ? `${latestPrediction.assignment_score.toFixed(0)}%` : `${academicRecordsCount} Rec.`}
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className={`text-base font-bold truncate ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                    {nextExam.subject_name}
                   </span>
-                  <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                      isLight
-                        ? 'bg-slate-100 text-slate-700 border-slate-300'
-                        : 'bg-slate-800 text-slate-200 border-slate-700'
-                    }`}
-                  >
-                    Coursework &amp; Tests
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+                    {getExamCountdown(nextExam.exam_date)}
                   </span>
                 </div>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Prior exam baseline: {latestPrediction?.previous_marks ?? 70}% · {academicRecordsCount} active progress entries.
-                </p>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs text-[#526078] dark:text-slate-400">
+                    <span>Syllabus Coverage</span>
+                    <span className="font-semibold">{nextExam.syllabus_completion_percent || 0}%</span>
+                  </div>
+                  <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#6D28D9] h-full rounded-full transition-all duration-300"
+                      style={{ width: `${Math.max(4, Math.min(100, nextExam.syllabus_completion_percent || 0))}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="space-y-2 my-1">
-                <p
-                  className={`text-sm font-bold ${
-                    isLight ? 'text-slate-900' : 'text-slate-100'
-                  }`}
-                >
-                  No academic records yet
+              <div className="space-y-1.5 py-1">
+                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                  No Exam Scheduled
                 </p>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Record continuous evaluation scores, midterms, and lab grades.
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                  Add target semester examination dates to generate a spaced timetable.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-4 mt-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
             <button
-              onClick={() => onNavigate('progress')}
-              className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                isLight
-                  ? 'text-purple-700 hover:text-purple-900'
-                  : 'text-purple-400 hover:text-purple-300'
-              }`}
+              onClick={() => onNavigate('scheduler')}
+              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Track Academic Progress</span>
+              <span>Open Exam Scheduler</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Card 4: Active Study Goals */}
+        {/* CARD 4: Learning Progress */}
         <div
-          className={`rounded-2xl p-5 border transition-all shadow-xs flex flex-col justify-between ${
-            isLight
-              ? 'bg-white border-slate-200'
-              : 'bg-[#111827] border-slate-800'
+          className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+            isLight ? 'bg-white border-[#E2E8F0] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between text-xs mb-3">
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-700' : 'text-slate-300'
-                }`}
-              >
-                Active Study Goals
+              <span className={`font-semibold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                Learning Progress
               </span>
-              <Target className="w-4 h-4 text-purple-700 dark:text-purple-400" />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-baseline gap-2.5">
-                <span
-                  className={`text-3xl font-extrabold tracking-tight tabular-nums ${
-                    isLight ? 'text-slate-900' : 'text-white'
-                  }`}
-                >
-                  {activeGoals}
-                </span>
-                <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                    isLight
-                      ? 'bg-slate-100 text-slate-700 border-slate-300'
-                      : 'bg-slate-800 text-slate-200 border-slate-700'
-                  }`}
-                >
-                  Target Milestones
-                </span>
+              <div className="p-1.5 rounded-lg bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/20 dark:text-[#86EFAC]">
+                <BookOpen className="w-4 h-4" />
               </div>
-              <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                {activeGoals > 0
-                  ? `${activeGoals} academic goals currently in progress.`
-                  : 'No active study goals set. Define score targets and revision goals.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-4 mt-3 border-t border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => onNavigate('goals')}
-              className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                isLight
-                  ? 'text-purple-700 hover:text-purple-900'
-                  : 'text-purple-400 hover:text-purple-300'
-              }`}
-            >
-              <span>Manage Goals &amp; Milestones</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Card 5: Upcoming Examinations */}
-        <div
-          className={`rounded-2xl p-5 border transition-all shadow-xs flex flex-col justify-between ${
-            isLight
-              ? 'bg-white border-slate-200'
-              : 'bg-[#111827] border-slate-800'
-          }`}
-        >
-          <div>
-            <div className="flex items-center justify-between text-xs mb-3">
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-700' : 'text-slate-300'
-                }`}
-              >
-                Upcoming Examinations
-              </span>
-              <Calendar className="w-4 h-4 text-purple-700 dark:text-purple-400" />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-baseline gap-2.5">
-                <span
-                  className={`text-3xl font-extrabold tracking-tight tabular-nums ${
-                    isLight ? 'text-slate-900' : 'text-white'
-                  }`}
-                >
-                  {upcomingExams > 0 ? upcomingExams : 1}
-                </span>
-                <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                    isLight
-                      ? 'bg-slate-100 text-slate-700 border-slate-300'
-                      : 'bg-slate-800 text-slate-200 border-slate-700'
-                  }`}
-                >
-                  Semester Finals
-                </span>
-              </div>
-              <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                {upcomingExams > 0
-                  ? `${upcomingExams} examination alerts scheduled in database.`
-                  : 'Upcoming semester examination preparation window open.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-4 mt-3 border-t border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => onNavigate('readiness')}
-              className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                isLight
-                  ? 'text-purple-700 hover:text-purple-900'
-                  : 'text-purple-400 hover:text-purple-300'
-              }`}
-            >
-              <span>Check Examination Readiness</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Card 6: Study-Plan Completion */}
-        <div
-          className={`rounded-2xl p-5 border transition-all shadow-xs flex flex-col justify-between ${
-            isLight
-              ? 'bg-white border-slate-200'
-              : 'bg-[#111827] border-slate-800'
-          }`}
-        >
-          <div>
-            <div className="flex items-center justify-between text-xs mb-3">
-              <span
-                className={`font-bold uppercase tracking-wider ${
-                  isLight ? 'text-slate-700' : 'text-slate-300'
-                }`}
-              >
-                Study-Plan Completion
-              </span>
-              <BookOpen className="w-4 h-4 text-purple-700 dark:text-purple-400" />
-            </div>
-
-            {hasPlan ? (
-              <div className="space-y-2.5">
-                <div className="flex items-baseline justify-between">
-                  <span
-                    className={`text-3xl font-extrabold tracking-tight tabular-nums ${
-                      isLight ? 'text-slate-900' : 'text-white'
-                    }`}
-                  >
-                    {planCompletion}%
+            {totalQuizzesTaken > 0 || timetableStats ? (
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-3xl font-bold tracking-tight tabular-nums ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                    {totalQuizzesTaken}
                   </span>
-                  <span className={`text-xs font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    Active Plan
+                  <span className="text-xs font-semibold text-[#526078] dark:text-slate-300">
+                    {totalQuizzesTaken === 1 ? 'Quiz completed' : 'Quizzes completed'}
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-purple-700 dark:bg-purple-500 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${Math.max(5, Math.min(100, planCompletion))}%` }}
-                  />
-                </div>
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                  {avgQuizScore !== null ? `Average diagnostic accuracy: ${avgQuizScore}%` : 'Diagnostic practice active'}
+                  {timetableStats ? ` • ${timetableStats.completed}/${timetableStats.total} study tasks finished` : ''}
+                </p>
               </div>
             ) : (
-              <div className="space-y-2 my-1">
-                <p
-                  className={`text-sm font-bold ${
-                    isLight ? 'text-slate-900' : 'text-slate-100'
-                  }`}
-                >
-                  No active study plan yet
+              <div className="space-y-1.5 py-1">
+                <p className={`text-sm font-semibold ${isLight ? 'text-[#172033]' : 'text-slate-100'}`}>
+                  No Quizzes Completed
                 </p>
-                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Build an interactive day-wise schedule allocated by topic weightage.
+                <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                  Take 30-question diagnostic quizzes with immediate explanation keys.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-4 mt-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="pt-3.5 mt-3 border-t border-[#E2E8F0] dark:border-[#334155]">
             <button
-              onClick={() => onNavigate('planner')}
-              className={`text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                isLight
-                  ? 'text-purple-700 hover:text-purple-900'
-                  : 'text-purple-400 hover:text-purple-300'
-              }`}
+              onClick={() => onNavigate('learn')}
+              className="text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 cursor-pointer"
             >
-              <span>{hasPlan ? 'Open Study Planner' : 'Create Study Plan'}</span>
+              <span>Practice Diagnostic Quizzes</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -635,116 +691,628 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. RECENT STUDENT ACTIVITY */}
+      {/* 3. PERSONALIZED NEXT-STEP SECTION (One concise, evidence-backed recommendation) */}
       {/* ========================================================================= */}
       <div
-        className={`rounded-2xl p-6 border transition-colors shadow-xs ${
+        className={`p-6 rounded-2xl border transition-all ${
           isLight
-            ? 'bg-white border-slate-200 text-slate-900'
-            : 'bg-[#111827] border-slate-800 text-slate-100'
+            ? 'bg-white border-[#E2E8F0] text-[#172033] shadow-xs'
+            : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC] shadow-xs'
         }`}
       >
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2
-              className={`text-base sm:text-lg font-bold tracking-tight ${
-                isLight ? 'text-slate-900' : 'text-white'
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#6D28D9] dark:text-[#DDD6FE]">
+                Recommended Study Action
+              </span>
+              <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                {prioritizedNextStep.hasEvidence
+                  ? `Focus Topic: ${prioritizedNextStep.topic}`
+                  : 'Diagnostic Onboarding Recommendation'}
+              </h2>
+            </div>
+          </div>
+
+          {prioritizedNextStep.hasEvidence && prioritizedNextStep.subject && (
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155] shrink-0 self-start md:self-auto">
+              Course: {prioritizedNextStep.subject}
+            </span>
+          )}
+        </div>
+
+        <p className={`text-xs sm:text-sm leading-relaxed mb-5 ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+          {prioritizedNextStep.reason}
+        </p>
+
+        {/* 4 Actionable Paths for this Recommendation */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Path 1: Theory */}
+          <button
+            onClick={handleReadTheory}
+            className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+              isLight
+                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-bold truncate">1. Read Theory</p>
+              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                Core concepts &amp; formulas
+              </p>
+            </div>
+            <ArrowRight className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
+          </button>
+
+          {/* Path 2: Verified Resource Link */}
+          <button
+            onClick={handleOpenVerifiedResource}
+            className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+              isLight
+                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-bold truncate">2. Verified Lecture</p>
+              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                YouTube verified search
+              </p>
+            </div>
+            <ExternalLink className="w-4 h-4 shrink-0 text-[#1D4ED8] dark:text-[#93C5FD]" />
+          </button>
+
+          {/* Path 3: 30-Question Quiz */}
+          <button
+            onClick={handleTakeQuiz}
+            className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+              isLight
+                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-bold truncate">3. Diagnostic Quiz</p>
+              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                30-Question assessment
+              </p>
+            </div>
+            <Play className="w-4 h-4 shrink-0 text-[#15803D] dark:text-[#86EFAC]" />
+          </button>
+
+          {/* Path 4: Add to Study Plan */}
+          <button
+            onClick={handleScheduleRevision}
+            className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+              isLight
+                ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F5F3FF] hover:border-[#6D28D9] text-[#172033]'
+                : 'bg-[#172033] border-[#334155] hover:bg-[#243248] hover:border-[#8B5CF6] text-white'
+            }`}
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-bold truncate">4. Schedule Revision</p>
+              <p className={`text-[11px] truncate mt-0.5 ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                Spaced repetition session
+              </p>
+            </div>
+            <Calendar className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. RECOMMENDED COURSES (Personalized to profile, degree & weak subjects) */}
+      {/* ========================================================================= */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#6D28D9] dark:text-[#DDD6FE]">
+                  Personalized Learning
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/25 dark:text-[#86EFAC] border border-[#86EFAC] dark:border-[#15803D]/40">
+                  Verified Courses
+                </span>
+              </div>
+              <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Recommended Courses
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsCoursePrefsOpen(true)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${
+                isLight
+                  ? 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#526078]'
+                  : 'border-[#334155] bg-[#172033] hover:bg-[#243248] text-slate-300'
               }`}
+              title="Configure target skills & duration"
             >
-              Recent Student Activity
-            </h2>
-            <p
-              className={`text-xs mt-0.5 ${
-                isLight ? 'text-slate-600' : 'text-slate-400'
-              }`}
+              <Sliders className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+              <span>Update Preferences</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('courses')}
+              className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 py-1.5 px-3 rounded-xl hover:bg-[#EDE9FE]/50 dark:hover:bg-[#6D28D9]/20 transition cursor-pointer"
             >
-              Recent academic assessments and planner milestones.
-            </p>
+              <span>View All Courses</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
-        {displayActivities.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {displayActivities.map((act) => (
+        {/* 3 Personalized Course Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {recommendedCourses.map((course) => {
+            const status = dashboardSavedCourses[course.id];
+            return (
               <div
-                key={act.id}
-                className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition ${
+                key={course.id}
+                className={`p-5 rounded-2xl border transition-all flex flex-col justify-between group ${
                   isLight
-                    ? 'bg-slate-50 border-slate-200 hover:bg-slate-100'
-                    : 'bg-slate-800/80 border-slate-700 hover:bg-slate-800'
+                    ? 'bg-white border-[#E2E8F0] hover:border-[#6D28D9]/50 shadow-xs hover:shadow-md'
+                    : 'bg-[#1E293B] border-[#334155] hover:border-[#8B5CF6]/50 shadow-xs hover:shadow-md'
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                      isLight
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-purple-950/70 text-purple-300'
-                    }`}
-                  >
-                    <Sparkles className="w-4 h-4" />
+                <div className="space-y-3">
+                  {/* Top Header: Provider and Price */}
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#F8FAFC] text-[#526078] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#334155] flex items-center gap-1 line-clamp-1">
+                      <ShieldCheck className="w-3 h-3 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
+                      <span className="truncate">{course.provider}</span>
+                    </span>
+
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
+                        course.pricing === '100% Free'
+                          ? 'bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] dark:bg-[#15803D]/25 dark:text-[#86EFAC] dark:border-[#15803D]/40'
+                          : 'bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] dark:border-[#1D4ED8]/40'
+                      }`}
+                    >
+                      {course.pricing}
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <p
-                      className={`text-xs font-bold truncate ${
-                        isLight ? 'text-slate-900' : 'text-white'
+
+                  {/* Title */}
+                  <h3 className="text-sm font-bold tracking-tight text-[#172033] dark:text-white line-clamp-2 leading-snug group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] transition-colors">
+                    {course.name}
+                  </h3>
+
+                  {/* Why recommended badge */}
+                  {course.matchReason && (
+                    <div className="text-[11px] font-semibold text-[#6D28D9] dark:text-[#DDD6FE] bg-[#EDE9FE]/60 dark:bg-[#6D28D9]/20 px-2.5 py-1 rounded-lg border border-[#DDD6FE] dark:border-[#8B5CF6]/30 flex items-center gap-1.5 line-clamp-1">
+                      <Sparkles className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{course.matchReason}</span>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <p className="text-xs text-[#526078] dark:text-slate-300 line-clamp-2 leading-relaxed">
+                    {course.outcome}
+                  </p>
+
+                  {/* Meta Chips: Subject, Difficulty, Duration */}
+                  <div className="flex items-center gap-2 flex-wrap text-[11px] text-[#526078] dark:text-slate-400 pt-1">
+                    <span className="bg-slate-100 dark:bg-[#172033] px-2 py-0.5 rounded font-medium text-[#172033] dark:text-slate-300 border border-[#E2E8F0] dark:border-[#334155]">
+                      {course.category}
+                    </span>
+                    <span>•</span>
+                    <span
+                      className={`font-semibold ${
+                        course.difficulty === 'Beginner'
+                          ? 'text-[#15803D] dark:text-[#86EFAC]'
+                          : course.difficulty === 'Intermediate'
+                          ? 'text-[#B45309] dark:text-[#FCD34D]'
+                          : 'text-[#6D28D9] dark:text-[#DDD6FE]'
                       }`}
                     >
-                      {act.title}
-                    </p>
-                    <p
-                      className={`text-[11px] truncate mt-0.5 font-medium ${
-                        isLight ? 'text-slate-600' : 'text-slate-400'
-                      }`}
-                    >
-                      {act.description}
-                    </p>
+                      {course.difficulty}
+                    </span>
+                    {course.duration && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[#64748B]" />
+                          <span>{course.duration}</span>
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                <span
-                  className={`text-[11px] font-semibold shrink-0 tabular-nums ${
-                    isLight ? 'text-slate-500' : 'text-slate-400'
-                  }`}
-                >
-                  {formatDate(act.timestamp)}
-                </span>
+                {/* Bottom Actions */}
+                <div className="mt-4 pt-3.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleCourseSave(course.id)}
+                    className={`text-xs px-2.5 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 transition cursor-pointer border ${
+                      status === 'completed'
+                        ? 'bg-[#DCFCE7] text-[#15803D] border-[#86EFAC] dark:bg-[#15803D]/25 dark:text-[#86EFAC] dark:border-[#15803D]/40'
+                        : status === 'in_progress'
+                        ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] dark:bg-[#B45309]/25 dark:text-[#FCD34D] dark:border-[#B45309]/40'
+                        : status === 'saved'
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/40'
+                        : isLight
+                        ? 'bg-white text-[#526078] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                        : 'bg-[#172033] text-slate-300 border-[#334155] hover:bg-[#243248]'
+                    }`}
+                  >
+                    {status === 'completed' ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#15803D] dark:text-[#86EFAC]" />
+                        <span>Completed</span>
+                      </>
+                    ) : status === 'in_progress' ? (
+                      <>
+                        <Clock className="w-3.5 h-3.5 text-[#B45309] dark:text-[#FCD34D]" />
+                        <span>In Progress</span>
+                      </>
+                    ) : status === 'saved' ? (
+                      <>
+                        <BookmarkCheck className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="w-3.5 h-3.5 text-[#64748B]" />
+                        <span>Bookmark</span>
+                      </>
+                    )}
+                  </button>
+
+                  <a
+                    href={course.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-xs transition-colors cursor-pointer"
+                  >
+                    <span>Visit Official Course</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-white" />
+                  </a>
+                </div>
               </div>
-            ))}
-          </div>
-        ) : (
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 5. FIVE USEFUL DASHBOARD CAPABILITIES (Clean navigation hub) */}
+      {/* ========================================================================= */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className={`text-base sm:text-lg font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+            Academic Capabilities
+          </h2>
+          <span className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+            Direct access to full academic tools
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* 1. Academic Performance & Progress */}
           <div
-            className={`p-8 rounded-xl border text-center space-y-3 ${
-              isLight
-                ? 'bg-slate-50 border-slate-200'
-                : 'bg-slate-800/50 border-slate-700'
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+              isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
           >
-            <div
-              className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center ${
-                isLight ? 'bg-purple-100 text-purple-800' : 'bg-purple-950/70 text-purple-300'
-              }`}
-            >
-              <Clock className="w-6 h-6" />
-            </div>
-            <div className="max-w-sm mx-auto">
-              <p className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                No recent student activity yet
-              </p>
-              <p className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                Run your first performance assessment or build an exam study plan to begin generating genuine records.
+            <div className="space-y-2">
+              <div className="w-9 h-9 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] flex items-center justify-center">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                1. Performance &amp; Progress
+              </h3>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Review semester marks, attendance trends, and predictive grade distribution.
               </p>
             </div>
             <button
-              onClick={() => onNavigate('predict')}
-              className="btn-primary text-xs !py-1.5 !px-3.5 gap-1.5"
+              onClick={() => onNavigate('analysis')}
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
             >
-              <Plus className="w-3.5 h-3.5 text-white" />
-              <span className="text-white">Run First Assessment</span>
+              <span>Open Academic Analysis</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        )}
+
+          {/* 2. Weak-Subject & Topic Diagnosis */}
+          <div
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+              isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
+            }`}
+          >
+            <div className="space-y-2">
+              <div className="w-9 h-9 rounded-xl bg-[#FEF3C7] text-[#B45309] dark:bg-[#B45309]/25 dark:text-[#FCD34D] flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                2. Weak-Subject Diagnosis
+              </h3>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Pinpoint syllabus chapters causing performance friction and view targeted intervention suggestions.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('analysis')}
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+            >
+              <span>View Topic Diagnostics</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* 3. Exam Scheduling & Timetable */}
+          <div
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+              isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
+            }`}
+          >
+            <div className="space-y-2">
+              <div className="w-9 h-9 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                3. Exam Scheduling &amp; Timetable
+              </h3>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Manage upcoming examinations, track countdowns, and maintain a spaced revision timetable.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('scheduler')}
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+            >
+              <span>Open Exam Scheduler</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* 4. Topic Theory & 30-Question Quizzes */}
+          <div
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+              isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
+            }`}
+          >
+            <div className="space-y-2">
+              <div className="w-9 h-9 rounded-xl bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/25 dark:text-[#86EFAC] flex items-center justify-center">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                4. Learn &amp; Practice Studio
+              </h3>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Search any curriculum topic to study concise structured theory and take 30-question diagnostic quizzes.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('learn')}
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+            >
+              <span>Open Learn &amp; Practice</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* 5. Personalized Improvement Plan */}
+          <div
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between md:col-span-2 lg:col-span-2 ${
+              isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
+            }`}
+          >
+            <div className="space-y-2">
+              <div className="w-9 h-9 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/25 dark:text-[#93C5FD] flex items-center justify-center">
+                <Target className="w-5 h-5" />
+              </div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                5. Personalized Improvement Plan
+              </h3>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                Set target score milestones, rebalance missed study sessions across remaining days, and track statutory attendance compliance.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('scheduler')}
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-semibold text-[#6D28D9] dark:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline"
+            >
+              <span>Build Revision Timetable</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 7. FLOATING QUICK ACTIONS SPEED DIAL */}
+      {/* ========================================================================= */}
+      <div ref={quickActionsRef} className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40">
+        {/* Expanded Speed-Dial Card */}
+        {isQuickActionsOpen && (
+          <div
+            role="dialog"
+            aria-label="Quick Actions Menu"
+            className={`absolute bottom-16 right-0 mb-2 w-80 sm:w-96 rounded-2xl shadow-2xl border p-4.5 origin-bottom-right animate-quick-actions-menu ${
+              isLight
+                ? 'bg-white/95 backdrop-blur-md border-[#E2E8F0] text-[#172033] shadow-slate-900/15'
+                : 'bg-[#1E293B]/95 backdrop-blur-md border-[#334155] text-white shadow-black/50'
+            }`}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E8ECF3] dark:border-[#334155]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center">
+                  <Zap className="w-4 h-4 fill-current" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold tracking-tight">Quick Actions</h4>
+                  <p className="text-[11px] text-[#526078] dark:text-slate-400">Immediate access to core workflows</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickActionsOpen(false)}
+                className="p-1 rounded-lg text-[#526078] hover:text-[#172033] dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Close Quick Actions"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Actions list */}
+            <div className="space-y-2">
+              {/* Action 1: Add New Exam */}
+              <button
+                type="button"
+                onClick={handleQuickAddExam}
+                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-1 ${
+                  isLight
+                    ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#DBEAFE]/30 hover:border-[#1D4ED8]/40'
+                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#38BDF8]/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <CalendarPlus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold">Add New Exam</span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD]">
+                        Scheduler
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#526078] dark:text-slate-400 mt-0.5 line-clamp-1">
+                      Schedule test date, syllabus chapters &amp; priority
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#526078] dark:text-slate-400 group-hover:text-[#1D4ED8] dark:group-hover:text-[#93C5FD] group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* Action 2: Start New Practice Quiz */}
+              <button
+                type="button"
+                onClick={handleQuickPracticeQuiz}
+                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-2 ${
+                  isLight
+                    ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#DCFCE7]/30 hover:border-[#15803D]/40'
+                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#10B981]/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/30 dark:text-[#6EE7B7] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <BrainCircuit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold">Start New Practice Quiz</span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/30 dark:text-[#6EE7B7]">
+                        30 Questions
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#526078] dark:text-slate-400 mt-0.5 line-clamp-1">
+                      {prioritizedNextStep.hasEvidence
+                        ? `Practice ${prioritizedNextStep.topic} (${prioritizedNextStep.subject})`
+                        : 'Interactive diagnostic quiz & curriculum mastery'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#526078] dark:text-slate-400 group-hover:text-[#15803D] dark:group-hover:text-[#6EE7B7] group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* Action 3: View Study Roadmap */}
+              <button
+                type="button"
+                onClick={handleQuickStudyRoadmap}
+                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-3 ${
+                  isLight
+                    ? 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9]/40'
+                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#8B5CF6]/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold">View Study Roadmap</span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
+                        Daily Roadmap
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#526078] dark:text-slate-400 mt-0.5 line-clamp-1">
+                      {nextExam
+                        ? `${nextExam.subject_name} (${getExamCountdown(nextExam.exam_date)}) • Daily plan & timer`
+                        : 'Day-by-day task distribution & focus sessions'}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#526078] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
+              </button>
+            </div>
+
+            {/* Quick Status / Keyboard Hint */}
+            <div className="mt-3 pt-2.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between text-[11px] text-[#526078] dark:text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Active intelligence hub</span>
+              </span>
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                ESC to close
+              </kbd>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Action Button */}
+        <button
+          type="button"
+          onClick={() => setIsQuickActionsOpen(prev => !prev)}
+          aria-expanded={isQuickActionsOpen}
+          aria-haspopup="dialog"
+          aria-label="Toggle Quick Actions Floating Menu"
+          className={`flex items-center gap-2.5 px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-full font-semibold shadow-2xl transition-all duration-200 cursor-pointer active:scale-95 focus:outline-hidden focus:ring-4 ${
+            isQuickActionsOpen
+              ? isLight
+                ? 'bg-[#172033] text-white shadow-slate-900/30 focus:ring-[#172033]/25'
+                : 'bg-white text-[#0B0F19] shadow-black/50 focus:ring-white/30'
+              : 'bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-[#6D28D9]/40 hover:shadow-[#6D28D9]/60 focus:ring-[#6D28D9]/30 hover:-translate-y-0.5'
+          }`}
+        >
+          <div className={`transition-transform duration-300 ${isQuickActionsOpen ? 'rotate-90' : 'rotate-0'}`}>
+            {isQuickActionsOpen ? <X className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+          </div>
+          <span className="text-sm font-semibold tracking-wide">Quick Actions</span>
+          <span className="inline-flex items-center justify-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">
+            3
+          </span>
+        </button>
+      </div>
+
+      {/* Course Preferences Modal */}
+      {isCoursePrefsOpen && (
+        <CoursePreferencesModal
+          isOpen={isCoursePrefsOpen}
+          onClose={() => setIsCoursePrefsOpen(false)}
+          onSaved={(newPrefs) => {
+            setCoursePrefs(newPrefs);
+          }}
+        />
+      )}
     </div>
   );
 };

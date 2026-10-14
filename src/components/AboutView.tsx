@@ -5,9 +5,9 @@ export const AboutView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div className="border-b border-[#E1E6EF] dark:border-[#1E2B42] pb-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-[#0B132B] flex items-center justify-center border border-teal-500/30 shadow-md shrink-0">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden bg-[#0B132B] flex items-center justify-center border border-[#7000E8]/30 shadow-md shrink-0">
             <img
               src="/edupredict-ai-logo.png"
               alt="EduPredict AI Logo"
@@ -16,13 +16,13 @@ export const AboutView: React.FC = () => {
             />
           </div>
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold mb-1.5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEE7FF] dark:bg-[rgba(112,0,232,0.18)] border border-[#D1B8FC] dark:border-[rgba(142,48,255,0.35)] text-[#7000E8] dark:text-[#C4B5FD] text-xs font-bold mb-1.5">
               Platform Architecture &amp; Ethics
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-[#172033] dark:text-white tracking-tight">
               About EduPredict AI
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-3xl leading-relaxed font-medium">
+            <p className="text-xs sm:text-sm text-[#526078] dark:text-slate-300 mt-1 max-w-3xl leading-relaxed font-medium">
               Mission, multi-level supervised machine learning methodology, datasets, verified course integrations, and responsible academic governance.
             </p>
           </div>
@@ -34,9 +34,9 @@ export const AboutView: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Problem Statement & Solution */}
-          <div className="bg-white dark:bg-[#111827] rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Target className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <div className="bg-white dark:bg-[#131926] rounded-2xl p-5 sm:p-6 border border-[#E1E6EF] dark:border-[#1E2B42] shadow-xs space-y-3">
+            <h3 className="text-sm font-bold text-[#172033] dark:text-white flex items-center gap-2">
+              <Target className="w-4 h-4 text-[#7000E8] dark:text-[#C4B5FD]" />
               <span>Problem Statement &amp; Academic Objectives</span>
             </h3>
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">

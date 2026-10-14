@@ -36,6 +36,7 @@ interface LearnPracticeViewProps {
   onNavigate: (section: SectionId) => void;
   initialTopic?: string;
   initialCourseContext?: string;
+  initialSubTab?: 'theory' | 'quiz';
 }
 
 const FEATURED_TOPICS = [
@@ -92,7 +93,8 @@ const FEATURED_TOPICS = [
 export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
   onNavigate,
   initialTopic,
-  initialCourseContext
+  initialCourseContext,
+  initialSubTab
 }) => {
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -100,7 +102,14 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
 
   // Navigation within Learn & Practice: 'directory' | 'study' | 'history'
   const [activeTab, setActiveTab] = useState<'study' | 'directory' | 'history'>('study');
-  const [studySubTab, setStudySubTab] = useState<'theory' | 'quiz'>('theory');
+  const [studySubTab, setStudySubTab] = useState<'theory' | 'quiz'>(initialSubTab || 'theory');
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setStudySubTab(initialSubTab);
+      setActiveTab('study');
+    }
+  }, [initialSubTab]);
 
   // Selected Topic
   const [selectedTopic, setSelectedTopic] = useState<string>(initialTopic || 'Binary Trees');
@@ -113,14 +122,15 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [topicSource, setTopicSource] = useState<string>('');
 
-  // Quiz Execution State
-  const [quizLength, setQuizLength] = useState<10 | 30>(10);
+  // Quiz Execution State (Default 30 questions)
+  const [quizLength, setQuizLength] = useState<10 | 30>(30);
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | 'Easy' | 'Medium' | 'Hard'>('All');
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizSubmissionResult | null>(null);
   const [quizStartTime, setQuizStartTime] = useState<number>(Date.now());
   const [pastAttempts, setPastAttempts] = useState<any[]>([]);
+  const [topicLoadError, setTopicLoadError] = useState<string>('');
 
   // AI Topic Coach Modal State
   const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
@@ -128,18 +138,25 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
   // Load Topic Data from API
   const loadTopicModule = useCallback(async (topicToLoad: string) => {
     setIsLoadingTopic(true);
+    setTopicLoadError('');
     setQuizResult(null);
     setSelectedAnswers({});
     try {
       const res = await fetchLearnTopic(topicToLoad, courseContext, false);
-      if (res && res.status === 'success') {
+      if (res && res.status === 'success' && res.theory && Array.isArray(res.questions) && res.questions.length > 0) {
         setSelectedTopic(res.topicTitle || topicToLoad);
         setTopicTheory(res.theory);
         setQuizQuestions(res.questions || []);
         setTopicSource(res.source);
+        if (res.questions.length < 30) {
+          console.warn(`Curriculum module returned ${res.questions.length} questions; 30 expected.`);
+        }
+      } else {
+        setTopicLoadError(`Incomplete curriculum response for "${topicToLoad}". Expected 30 questions.`);
       }
     } catch (err: any) {
       console.error('Failed to load topic module:', err);
+      setTopicLoadError(err?.message || `Failed to load verified curriculum for "${topicToLoad}".`);
     } finally {
       setIsLoadingTopic(false);
       setQuizStartTime(Date.now());
@@ -248,13 +265,13 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
       <div
         className={`p-5 sm:p-6 rounded-2xl border transition-all ${
           isLight
-            ? 'bg-gradient-to-r from-purple-50/70 via-teal-50/50 to-white border-purple-200/80 shadow-xs'
-            : 'bg-gradient-to-r from-[#1b1531] via-[#0B132B] to-[#111827] border-purple-500/30 shadow-md'
+            ? 'bg-white border-[#E1E6EF] text-[#172033] shadow-xs'
+            : 'bg-[#131926] border-[#1E2B42] text-[#F7F8FC] shadow-xs'
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border-2 border-purple-500/40 bg-[#0B132B] shadow-md flex items-center justify-center p-1">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-[#E1E6EF] dark:border-[#1E2B42] bg-[#0B132B] shadow-md flex items-center justify-center p-1">
               <img
                 src="/edupredict-ai-logo.png"
                 alt="EduPredict AI"
@@ -263,17 +280,17 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30">
-                  Core Workflow 3
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#EEE7FF] text-[#7000E8] dark:bg-[rgba(112,0,232,0.18)] dark:text-[#C4B5FD] border border-[#D1B8FC] dark:border-[rgba(142,48,255,0.35)]">
+                  Core Workflow
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-700 dark:text-teal-300">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#F0F3F9] text-[#526078] dark:bg-[#182236] dark:text-[#CBD5E1] border border-[#E1E6EF] dark:border-[#1E2B42]">
                   Topic: {selectedTopic}
                 </span>
               </div>
-              <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Learn & Practice Studio
+              <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Learn &amp; Practice Studio
               </h1>
-              <p className={`text-xs sm:text-sm mt-0.5 font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+              <p className={`text-xs sm:text-sm mt-0.5 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
                 Master academic theory, practice verified multiple-choice questions, and update your topic mastery automatically.
               </p>
             </div>
@@ -282,16 +299,14 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
           <div className="flex items-center gap-2.5 flex-wrap">
             <button
               onClick={() => setIsCoachModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition shadow-sm cursor-pointer bg-purple-600 hover:bg-purple-700 text-white"
+              className="btn-primary text-xs sm:text-sm gap-2"
             >
-              <Sparkles className="w-4 h-4" />
-              Ask AI Topic Coach
+              <Sparkles className="w-4 h-4 text-white" />
+              <span className="text-white">Ask AI Topic Coach</span>
             </button>
             <button
               onClick={() => setActiveTab('directory')}
-              className={`px-3.5 py-2.5 rounded-xl border font-bold text-xs sm:text-sm transition cursor-pointer ${
-                isLight ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
-              }`}
+              className="btn-secondary text-xs sm:text-sm"
             >
               Browse Syllabus Directory
             </button>
@@ -363,25 +378,25 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
       {activeTab === 'study' && (
         <div className="space-y-4">
           {/* Sub-tab switcher: Concept Theory vs Practice Quiz */}
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] pb-2">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setStudySubTab('theory')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   studySubTab === 'theory'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-[#6D28D9] text-white shadow-xs'
+                    : 'text-[#526078] dark:text-slate-400 hover:text-[#172033] dark:hover:text-white'
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
-                Concept Theory & Notes
+                Concept Theory &amp; Notes
               </button>
               <button
                 onClick={() => setStudySubTab('quiz')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                   studySubTab === 'quiz'
-                    ? 'bg-teal-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-[#6D28D9] text-white shadow-xs'
+                    : 'text-[#526078] dark:text-slate-400 hover:text-[#172033] dark:hover:text-white'
                 }`}
               >
                 <BrainCircuit className="w-4 h-4" />
@@ -389,24 +404,57 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
               </button>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500">
-              <span>Course: <strong>{courseContext}</strong></span>
+            <div className="hidden sm:flex items-center gap-2 text-xs text-[#526078] dark:text-slate-400">
+              <span>Course: <strong className="text-[#172033] dark:text-white">{courseContext}</strong></span>
             </div>
           </div>
 
           {isLoadingTopic ? (
             <div
               className={`p-16 rounded-2xl border text-center space-y-3 ${
-                isLight ? 'bg-white border-slate-200' : 'bg-[#111827] border-slate-800'
+                isLight ? 'bg-white border-[#E1E6EF]' : 'bg-[#131926] border-[#1E2B42]'
               }`}
             >
-              <div className="w-10 h-10 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                Loading academic theory and verified quiz questions...
+              <div className="w-10 h-10 border-3 border-[#7000E8] border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className={`text-sm font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Loading academic theory and verified 30 questions...
               </p>
-              <p className="text-xs text-slate-500">
+              <p className={`text-xs ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
                 Retrieving comprehensive curriculum notes for "{selectedTopic}"
               </p>
+            </div>
+          ) : topicLoadError ? (
+            <div
+              className={`p-10 rounded-2xl border text-center space-y-4 ${
+                isLight ? 'bg-white border-[#E1E6EF]' : 'bg-[#131926] border-[#1E2B42]'
+              }`}
+            >
+              <div className="w-12 h-12 rounded-xl bg-[#FEECEC] text-[#B42318] dark:bg-[rgba(180,35,24,0.2)] dark:text-[#FCA5A5] flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className={`text-base font-bold ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                  Curriculum Module Unavailable
+                </h3>
+                <p className={`text-xs mt-1 max-w-md mx-auto leading-relaxed ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                  {topicLoadError}
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  onClick={() => loadTopicModule(selectedTopic)}
+                  className="btn-primary text-xs px-4 py-2 gap-2"
+                >
+                  <RotateCcw className="w-4 h-4 text-white" />
+                  <span>Retry Generating 30 Questions</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('directory')}
+                  className="btn-secondary text-xs px-4 py-2"
+                >
+                  Browse Verified Banks
+                </button>
+              </div>
             </div>
           ) : (
             <>

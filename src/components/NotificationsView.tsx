@@ -90,18 +90,18 @@ export const NotificationsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Banner */}
-      <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#131926] rounded-2xl p-6 border border-[#E1E6EF] dark:border-[#1E2B42] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#EEE7FF] dark:bg-[rgba(112,0,232,0.18)] text-[#7000E8] dark:text-[#C4B5FD] border border-[#D1B8FC] dark:border-[rgba(142,48,255,0.35)]">
               Alert Stream
             </span>
-            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Timely Academic Triggers</span>
+            <span className="text-xs text-[#526078] dark:text-slate-400 font-semibold">Timely Academic Triggers</span>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">
+          <h2 className="text-2xl font-black text-[#172033] dark:text-white mt-1 tracking-tight">
             Notifications &amp; Academic Alerts
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl font-medium">
+          <p className="text-sm text-[#526078] dark:text-slate-300 mt-1 max-w-2xl font-medium">
             Stay informed on critical attendance shortfalls, upcoming exam deadlines, and study goal milestones.
           </p>
         </div>
@@ -113,14 +113,14 @@ export const NotificationsView: React.FC = () => {
               onClick={markAllRead}
               className="btn-secondary text-xs px-3.5 py-2 gap-1.5"
             >
-              <Check className="w-4 h-4 text-purple-700 dark:text-purple-400" />
+              <Check className="w-4 h-4 text-[#7000E8] dark:text-[#C4B5FD]" />
               <span>Mark all as read</span>
             </button>
           )}
           {notifications.length > 0 && (
             <button
               onClick={clearAll}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="p-2 rounded-xl border border-[#E1E6EF] dark:border-[#1E2B42] text-slate-500 hover:text-[#B42318] dark:text-slate-400 dark:hover:text-rose-400 hover:bg-[#FEECEC] dark:hover:bg-[#182236] transition cursor-pointer"
               title="Clear all notifications"
               aria-label="Clear all notifications"
             >
@@ -131,7 +131,7 @@ export const NotificationsView: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between flex-wrap gap-3">
+      <div className="bg-white dark:bg-[#131926] rounded-xl p-4 border border-[#E1E6EF] dark:border-[#1E2B42] shadow-xs flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-1.5 flex-wrap">
           {(['all', 'alert', 'deadline', 'milestone'] as const).map((tab) => (
             <button
@@ -139,8 +139,8 @@ export const NotificationsView: React.FC = () => {
               onClick={() => setFilter(tab)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition cursor-pointer ${
                 filter === tab
-                  ? 'bg-purple-700 dark:bg-purple-600 text-white shadow-xs'
-                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'bg-[#7000E8] text-white shadow-xs'
+                  : 'text-[#526078] dark:text-slate-300 hover:bg-[#F0F3F9] dark:hover:bg-[#182236]'
               }`}
             >
               {tab === 'all' ? 'All Alerts' : tab}
@@ -148,8 +148,8 @@ export const NotificationsView: React.FC = () => {
           ))}
         </div>
 
-        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-          Unread: <strong className="text-purple-700 dark:text-purple-400 font-bold">{unreadCount}</strong> alerts
+        <span className="text-xs font-semibold text-[#526078] dark:text-slate-400">
+          Unread: <strong className="text-[#7000E8] dark:text-[#C4B5FD] font-bold">{unreadCount}</strong> alerts
         </span>
       </div>
 

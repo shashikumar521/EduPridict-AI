@@ -307,20 +307,20 @@ export const LoginView: React.FC<LoginViewProps> = ({
         <div
           className={`w-full max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden transition-all mx-auto ${
             isLight
-              ? 'bg-white border-slate-200 shadow-slate-200/50'
-              : 'bg-[#111827] border-slate-800 shadow-black/60'
+              ? 'bg-white border-[#E1E6EF] shadow-slate-200/50'
+              : 'bg-[#131926] border-[#1E2B42] shadow-black/60'
           }`}
         >
           {/* Header Banner */}
           <div
             className={`p-5 sm:p-7 border-b relative ${
               isLight
-                ? 'bg-slate-50 border-slate-200 text-slate-900'
-                : 'bg-[#161F33] border-slate-800 text-white'
+                ? 'bg-[#F0F3F9] border-[#E1E6EF] text-[#172033]'
+                : 'bg-[#182236] border-[#1E2B42] text-white'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-lg shrink-0 bg-[#0B132B] flex items-center justify-center border border-teal-500/30">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-lg shrink-0 bg-[#0B132B] flex items-center justify-center border border-[#7000E8]/30">
                 <img
                   src="/edupredict-ai-logo.png"
                   alt="EduPredict AI Logo"
@@ -330,21 +330,21 @@ export const LoginView: React.FC<LoginViewProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className={`text-lg sm:text-xl font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <h1 className={`text-lg sm:text-xl font-extrabold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
                     EduPredict AI
                   </h1>
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                       isLight
-                        ? 'bg-purple-50 text-purple-800 border-purple-200'
-                        : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                        ? 'bg-[#EEE7FF] text-[#7000E8] border-[#D1B8FC]'
+                        : 'bg-[rgba(112,0,232,0.18)] text-[#C4B5FD] border-[rgba(142,48,255,0.35)]'
                     }`}
                   >
                     Student Portal
                   </span>
                 </div>
-                <p className={`text-xs mt-0.5 font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
-                  Secure Student Authentication & Longitudinal Profiles
+                <p className={`text-xs mt-0.5 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                  Secure Student Authentication &amp; Longitudinal Profiles
                 </p>
               </div>
             </div>

@@ -209,8 +209,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       <div
         className={`rounded-2xl sm:rounded-3xl border shadow-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto custom-scrollbar transition-all ${
           isLight
-            ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50'
-            : 'bg-[#111827] border-slate-800 text-slate-100 shadow-black/80'
+            ? 'bg-white border-[#E1E6EF] text-[#172033] shadow-slate-300/50'
+            : 'bg-[#131926] border-[#1E2B42] text-[#F7F8FC] shadow-black/80'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -218,15 +218,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <div
           className={`p-5 sm:p-6 border-b relative ${
             isLight
-              ? 'bg-slate-50 border-slate-200 text-slate-900'
-              : 'bg-[#161F33] border-slate-800 text-white'
+              ? 'bg-[#F0F3F9] border-[#E1E6EF] text-[#172033]'
+              : 'bg-[#182236] border-[#1E2B42] text-white'
           }`}
         >
           <button
             onClick={onClose}
             className={`absolute top-4 right-4 p-2 rounded-full transition cursor-pointer ${
               isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                ? 'text-[#526078] hover:text-[#172033] hover:bg-[#E1E6EF]'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             aria-label="Close dialog"
@@ -235,7 +235,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-md shrink-0 bg-[#0B132B] flex items-center justify-center border border-teal-500/30">
+            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-md shrink-0 bg-[#0B132B] flex items-center justify-center border border-[#7000E8]/30">
               <img
                 src="/edupredict-ai-logo.png"
                 alt="EduPredict AI Logo"
@@ -245,14 +245,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className={`text-lg font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                <h3 className={`text-lg font-extrabold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
                   EduPredict AI
                 </h3>
                 <span
                   className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                     isLight
-                      ? 'bg-purple-100 text-purple-900 border-purple-300 font-extrabold'
-                      : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                      ? 'bg-[#EEE7FF] text-[#7000E8] border-[#D1B8FC]'
+                      : 'bg-[rgba(112,0,232,0.18)] text-[#C4B5FD] border-[rgba(142,48,255,0.35)]'
                   }`}
                 >
                   Student Portal
