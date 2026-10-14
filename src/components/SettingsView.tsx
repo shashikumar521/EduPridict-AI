@@ -390,27 +390,19 @@ export const SettingsView: React.FC = () => {
           <button
             type="button"
             onClick={handleReset}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-              isLight
-                ? 'bg-white hover:bg-[#F0F3F8] text-[#526581] border-[#E9E5F2]'
-                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
-            }`}
+            className="btn-secondary text-xs px-4 py-2.5 gap-1.5"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400" />
             <span>Restore Defaults</span>
           </button>
 
           <button
             type="submit"
             disabled={isSaving}
-            className={`px-6 py-2.5 rounded-xl font-bold text-xs text-white flex items-center gap-2 shadow-md transition cursor-pointer active:scale-95 ${
-              isLight
-                ? 'bg-[#8000E8] hover:bg-[#6a00c2] shadow-[#8000E8]/20'
-                : 'bg-[#8000E8] hover:bg-[#9226ff] shadow-[#8000E8]/30'
-            }`}
+            className="btn-primary text-xs px-6 py-2.5 gap-2"
           >
-            <Save className="w-4 h-4" />
-            <span>{isSaving ? 'Saving Changes...' : 'Save Settings'}</span>
+            <Save className="w-4 h-4 text-white" />
+            <span className="text-white">{isSaving ? 'Saving Changes...' : 'Save Settings'}</span>
           </button>
         </div>
       </form>

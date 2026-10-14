@@ -245,10 +245,10 @@ export const ExamReadinessView: React.FC = () => {
             <button
               onClick={handleSaveAssessment}
               disabled={isSaving}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="btn-primary text-xs px-4 py-2 gap-1.5"
             >
-              <BookmarkPlus className="w-3.5 h-3.5" />
-              <span>{isSaving ? 'Saving...' : saveSuccess ? 'Saved to Audit Log!' : 'Save Readiness Assessment'}</span>
+              <BookmarkPlus className="w-3.5 h-3.5 text-white" />
+              <span className="text-white">{isSaving ? 'Saving...' : saveSuccess ? 'Saved to Audit Log!' : 'Save Readiness Assessment'}</span>
             </button>
             <span className="text-[11px] text-slate-400">Persisted in SQLite database</span>
           </div>

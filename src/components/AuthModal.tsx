@@ -7,10 +7,10 @@ import {
   User,
   Phone,
   AlertCircle,
-  Info,
   ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { MobileAuthFlow } from './MobileAuthFlow';
 
 interface AuthModalProps {
@@ -36,6 +36,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     currentOrigin,
     pendingRedirectSection
   } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   const [authMethod, setAuthMethod] = useState<'mobile' | 'email'>('mobile');
   const [mode, setMode] = useState<'signin' | 'register'>('signin');
@@ -78,113 +80,89 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 }
               }
             },
-            error_callback: (err: any) => {
-              console.warn('Google Identity error in modal:', err);
-              if (err?.message?.includes('origin') || err?.type === 'origin_mismatch') {
-                setErrorMessage(
-                  `Authorized origin mismatch: "${activeOrigin}" is not registered in Google Cloud Console.`
-                );
-              }
-            },
-            auto_select: false,
             cancel_on_tap_outside: true
           });
 
           if (googleButtonRef.current) {
-            googleButtonRef.current.innerHTML = '';
-            const calcWidth = typeof window !== 'undefined'
-              ? Math.min(320, Math.max(240, window.innerWidth - 80))
-              : 280;
-
             window.google.accounts.id.renderButton(googleButtonRef.current, {
-              type: 'standard',
-              theme: 'outline',
+              theme: isLight ? 'outline' : 'filled_blue',
               size: 'large',
-              text: 'continue_with',
+              type: 'standard',
               shape: 'pill',
+              text: 'signin_with',
               logo_alignment: 'left',
-              width: calcWidth
+              width: 320
             });
           }
-          return true;
-        } catch (e: any) {
-          console.error('Failed to initialize Google Identity Services:', e);
-          return false;
+        } catch (e) {
+          console.warn('Google GSI render error:', e);
         }
+      } else if (attempts < maxAttempts) {
+        setTimeout(setupGsi, 300);
       }
-      return false;
     };
 
-    const isReady = setupGsi();
-    if (!isReady && googleClientId) {
-      const interval = setInterval(() => {
-        if (setupGsi() || attempts >= maxAttempts) {
-          clearInterval(interval);
-        }
-      }, 300);
-      return () => clearInterval(interval);
-    }
-  }, [isOpen, googleClientId, loginGoogle, onSuccess, activeOrigin]);
+    setupGsi();
+  }, [isOpen, googleClientId, isLight, loginGoogle, onSuccess]);
 
   const handleGoogleClick = () => {
-    if (isGoogleLoading) return;
     setErrorMessage(null);
 
     if (!googleClientId) {
-      setErrorMessage('Google Client ID is not configured.');
+      setErrorMessage(
+        'Google Client ID is not configured in .env. Please sign in with your phone or email below.'
+      );
       return;
     }
 
-    if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
-      setIsGoogleLoading(true);
+    if (window.google?.accounts?.oauth2) {
       try {
+        setIsGoogleLoading(true);
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: googleClientId,
           scope: 'email profile openid',
           callback: async (tokenResponse: any) => {
             if (tokenResponse?.error) {
               setIsGoogleLoading(false);
-              if (tokenResponse.error === 'popup_closed_by_user') {
-                setErrorMessage('Google sign-in was cancelled.');
-              } else if (tokenResponse.error === 'access_denied') {
-                setErrorMessage('Permission was denied.');
-              } else if (tokenResponse.error === 'origin_mismatch') {
-                setErrorMessage(`Origin mismatch: Ensure "${activeOrigin}" is authorized in Google Cloud Console.`);
-              } else {
-                setErrorMessage(`Google sign-in error: ${tokenResponse.error_description || tokenResponse.error}`);
-              }
+              setErrorMessage(`Google authentication error: ${tokenResponse.error}`);
+              setShowRedirectOption(true);
               return;
             }
-
             if (tokenResponse?.access_token) {
               try {
                 const res = await loginGoogleAccessToken(tokenResponse.access_token);
                 if (onSuccess) onSuccess(res.isNewUser);
               } catch (err: any) {
-                setErrorMessage(err.message || 'Server failed to verify Google account.');
+                setErrorMessage(err.message || 'Google token validation failed on the backend.');
               } finally {
                 setIsGoogleLoading(false);
               }
-            } else {
-              setIsGoogleLoading(false);
-              setErrorMessage('No token received from Google.');
             }
           },
-          error_callback: (nonOAuthError: any) => {
+          error_callback: (err: any) => {
             setIsGoogleLoading(false);
-            if (nonOAuthError?.type === 'popup_blocked') {
-              setErrorMessage('Popup blocked. Use redirect authentication instead.');
-              setShowRedirectOption(true);
-            } else {
-              setErrorMessage(nonOAuthError?.message || 'Google OAuth failed.');
-            }
+            console.warn('Token client error:', err);
+            setShowRedirectOption(true);
           }
         });
 
         tokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
-      } catch (err: any) {
-        setIsGoogleLoading(false);
+      } catch (err) {
+        console.warn('OAuth2 tokenClient failed, attempting prompt fallback:', err);
+      }
+    }
+
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            setShowRedirectOption(true);
+          }
+        });
+        return;
+      } catch (promptErr) {
+        console.warn('GSI prompt failed:', promptErr);
       }
     }
 
@@ -229,39 +207,67 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
       <div
-        className="bg-[#0d0f17] rounded-2xl sm:rounded-3xl border border-zinc-800 shadow-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto custom-scrollbar transition-all"
+        className={`rounded-2xl sm:rounded-3xl border shadow-2xl max-w-md w-full max-h-[92dvh] overflow-y-auto custom-scrollbar transition-all ${
+          isLight
+            ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/50'
+            : 'bg-[#111827] border-slate-800 text-slate-100 shadow-black/80'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 bg-[#121522] border-b border-zinc-800/80 text-white relative">
+        <div
+          className={`p-5 sm:p-6 border-b relative ${
+            isLight
+              ? 'bg-slate-50 border-slate-200 text-slate-900'
+              : 'bg-[#161F33] border-slate-800 text-white'
+          }`}
+        >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+            className={`absolute top-4 right-4 p-2 rounded-full transition cursor-pointer ${
+              isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#8000E8] to-[#633BFF] flex items-center justify-center text-white font-extrabold shadow-md shadow-[#8000E8]/25 shrink-0">
-              <GraduationCap className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 flex items-center justify-center text-white font-extrabold shadow-md shadow-purple-600/25 shrink-0">
+              <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-black tracking-tight text-white">EduPredict AI</h3>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded">
+                <h3 className={`text-lg font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  EduPredict AI
+                </h3>
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                    isLight
+                      ? 'bg-purple-100 text-purple-900 border-purple-300 font-extrabold'
+                      : 'bg-purple-950/70 text-purple-300 border-purple-800'
+                  }`}
+                >
                   Student Portal
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">
-                Sign in to access your private academic records & forecasts
+              <p className={`text-xs mt-0.5 font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                Sign in to access your private academic records &amp; forecasts
               </p>
             </div>
           </div>
 
           {pendingRedirectSection && (
-            <div className="mt-3 p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-200 flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+            <div
+              className={`mt-3 p-2 rounded-xl border text-[11px] flex items-center gap-2 ${
+                isLight
+                  ? 'bg-purple-50 border-purple-200 text-purple-900'
+                  : 'bg-purple-950/60 border-purple-800 text-purple-200'
+              }`}
+            >
+              <Lock className={`w-3.5 h-3.5 shrink-0 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
               <span>
                 Please sign in to view <strong>{pendingRedirectSection}</strong>.
               </span>
@@ -273,14 +279,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <div className="p-5 sm:p-6 space-y-4">
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
-              <div className="flex-1 leading-snug">{errorMessage}</div>
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 dark:bg-rose-950/60 dark:border-rose-800 dark:text-rose-300 flex items-start gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+              <div className="flex-1 leading-snug font-medium">{errorMessage}</div>
             </div>
           )}
 
           {/* Primary Authentication Method Tabs */}
-          <div className="grid grid-cols-2 p-1 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold">
+          <div
+            className={`grid grid-cols-2 p-1 rounded-xl text-xs font-semibold border ${
+              isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-slate-800'
+            }`}
+          >
             <button
               type="button"
               onClick={() => {
@@ -289,8 +299,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               }}
               className={`py-2 px-2 rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 authMethod === 'mobile'
-                  ? 'bg-[#FF6B00] text-white font-bold shadow-xs'
-                  : 'text-zinc-400 hover:text-white'
+                  ? isLight
+                    ? 'bg-white text-purple-900 font-extrabold shadow-xs border border-slate-200'
+                    : 'bg-purple-700 text-white font-bold shadow-xs'
+                  : isLight
+                  ? 'text-slate-700 hover:text-slate-900 font-semibold'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <Phone className="w-3.5 h-3.5" />
@@ -304,8 +318,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               }}
               className={`py-2 px-2 rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 ${
                 authMethod === 'email'
-                  ? 'bg-zinc-800 text-white font-bold shadow-xs'
-                  : 'text-zinc-400 hover:text-white'
+                  ? isLight
+                    ? 'bg-white text-purple-900 font-extrabold shadow-xs border border-slate-200'
+                    : 'bg-purple-700 text-white font-bold shadow-xs'
+                  : isLight
+                  ? 'text-slate-700 hover:text-slate-900 font-semibold'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <Mail className="w-3.5 h-3.5" />
@@ -327,7 +345,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           {authMethod === 'email' && (
             <div className="space-y-3.5">
               {/* Mode Switch Tabs */}
-              <div className="grid grid-cols-2 p-1 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-semibold">
+              <div
+                className={`grid grid-cols-2 p-1 rounded-xl text-xs font-semibold border ${
+                  isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-slate-800'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -336,8 +358,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   }}
                   className={`py-2 rounded-lg transition cursor-pointer min-h-[36px] ${
                     mode === 'signin'
-                      ? 'bg-zinc-800 text-white font-bold shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
+                      ? isLight
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-bold'
+                        : 'bg-slate-800 text-white font-bold shadow-xs'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   Sign In
@@ -350,8 +376,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   }}
                   className={`py-2 rounded-lg transition cursor-pointer min-h-[36px] ${
                     mode === 'register'
-                      ? 'bg-zinc-800 text-white font-bold shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
+                      ? isLight
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-bold'
+                        : 'bg-slate-800 text-white font-bold shadow-xs'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   Create Account
@@ -362,46 +392,54 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <form onSubmit={handleSubmit} className="space-y-3 text-xs">
                 {mode === 'register' && (
                   <div>
-                    <label className="block font-semibold text-zinc-300 mb-1">
+                    <label className={`block font-bold mb-1 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                       Student Full Name
                     </label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-zinc-500 absolute left-3 top-3.5 pointer-events-none" />
+                      <User className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                       <input
                         type="text"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="e.g. Shashikumar S."
-                        className="w-full bg-zinc-900/90 border border-zinc-800 rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] font-medium min-h-[44px]"
+                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                          isLight
+                            ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20'
+                            : 'bg-[#161F33] border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'
+                        }`}
                       />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block font-semibold text-zinc-300 mb-1">
+                  <label className={`block font-bold mb-1 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                     Student Email Address
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-zinc-500 absolute left-3 top-3.5 pointer-events-none" />
+                    <Mail className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="student@university.edu"
-                      className="w-full bg-zinc-900/90 border border-zinc-800 rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] font-medium min-h-[44px]"
+                      className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                        isLight
+                          ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20'
+                          : 'bg-[#161F33] border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'
+                      }`}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-zinc-300 mb-1">
+                  <label className={`block font-bold mb-1 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                     Account Password
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-zinc-500 absolute left-3 top-3.5 pointer-events-none" />
+                    <Lock className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                     <input
                       type="password"
                       required
@@ -409,7 +447,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-zinc-900/90 border border-zinc-800 rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] font-medium min-h-[44px]"
+                      className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                        isLight
+                          ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20'
+                          : 'bg-[#161F33] border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'
+                      }`}
                     />
                   </div>
                 </div>
@@ -417,14 +459,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-[#FF6B00] hover:bg-[#E05E00] disabled:bg-[#FF6B00]/50 text-white flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B00]/25 transition cursor-pointer active:scale-98 min-h-[46px]"
+                  className="btn-primary w-full py-3 px-4 text-sm font-bold gap-2 min-h-[46px]"
                 >
                   {isLoading ? (
-                    <span>Verifying credentials...</span>
+                    <span className="text-white">Verifying credentials...</span>
                   ) : (
                     <>
-                      <span>{mode === 'register' ? 'Register Student Profile' : 'Sign In with Email'}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span className="text-white">{mode === 'register' ? 'Register Student Profile' : 'Sign In with Email'}</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
                     </>
                   )}
                 </button>
@@ -434,8 +476,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
           {/* Divider */}
           <div className="relative flex items-center justify-center pt-1">
-            <div className="border-t border-zinc-800 w-full" />
-            <span className="bg-[#0d0f17] px-3 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider absolute">
+            <div className={`border-t w-full ${isLight ? 'border-slate-200' : 'border-slate-800'}`} />
+            <span
+              className={`px-3 text-[10px] font-bold uppercase tracking-wider absolute ${
+                isLight ? 'bg-white text-slate-500' : 'bg-[#111827] text-slate-400'
+              }`}
+            >
               or Google identity
             </span>
           </div>
@@ -446,11 +492,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               type="button"
               onClick={handleGoogleClick}
               disabled={isGoogleLoading || isLoading}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2.5 border border-zinc-700/80 bg-[#141724] hover:bg-[#1a1e30] text-white transition cursor-pointer active:scale-98 min-h-[44px] disabled:opacity-60 shadow-sm"
+              className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2.5 border transition cursor-pointer active:scale-98 min-h-[44px] disabled:opacity-60 shadow-xs ${
+                isLight
+                  ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800'
+                  : 'bg-[#161F33] hover:bg-[#1E293B] border-slate-700 text-white'
+              }`}
             >
               {isGoogleLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-3.5 h-3.5 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                   <span>Connecting to Google...</span>
                 </div>
               ) : (
@@ -473,7 +523,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
-                  <span>Continue with Google</span>
+                  <span>Sign in with Google</span>
                 </>
               )}
             </button>
@@ -483,14 +533,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             )}
 
             {showRedirectOption && (
-              <div className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs flex items-center justify-between gap-2">
-                <span className="text-[11px]">Popup blocked?</span>
+              <div
+                className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                  isLight
+                    ? 'bg-amber-50 border-amber-300 text-amber-900'
+                    : 'bg-amber-950/60 border-amber-800 text-amber-200'
+                }`}
+              >
+                <span className="text-[11px] font-medium">Popup blocked? Use browser redirect.</span>
                 <button
                   type="button"
                   onClick={handleGoogleRedirectFlow}
-                  className="px-2.5 py-1 rounded bg-[#FF6B00] text-white text-[11px] font-bold hover:bg-[#E05E00] cursor-pointer"
+                  className="btn-secondary !text-xs !py-1 !px-2.5 font-bold"
                 >
-                  Redirect Sign-In
+                  Redirect
                 </button>
               </div>
             )}

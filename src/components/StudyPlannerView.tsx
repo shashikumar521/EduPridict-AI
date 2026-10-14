@@ -530,56 +530,56 @@ export const StudyPlannerView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 transition-colors">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              <span>AI Exam Scheduler & Personalized Study Planner</span>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span>AI Exam Scheduler &amp; Personalized Study Planner</span>
             </span>
-            <span className="text-xs text-slate-400 font-medium">Algorithmic & Gemini Assisted</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Algorithmic &amp; Gemini Assisted</span>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 mt-1 tracking-tight">
-            AI Exam Scheduler & Study Planner
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">
+            AI Exam Scheduler &amp; Study Planner
           </h2>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed font-medium">
             Generate an intelligent, day-wise study timetable calibrated to your exact exam dates, topic difficulty, confidence ratings, and daily study hour budget.
           </p>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 shrink-0">
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
           <button
             onClick={() => setActiveTab('schedule')}
             className={`px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'schedule'
-                ? 'bg-white text-indigo-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#111827] text-purple-700 dark:text-purple-300 shadow-xs border border-slate-200 dark:border-slate-700'
+                : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Calendar className="w-4 h-4" />
+            <Calendar className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span>Study Schedule</span>
           </button>
           <button
             onClick={() => setActiveTab('builder')}
             className={`px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'builder'
-                ? 'bg-white text-indigo-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#111827] text-purple-700 dark:text-purple-300 shadow-xs border border-slate-200 dark:border-slate-700'
+                : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Edit3 className="w-4 h-4" />
-            <span>Edit Syllabus & Exams</span>
+            <Edit3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <span>Edit Syllabus &amp; Exams</span>
           </button>
           <button
             onClick={() => setActiveTab('habits')}
             className={`px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'habits'
-                ? 'bg-white text-indigo-700 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-[#111827] text-purple-700 dark:text-purple-300 shadow-xs border border-slate-200 dark:border-slate-700'
+                : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <Clock className="w-4 h-4" />
+            <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span>Focus Timer</span>
           </button>
         </div>

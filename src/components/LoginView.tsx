@@ -66,7 +66,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   // Initialize and render Google Identity Services with active retry
   useEffect(() => {
     let attempts = 0;
-    const maxAttempts = 15; // check for up to 4.5 seconds
+    const maxAttempts = 15;
 
     const setupGsi = () => {
       attempts++;
@@ -98,154 +98,139 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 setShowConfigGuide(true);
               }
             },
-            auto_select: false,
             cancel_on_tap_outside: true
           });
 
           if (googleButtonRef.current) {
-            googleButtonRef.current.innerHTML = '';
-            const calcWidth = typeof window !== 'undefined'
-              ? Math.min(360, Math.max(260, window.innerWidth - 64))
-              : 300;
-
             window.google.accounts.id.renderButton(googleButtonRef.current, {
-              type: 'standard',
-              theme: isLight ? 'outline' : 'filled_black',
+              theme: isLight ? 'outline' : 'filled_blue',
               size: 'large',
-              text: 'continue_with',
+              type: 'standard',
               shape: 'pill',
+              text: 'signin_with',
               logo_alignment: 'left',
-              width: calcWidth
+              width: 320
             });
           }
-          return true;
-        } catch (e: any) {
-          console.error('Failed to initialize Google Identity Services:', e);
-          return false;
+        } catch (e) {
+          console.warn('Google GSI render error:', e);
         }
+      } else if (attempts < maxAttempts) {
+        setTimeout(setupGsi, 300);
       }
-      return false;
     };
 
-    const isReady = setupGsi();
-    if (!isReady && googleClientId) {
-      const interval = setInterval(() => {
-        if (setupGsi() || attempts >= maxAttempts) {
-          clearInterval(interval);
-        }
-      }, 300);
-      return () => clearInterval(interval);
-    }
-  }, [googleClientId, isGoogleConfigured, isLight, loginGoogle, onSuccess, activeOrigin]);
+    setupGsi();
+  }, [googleClientId, isLight, loginGoogle, onSuccess, activeOrigin]);
 
-  // Primary interactive Google Sign-In handler (OAuth 2.0 Popup & Token Client)
+  // Check URL hash for OAuth redirect token response
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (hash && (hash.includes('access_token=') || hash.includes('id_token='))) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = params.get('access_token');
+      const idToken = params.get('id_token');
+
+      if (accessToken || idToken) {
+        setIsGoogleLoading(true);
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+        const verifyToken = async () => {
+          try {
+            if (idToken) {
+              const res = await loginGoogle(idToken);
+              onSuccess(res.isNewUser);
+            } else if (accessToken) {
+              const res = await loginGoogleAccessToken(accessToken);
+              onSuccess(res.isNewUser);
+            }
+          } catch (err: any) {
+            setErrorMessage(err.message || 'Failed to authenticate via Google redirect flow.');
+          } finally {
+            setIsGoogleLoading(false);
+          }
+        };
+
+        verifyToken();
+      }
+    }
+  }, [loginGoogle, loginGoogleAccessToken, onSuccess]);
+
+  // Google Sign-In button click handler
   const handleGoogleClick = () => {
-    if (isGoogleLoading) return;
     setErrorMessage(null);
 
     if (!googleClientId) {
-      setErrorMessage('Google Client ID is not configured. Please set VITE_GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID.');
+      setErrorMessage(
+        'Google Client ID is not configured in .env. Please set VITE_GOOGLE_CLIENT_ID or sign in with your phone or email below.'
+      );
       setShowConfigGuide(true);
       return;
     }
 
-    // Try Google OAuth2 token client first for clean popup behavior
-    if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
-      setIsGoogleLoading(true);
+    if (window.google?.accounts?.oauth2) {
       try {
+        setIsGoogleLoading(true);
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: googleClientId,
           scope: 'email profile openid',
           callback: async (tokenResponse: any) => {
             if (tokenResponse?.error) {
               setIsGoogleLoading(false);
-              if (tokenResponse.error === 'popup_closed_by_user') {
-                setErrorMessage('Google sign-in was cancelled.');
-              } else if (tokenResponse.error === 'access_denied') {
-                setErrorMessage('Permission to access Google account was denied.');
-              } else if (tokenResponse.error === 'origin_mismatch') {
-                setErrorMessage(
-                  `Origin mismatch: "${activeOrigin}" must be added to Authorized JavaScript Origins in Google Cloud Console.`
-                );
-                setShowConfigGuide(true);
-              } else {
-                setErrorMessage(`Google sign-in failed: ${tokenResponse.error_description || tokenResponse.error}`);
-              }
+              setErrorMessage(`Google authentication error: ${tokenResponse.error}`);
+              setShowRedirectOption(true);
               return;
             }
-
             if (tokenResponse?.access_token) {
               try {
                 const res = await loginGoogleAccessToken(tokenResponse.access_token);
                 onSuccess(res.isNewUser);
               } catch (err: any) {
-                setErrorMessage(err.message || 'Server failed to verify Google credentials.');
+                setErrorMessage(err.message || 'Google token validation failed on the backend.');
               } finally {
                 setIsGoogleLoading(false);
               }
-            } else {
-              setIsGoogleLoading(false);
-              setErrorMessage('No access token received from Google.');
             }
           },
-          error_callback: (nonOAuthError: any) => {
-            console.error('Google token client error:', nonOAuthError);
+          error_callback: (err: any) => {
             setIsGoogleLoading(false);
-            if (nonOAuthError?.type === 'popup_blocked') {
-              setErrorMessage('Google Sign-In popup was blocked by your browser. You can use direct redirect login below.');
-              setShowRedirectOption(true);
-            } else if (nonOAuthError?.type === 'popup_closed') {
-              setErrorMessage('Google sign-in popup was closed.');
-            } else {
-              setErrorMessage(
-                `Google authentication error: ${nonOAuthError?.message || 'SDK failed'}. Ensure ${activeOrigin} is authorized in Google Cloud.`
-              );
-              setShowConfigGuide(true);
-            }
+            console.warn('Token client error:', err);
+            setShowRedirectOption(true);
           }
         });
 
         tokenClient.requestAccessToken({ prompt: 'select_account' });
         return;
-      } catch (err: any) {
-        console.error('Failed to launch Google Token Client:', err);
-        setIsGoogleLoading(false);
+      } catch (err) {
+        console.warn('OAuth2 tokenClient failed, attempting prompt fallback:', err);
       }
     }
 
-    // If OAuth2 SDK is not ready or failed, prompt standard ID prompt or offer redirect
-    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+    if (window.google?.accounts?.id && isGsiReady) {
       try {
         window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed()) {
-            console.warn('Google One Tap not displayed:', notification.getNotDisplayedReason());
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             setShowRedirectOption(true);
           }
-          if (notification.isSkippedMoment()) {
-            console.warn('Google One Tap skipped:', notification.getSkippedReason());
-          }
         });
-      } catch (e) {
-        setShowRedirectOption(true);
+        return;
+      } catch (promptErr) {
+        console.warn('GSI prompt failed:', promptErr);
       }
-    } else {
-      setShowRedirectOption(true);
     }
+
+    setShowRedirectOption(true);
   };
 
-  // Direct OAuth 2.0 full-page redirect flow for browsers blocking popups or strict iframes
   const handleGoogleRedirectFlow = () => {
-    if (!googleClientId) {
-      setErrorMessage('Google Client ID is missing.');
-      return;
-    }
+    if (!googleClientId) return;
     const redirectUri = activeOrigin || window.location.origin;
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
       googleClientId
     )}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(
       'email profile openid'
     )}&prompt=select_account`;
-
     window.location.href = authUrl;
   };
 
@@ -279,16 +264,16 @@ export const LoginView: React.FC<LoginViewProps> = ({
     <div
       className={`min-h-[100dvh] w-full flex flex-col justify-between antialiased overflow-x-hidden transition-colors ${
         isLight
-          ? 'bg-[#F7F9FC] text-[#11182E]'
-          : 'bg-[#090a0f] text-zinc-100'
+          ? 'bg-[#F8FAFC] text-slate-900'
+          : 'bg-[#0B0F19] text-slate-100'
       }`}
     >
       {/* Top Navigation Bar */}
       <header
         className={`px-4 sm:px-8 py-3.5 sm:py-4 flex items-center justify-between border-b backdrop-blur-md ${
           isLight
-            ? 'bg-white/95 border-[#E9E5F2]'
-            : 'bg-[#090a0f]/90 border-zinc-800/80'
+            ? 'bg-white/95 border-slate-200'
+            : 'bg-[#111827]/90 border-slate-800'
         }`}
       >
         <div className="flex items-center gap-3">
@@ -296,11 +281,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
             onClick={() => onNavigate('home')}
             className={`inline-flex items-center gap-1.5 text-xs font-semibold transition cursor-pointer min-h-[40px] ${
               isLight
-                ? 'text-[#526581] hover:text-[#11182E]'
-                : 'text-zinc-400 hover:text-white'
+                ? 'text-slate-700 hover:text-slate-900'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
-            <ArrowLeft className={`w-4 h-4 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+            <ArrowLeft className={`w-4 h-4 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
             <span>Return to Public Home</span>
           </button>
         </div>
@@ -309,7 +294,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <ThemeToggle />
           <span
             className={`text-[11px] font-bold uppercase tracking-wider hidden sm:inline ${
-              isLight ? 'text-[#526581]' : 'text-zinc-500'
+              isLight ? 'text-slate-600' : 'text-slate-400'
             }`}
           >
             Secure Student Portal
@@ -322,44 +307,44 @@ export const LoginView: React.FC<LoginViewProps> = ({
         <div
           className={`w-full max-w-md rounded-2xl sm:rounded-3xl border shadow-2xl overflow-hidden transition-all mx-auto ${
             isLight
-              ? 'bg-white border-[#E9E5F2]'
-              : 'bg-[#0d0f17] border-zinc-800/90'
+              ? 'bg-white border-slate-200 shadow-slate-200/50'
+              : 'bg-[#111827] border-slate-800 shadow-black/60'
           }`}
         >
           {/* Header Banner */}
           <div
             className={`p-5 sm:p-7 border-b relative ${
               isLight
-                ? 'bg-gradient-to-b from-[#FFFFFF] to-[#F0F3F8] border-[#E9E5F2] text-[#11182E]'
-                : 'bg-[#121522] border-zinc-800/80 text-white'
+                ? 'bg-slate-50 border-slate-200 text-slate-900'
+                : 'bg-[#161F33] border-slate-800 text-white'
             }`}
           >
             <div className="flex items-center gap-3">
               <div
                 className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-white flex items-center justify-center font-extrabold shadow-lg shrink-0 ${
                   isLight
-                    ? 'bg-gradient-to-tr from-[#8000E8] to-[#633BFF] shadow-[#8000E8]/25'
-                    : 'bg-gradient-to-tr from-[#8000E8] to-[#633BFF] shadow-[#8000E8]/30'
+                    ? 'bg-gradient-to-tr from-purple-700 to-indigo-600 shadow-purple-500/25'
+                    : 'bg-gradient-to-tr from-purple-600 to-indigo-500 shadow-purple-500/30'
                 }`}
               >
-                <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7" />
+                <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className={`text-lg sm:text-xl font-black tracking-tight ${isLight ? 'text-[#11182E]' : 'text-white'}`}>
+                  <h1 className={`text-lg sm:text-xl font-black tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     EduPredict AI
                   </h1>
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                       isLight
-                        ? 'bg-[#8000E8]/10 text-[#8000E8] border-[#8000E8]/20'
-                        : 'bg-[#8000E8]/25 text-purple-300 border-[#8000E8]/40'
+                        ? 'bg-purple-50 text-purple-800 border-purple-200'
+                        : 'bg-purple-950/70 text-purple-300 border-purple-800'
                     }`}
                   >
                     Student Portal
                   </span>
                 </div>
-                <p className={`text-xs mt-0.5 ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
+                <p className={`text-xs mt-0.5 font-medium ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   Secure Student Authentication & Longitudinal Profiles
                 </p>
               </div>
@@ -369,11 +354,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <div
                 className={`mt-4 p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
                   isLight
-                    ? 'bg-[#8000E8]/10 border-[#8000E8]/25 text-[#11182E]'
-                    : 'bg-purple-900/30 border-purple-500/30 text-purple-200'
+                    ? 'bg-purple-50 border-purple-200 text-purple-900'
+                    : 'bg-purple-950/60 border-purple-800 text-purple-200'
                 }`}
               >
-                <Lock className={`w-4 h-4 shrink-0 ${isLight ? 'text-[#8000E8]' : 'text-purple-400'}`} />
+                <Lock className={`w-4 h-4 shrink-0 ${isLight ? 'text-purple-700' : 'text-purple-400'}`} />
                 <span>
                   Please authenticate to access your <strong>{pendingRedirectSection}</strong> records.
                 </span>
@@ -385,8 +370,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <div className="p-5 sm:p-7 space-y-5">
             {/* Error Message */}
             {errorMessage && (
-              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-500 flex items-start gap-2.5 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 dark:bg-rose-950/60 dark:border-rose-800 dark:text-rose-300 flex items-start gap-2.5 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
                 <div className="flex-1 leading-snug">{errorMessage}</div>
               </div>
             )}
@@ -394,7 +379,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             {/* Primary Authentication Method Selector */}
             <div
               className={`grid grid-cols-2 p-1 rounded-2xl border ${
-                isLight ? 'bg-[#F0F3F8] border-[#E9E5F2]' : 'bg-zinc-900 border-zinc-800'
+                isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-slate-800'
               }`}
             >
               <button
@@ -406,14 +391,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 className={`py-2.5 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
                   authMethod === 'mobile'
                     ? isLight
-                      ? 'bg-white text-[#11182E] shadow-sm border border-[#E9E5F2]'
-                      : 'bg-[#FF6B00] text-white shadow-md shadow-[#FF6B00]/25'
+                      ? 'bg-white text-purple-900 shadow-sm border border-slate-200 font-extrabold'
+                      : 'bg-purple-700 text-white shadow-md shadow-purple-700/25 font-bold'
                     : isLight
-                    ? 'text-[#526581] hover:text-[#11182E]'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'text-slate-700 hover:text-slate-900 font-semibold'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Phone className={`w-3.5 h-3.5 ${authMethod === 'mobile' && isLight ? 'text-[#FF6B00]' : ''}`} />
+                <Phone className="w-3.5 h-3.5" />
                 <span>Mobile & OTP</span>
               </button>
 
@@ -426,11 +411,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 className={`py-2.5 px-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 ${
                   authMethod === 'email'
                     ? isLight
-                      ? 'bg-white text-[#11182E] shadow-sm border border-[#E9E5F2]'
-                      : 'bg-zinc-800 text-white shadow-sm'
+                      ? 'bg-white text-purple-900 shadow-sm border border-slate-200 font-extrabold'
+                      : 'bg-purple-700 text-white shadow-md shadow-purple-700/25 font-bold'
                     : isLight
-                    ? 'text-[#526581] hover:text-[#11182E]'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'text-slate-700 hover:text-slate-900 font-semibold'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Mail className="w-3.5 h-3.5" />
@@ -453,8 +438,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <div
                   className={`grid grid-cols-2 p-1 rounded-xl border ${
                     isLight
-                      ? 'bg-[#F0F3F8] border-[#E9E5F2]'
-                      : 'bg-zinc-900 border-zinc-800'
+                      ? 'bg-slate-100 border-slate-300'
+                      : 'bg-slate-900 border-slate-800'
                   }`}
                 >
                   <button
@@ -463,11 +448,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
                       mode === 'signin'
                         ? isLight
-                          ? 'bg-white text-[#11182E] shadow-xs'
-                          : 'bg-zinc-800 text-white shadow-xs'
+                          ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                          : 'bg-slate-800 text-white shadow-xs'
                         : isLight
-                        ? 'text-[#526581] hover:text-[#11182E]'
-                        : 'text-zinc-400 hover:text-white'
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Sign In
@@ -478,11 +463,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     className={`py-2 text-xs font-bold rounded-lg transition cursor-pointer ${
                       mode === 'register'
                         ? isLight
-                          ? 'bg-white text-[#11182E] shadow-xs'
-                          : 'bg-zinc-800 text-white shadow-xs'
+                          ? 'bg-white text-slate-900 shadow-xs border border-slate-200'
+                          : 'bg-slate-800 text-white shadow-xs'
                         : isLight
-                        ? 'text-[#526581] hover:text-[#11182E]'
-                        : 'text-zinc-400 hover:text-white'
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Create Account
@@ -493,21 +478,21 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                   {mode === 'register' && (
                     <div>
-                      <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
+                      <label className={`block font-bold mb-1 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                         Student Full Name
                       </label>
                       <div className="relative">
-                        <User className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
+                        <User className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                         <input
                           type="text"
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="e.g. Shashikumar S."
-                          className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                          className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-sm font-medium min-h-[44px] border focus:outline-none transition ${
                             isLight
-                              ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
-                              : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                              ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20'
+                              : 'bg-[#161F33] border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'
                           }`}
                         />
                       </div>
@@ -515,32 +500,32 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   )}
 
                   <div>
-                    <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
+                    <label className={`block font-bold mb-1 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                       Student Email Address
                     </label>
                     <div className="relative">
-                      <Mail className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
+                      <Mail className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                       <input
                         type="email"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="student@university.edu"
-                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-sm font-medium min-h-[44px] border focus:outline-none transition ${
                           isLight
-                            ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
-                            : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                            ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20'
+                            : 'bg-[#161F33] border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'
                         }`}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className={`block font-semibold mb-1 ${isLight ? 'text-[#11182E]' : 'text-zinc-300'}`}>
+                    <label className={`block font-bold mb-1 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                       Account Password
                     </label>
                     <div className="relative">
-                      <Lock className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`} />
+                      <Lock className={`w-4 h-4 absolute left-3 top-3.5 pointer-events-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                       <input
                         type="password"
                         required
@@ -548,14 +533,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-base sm:text-xs font-medium min-h-[44px] border focus:outline-none transition ${
+                        className={`w-full rounded-xl pl-9 pr-3.5 py-2.5 text-sm font-medium min-h-[44px] border focus:outline-none transition ${
                           isLight
-                            ? 'bg-white border-[#E9E5F2] text-[#11182E] placeholder-[#526581]/60 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
-                            : 'bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00]'
+                            ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20'
+                            : 'bg-[#161F33] border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-400 focus:ring-2 focus:ring-purple-500/30'
                         }`}
                       />
                     </div>
-                    <span className={`text-[10px] mt-1 block ${isLight ? 'text-[#526581]' : 'text-zinc-500'}`}>
+                    <span className={`text-[11px] mt-1 block font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                       {mode === 'register' ? 'Minimum 6 characters' : 'Enter your student account password'}
                     </span>
                   </div>
@@ -563,14 +548,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg transition cursor-pointer active:scale-98 min-h-[46px] bg-[#FF6B00] hover:bg-[#E05E00] shadow-[#FF6B00]/25 disabled:opacity-50"
+                    className="btn-primary w-full py-3 px-4 text-sm font-bold gap-2 min-h-[46px]"
                   >
                     {isLoading ? (
-                      <span>Authenticating...</span>
+                      <span className="text-white">Authenticating...</span>
                     ) : (
                       <>
-                        <span>{mode === 'register' ? 'Create Student Profile' : 'Sign In with Email'}</span>
-                        <ArrowRight className="w-4 h-4" />
+                        <span className="text-white">{mode === 'register' ? 'Create Student Profile' : 'Sign In with Email'}</span>
+                        <ArrowRight className="w-4 h-4 text-white" />
                       </>
                     )}
                   </button>
@@ -580,12 +565,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
             {/* Divider */}
             <div className="relative flex items-center justify-center my-3">
-              <div className={`absolute inset-0 flex items-center ${isLight ? 'border-t border-[#E9E5F2]' : 'border-t border-zinc-800'}`} />
+              <div className={`absolute inset-0 flex items-center ${isLight ? 'border-t border-slate-200' : 'border-t border-slate-800'}`} />
               <span
                 className={`relative px-3 text-[10px] uppercase font-bold tracking-wider ${
                   isLight
-                    ? 'bg-white text-[#526581]'
-                    : 'bg-[#0d0f17] text-zinc-400'
+                    ? 'bg-white text-slate-600'
+                    : 'bg-[#111827] text-slate-400'
                 }`}
               >
                 Or Continue With Google
@@ -601,13 +586,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 disabled={isGoogleLoading || isLoading}
                 className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-3 border transition cursor-pointer shadow-sm active:scale-98 min-h-[46px] disabled:opacity-60 ${
                   isLight
-                    ? 'bg-white hover:bg-slate-50 border-[#E9E5F2] text-[#11182E] shadow-slate-200/50'
-                    : 'bg-[#141724] hover:bg-[#1a1e30] border-zinc-700/80 text-white shadow-black/40'
+                    ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800 shadow-slate-200/50'
+                    : 'bg-[#161F33] hover:bg-[#1E293B] border-slate-700 text-white shadow-black/40'
                 }`}
               >
                 {isGoogleLoading ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-[#FF6B00] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                     <span>Connecting to Google...</span>
                   </div>
                 ) : (
@@ -645,17 +630,17 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <div
                   className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row items-center justify-between gap-2.5 animate-in fade-in ${
                     isLight
-                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-900'
-                      : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                      ? 'bg-amber-50 border-amber-300 text-amber-900'
+                      : 'bg-amber-950/60 border-amber-800 text-amber-200'
                   }`}
                 >
-                  <span className="text-[11px] leading-tight text-center sm:text-left">
+                  <span className="text-[11px] leading-tight text-center sm:text-left font-medium">
                     Popup blocked or restricted? Use standard browser redirect.
                   </span>
                   <button
                     type="button"
                     onClick={handleGoogleRedirectFlow}
-                    className="px-3 py-1.5 rounded-lg bg-[#FF6B00] text-white text-[11px] font-bold hover:bg-[#E05E00] transition cursor-pointer whitespace-nowrap shrink-0 shadow-xs"
+                    className="btn-secondary !text-xs !py-1 !px-3 font-bold"
                   >
                     Open Redirect Sign-In
                   </button>
@@ -666,28 +651,28 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <div
                 className={`p-3 rounded-xl border text-left text-xs space-y-1.5 ${
                   isLight
-                    ? 'bg-[#F0F3F8] border-[#E9E5F2]'
-                    : 'bg-zinc-900 border-zinc-800'
+                    ? 'bg-slate-50 border-slate-200'
+                    : 'bg-slate-900 border-slate-800'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-[11px] text-[#FF6B00]">
+                  <div className="flex items-center gap-1.5 font-bold text-[11px] text-purple-700 dark:text-purple-400">
                     <Info className="w-3.5 h-3.5 shrink-0" />
                     <span>Google OAuth Configuration</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowConfigGuide(!showConfigGuide)}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#FF6B00] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 dark:text-purple-400 hover:underline cursor-pointer"
                   >
                     <span>{showConfigGuide ? 'Hide details' : 'Domain diagnostics'}</span>
                     <ExternalLink className="w-3 h-3" />
                   </button>
                 </div>
 
-                <div className={`text-[10px] space-y-0.5 ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
+                <div className={`text-[10px] space-y-0.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                   <p className="truncate">
-                    Current origin: <code className="text-[#FF6B00] font-mono">{activeOrigin || 'http://localhost:3000'}</code>
+                    Current origin: <code className="text-purple-700 dark:text-purple-300 font-mono">{activeOrigin || 'http://localhost:3000'}</code>
                   </p>
                   <p className="truncate">
                     Client ID: <span className="font-mono text-[9px] opacity-80">{googleClientId ? `${googleClientId.slice(0, 24)}...` : 'Not configured'}</span>
@@ -695,26 +680,26 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 </div>
 
                 {showConfigGuide && (
-                  <div className={`mt-2 pt-2 border-t text-[11px] space-y-2 ${isLight ? 'border-[#E9E5F2] text-[#11182E]' : 'border-zinc-800 text-zinc-300'}`}>
+                  <div className={`mt-2 pt-2 border-t text-[11px] space-y-2 ${isLight ? 'border-slate-200 text-slate-800' : 'border-slate-800 text-slate-300'}`}>
                     <p className="font-semibold text-[11px]">
                       Required Google Cloud Console Settings:
                     </p>
-                    <ol className={`list-decimal list-inside space-y-1 text-[10px] leading-relaxed ${isLight ? 'text-[#526581]' : 'text-zinc-400'}`}>
+                    <ol className={`list-decimal list-inside space-y-1 text-[10px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                       <li>
                         Under <strong>Authorized JavaScript origins</strong>, ensure you have:
-                        <div className="mt-1 font-mono text-[10px] bg-black/10 dark:bg-black/30 p-1.5 rounded text-[#FF6B00] break-all select-all">
+                        <div className="mt-1 font-mono text-[10px] bg-slate-200 dark:bg-slate-800 p-1.5 rounded text-purple-800 dark:text-purple-300 break-all select-all">
                           {activeOrigin || 'http://localhost:3000'}
                         </div>
                       </li>
                       <li>
                         Under <strong>Authorized redirect URIs</strong>, add:
-                        <div className="mt-1 font-mono text-[10px] bg-black/10 dark:bg-black/30 p-1.5 rounded text-[#FF6B00] break-all select-all">
+                        <div className="mt-1 font-mono text-[10px] bg-slate-200 dark:bg-slate-800 p-1.5 rounded text-purple-800 dark:text-purple-300 break-all select-all">
                           {activeOrigin || 'http://localhost:3000'}
                         </div>
                       </li>
                       <li>
                         In your environment settings, ensure:
-                        <div className="mt-1 font-mono text-[10px] bg-black/10 dark:bg-black/30 p-1.5 rounded text-[#FF6B00] break-all">
+                        <div className="mt-1 font-mono text-[10px] bg-slate-200 dark:bg-slate-800 p-1.5 rounded text-purple-800 dark:text-purple-300 break-all">
                           VITE_GOOGLE_CLIENT_ID={googleClientId || 'your-client-id.apps.googleusercontent.com'}
                         </div>
                       </li>
@@ -729,10 +714,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       {/* Footer */}
       <footer
-        className={`py-4 text-center text-[11px] border-t transition-colors ${
+        className={`py-4 text-center text-xs border-t transition-colors font-medium ${
           isLight
-            ? 'bg-white border-[#E9E5F2] text-[#526581]'
-            : 'bg-[#090a0f] border-zinc-800/80 text-zinc-500'
+            ? 'bg-white border-slate-200 text-slate-600'
+            : 'bg-[#111827] border-slate-800 text-slate-400'
         }`}
       >
         <p>EduPredict AI • Early Academic Warning & Machine Learning Intervention Platform</p>

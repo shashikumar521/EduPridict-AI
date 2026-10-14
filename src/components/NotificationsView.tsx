@@ -5,10 +5,8 @@ import {
   Calendar,
   CheckCircle2,
   Sparkles,
-  BookOpen,
   Trash2,
-  Check,
-  Filter
+  Check
 } from 'lucide-react';
 
 interface NotificationItem {
@@ -92,18 +90,18 @@ export const NotificationsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Banner */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
               Alert Stream
             </span>
-            <span className="text-xs text-slate-400">Timely Academic Triggers</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Timely Academic Triggers</span>
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 mt-1 tracking-tight">
-            Notifications & Academic Alerts
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">
+            Notifications &amp; Academic Alerts
           </h2>
-          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl font-medium">
             Stay informed on critical attendance shortfalls, upcoming exam deadlines, and study goal milestones.
           </p>
         </div>
@@ -113,17 +111,18 @@ export const NotificationsView: React.FC = () => {
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer"
+              className="btn-secondary text-xs px-3.5 py-2 gap-1.5"
             >
-              <Check className="w-4 h-4 text-slate-500" />
+              <Check className="w-4 h-4 text-purple-700 dark:text-purple-400" />
               <span>Mark all as read</span>
             </button>
           )}
           {notifications.length > 0 && (
             <button
               onClick={clearAll}
-              className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-slate-800 transition cursor-pointer"
               title="Clear all notifications"
+              aria-label="Clear all notifications"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -132,16 +131,16 @@ export const NotificationsView: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-1">
+      <div className="bg-white dark:bg-[#111827] rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {(['all', 'alert', 'deadline', 'milestone'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition cursor-pointer ${
                 filter === tab
-                  ? 'bg-indigo-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  ? 'bg-purple-700 dark:bg-purple-600 text-white shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               {tab === 'all' ? 'All Alerts' : tab}
@@ -149,18 +148,18 @@ export const NotificationsView: React.FC = () => {
           ))}
         </div>
 
-        <span className="text-xs font-medium text-slate-500">
-          Unread: <strong className="text-indigo-600 font-bold">{unreadCount}</strong> alerts
+        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+          Unread: <strong className="text-purple-700 dark:text-purple-400 font-bold">{unreadCount}</strong> alerts
         </span>
       </div>
 
       {/* Notification Stream */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
-            <Bell className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <h4 className="text-sm font-bold text-slate-700">No notifications in this filter</h4>
-            <p className="text-xs text-slate-400 mt-1">
+          <div className="bg-white dark:bg-[#111827] rounded-xl p-12 text-center border border-slate-200 dark:border-slate-800">
+            <Bell className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
+            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No notifications in this filter</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">
               All caught up! Alerts will populate as academic events occur.
             </p>
           </div>
@@ -171,21 +170,21 @@ export const NotificationsView: React.FC = () => {
             const isMilestone = item.type === 'milestone';
 
             const iconClass = isAlert
-              ? 'bg-rose-100 text-rose-700'
+              ? 'bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300'
               : isDeadline
-              ? 'bg-amber-100 text-amber-800'
+              ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-300'
               : isMilestone
-              ? 'bg-emerald-100 text-emerald-800'
-              : 'bg-indigo-100 text-indigo-700';
+              ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300'
+              : 'bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-300';
 
             return (
               <div
                 key={item.id}
                 onClick={() => markSingleRead(item.id)}
-                className={`bg-white rounded-xl p-4 border transition flex items-start gap-3.5 shadow-2xs cursor-pointer ${
+                className={`bg-white dark:bg-[#111827] rounded-xl p-4 border transition flex items-start gap-3.5 shadow-xs cursor-pointer ${
                   !item.read
-                    ? 'border-indigo-200 bg-indigo-50/20'
-                    : 'border-slate-200/90 hover:border-slate-300'
+                    ? 'border-purple-300 dark:border-purple-800 bg-purple-50/30 dark:bg-purple-950/20'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div
@@ -206,26 +205,26 @@ export const NotificationsView: React.FC = () => {
                   <div className="flex items-center justify-between gap-2">
                     <h4
                       className={`text-xs font-bold truncate ${
-                        !item.read ? 'text-slate-900' : 'text-slate-700'
+                        !item.read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       {item.title}
                     </h4>
-                    <span className="text-[10px] text-slate-400 shrink-0">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 font-medium">
                       {item.timestamp}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed font-medium">
                     {item.description}
                   </p>
 
                   <div className="flex items-center gap-3 mt-2">
                     {!item.read && (
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block"></span>
+                      <span className="w-2 h-2 rounded-full bg-purple-600 dark:bg-purple-400 inline-block"></span>
                     )}
                     {item.actionLabel && (
-                      <span className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800">
+                      <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 hover:underline">
                         {item.actionLabel} →
                       </span>
                     )}

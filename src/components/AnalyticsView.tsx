@@ -10,7 +10,7 @@ interface AnalyticsViewProps {
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ metrics, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl p-12 text-center text-slate-400">
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-12 text-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
         <p className="text-sm font-semibold">Loading model evaluation metrics...</p>
       </div>
     );
@@ -250,32 +250,32 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ metrics, isLoading
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 leading-snug">
-            <strong>Fairness & Ethics:</strong> Demographic parameters (age, gender, ethnicity) are strictly withheld from training tensors to prevent algorithmic discrimination.
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+            <strong className="text-slate-700 dark:text-slate-300">Fairness & Ethics:</strong> Demographic parameters (age, gender, ethnicity) are strictly withheld from training tensors to prevent algorithmic discrimination.
           </div>
         </div>
 
       </div>
 
       {/* Dataset Sources Documentation Card */}
-      <div className="bg-white rounded-xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-          <Database className="w-4 h-4 text-indigo-600" />
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <Database className="w-4 h-4 text-purple-600 dark:text-purple-400" />
           <span>Real-World Benchmark Datasets Used</span>
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           The models are evaluated against legitimate, documented educational datasets representing secondary school and higher education cohorts:
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-1">
           {datasetSources.map((ds, idx) => (
-            <div key={idx} className="p-3.5 rounded-lg bg-slate-50 border border-slate-200/80 space-y-1.5">
-              <div className="font-bold text-slate-900">{ds.name}</div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">{ds.description}</p>
-              <div className="text-[10px] text-slate-500">
-                <strong>Source:</strong> {ds.citation}
+            <div key={idx} className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-1.5">
+              <div className="font-bold text-slate-900 dark:text-slate-100">{ds.name}</div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">{ds.description}</p>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                <strong className="text-slate-700 dark:text-slate-300">Source:</strong> {ds.citation}
               </div>
-              <div className="text-[10px] text-indigo-700 font-semibold">
+              <div className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold">
                 Records: {ds.sample_count.toLocaleString()} samples • Supported Levels:{' '}
                 {ds.education_levels_covered.join(', ')}
               </div>
@@ -285,15 +285,15 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ metrics, isLoading
       </div>
 
       {/* Model Benchmark Comparison Table */}
-      <div className="bg-white rounded-xl p-5 border border-slate-200/90 shadow-xs">
-        <h3 className="text-sm font-bold text-slate-900 mb-1">Model Architecture Comparison</h3>
-        <p className="text-xs text-slate-500 mb-3">
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">Model Architecture Comparison</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
           Benchmark evaluation across candidate architectures on identical held-out test splits.
         </p>
 
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left text-xs text-slate-600 min-w-[620px]">
-            <thead className="bg-slate-50 text-[11px] uppercase font-semibold text-slate-500 border-b border-slate-200">
+          <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300 min-w-[620px]">
+            <thead className="bg-slate-50 dark:bg-slate-800/60 text-[11px] uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-3">Model Architecture</th>
                 <th className="p-3">Accuracy</th>
@@ -304,49 +304,49 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ metrics, isLoading
                 <th className="p-3">Engineering Notes</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              <tr className="bg-indigo-50/20 font-medium">
-                <td className="p-3 font-bold text-slate-900">Random Forest v2.4 (Ensemble)</td>
-                <td className="p-3 font-bold text-emerald-700">89.4%</td>
-                <td className="p-3 font-bold text-indigo-700">92.6%</td>
-                <td className="p-3">88.1%</td>
-                <td className="p-3">90.3%</td>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr className="bg-purple-50/30 dark:bg-purple-950/20 font-medium">
+                <td className="p-3 font-bold text-slate-900 dark:text-slate-100">Random Forest v2.4 (Ensemble)</td>
+                <td className="p-3 font-bold text-emerald-700 dark:text-emerald-400">89.4%</td>
+                <td className="p-3 font-bold text-purple-700 dark:text-purple-400">92.6%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">88.1%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">90.3%</td>
                 <td className="p-3">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                     Selected (Production)
                   </span>
                 </td>
-                <td className="p-3 text-slate-500 text-[11px]">
+                <td className="p-3 text-slate-500 dark:text-slate-400 text-[11px]">
                   Superior non-linear interaction modeling; lowest false negatives.
                 </td>
               </tr>
               <tr>
-                <td className="p-3 font-bold text-slate-900">Decision Tree (CART)</td>
-                <td className="p-3">83.2%</td>
-                <td className="p-3">84.1%</td>
-                <td className="p-3">82.5%</td>
-                <td className="p-3">83.1%</td>
+                <td className="p-3 font-bold text-slate-900 dark:text-slate-100">Decision Tree (CART)</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">83.2%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">84.1%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">82.5%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">83.1%</td>
                 <td className="p-3">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     Interpretable Baseline
                   </span>
                 </td>
-                <td className="p-3 text-slate-500 text-[11px]">
+                <td className="p-3 text-slate-500 dark:text-slate-400 text-[11px]">
                   Transparent hierarchical decision splits; higher variance.
                 </td>
               </tr>
               <tr>
-                <td className="p-3 font-bold text-slate-900">Logistic Regression (L2)</td>
-                <td className="p-3">81.7%</td>
-                <td className="p-3">80.5%</td>
-                <td className="p-3">81.2%</td>
-                <td className="p-3">80.8%</td>
+                <td className="p-3 font-bold text-slate-900 dark:text-slate-100">Logistic Regression (L2)</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">81.7%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">80.5%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">81.2%</td>
+                <td className="p-3 text-slate-700 dark:text-slate-300">80.8%</td>
                 <td className="p-3">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     Linear Baseline
                   </span>
                 </td>
-                <td className="p-3 text-slate-500 text-[11px]">
+                <td className="p-3 text-slate-500 dark:text-slate-400 text-[11px]">
                   Linear boundary struggles when low attendance and assignments drop together.
                 </td>
               </tr>

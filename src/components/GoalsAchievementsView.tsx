@@ -115,10 +115,10 @@ export const GoalsAchievementsView: React.FC = () => {
         <div className="shrink-0 flex items-center gap-2">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs hover:shadow transition flex items-center gap-1.5 cursor-pointer"
+            className="btn-primary text-xs px-4 py-2.5 gap-1.5"
           >
-            <Plus className="w-4 h-4" />
-            <span>Create New Goal</span>
+            <Plus className="w-4 h-4 text-white" />
+            <span className="text-white">Create New Goal</span>
           </button>
         </div>
       </div>
@@ -401,16 +401,16 @@ export const GoalsAchievementsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  className="btn-secondary text-xs px-4 py-2"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer disabled:opacity-50"
+                  className="btn-primary text-xs px-4 py-2"
                 >
-                  {isSubmitting ? 'Saving Goal...' : 'Save Goal'}
+                  <span className="text-white">{isSubmitting ? 'Saving Goal...' : 'Save Goal'}</span>
                 </button>
               </div>
             </form>

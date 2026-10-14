@@ -254,10 +254,10 @@ export const CounselorView: React.FC = () => {
             <button
               type="submit"
               disabled={!inputText.trim() || isTyping}
-              className="p-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl transition cursor-pointer shrink-0"
+              className="btn-primary !p-2.5 !rounded-xl min-h-[38px] min-w-[38px] shrink-0"
               title="Send question"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 text-white" />
             </button>
           </form>
         </div>

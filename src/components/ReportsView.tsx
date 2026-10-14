@@ -133,18 +133,18 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer"
+            className="btn-secondary text-xs px-3.5 py-2.5 gap-1.5"
           >
-            <Download className="w-4 h-4 text-slate-500" />
+            <Download className="w-4 h-4 text-purple-700 dark:text-purple-400" />
             <span>CSV Export</span>
           </button>
 
           <button
             onClick={handlePrint}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs hover:shadow transition flex items-center gap-1.5 cursor-pointer"
+            className="btn-primary text-xs px-4 py-2.5 gap-1.5"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print / Save PDF</span>
+            <Printer className="w-4 h-4 text-white" />
+            <span className="text-white">Print / Save PDF</span>
           </button>
         </div>
       </div>

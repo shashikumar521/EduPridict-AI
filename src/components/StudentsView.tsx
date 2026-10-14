@@ -144,10 +144,10 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl shadow-xs transition cursor-pointer active:scale-95"
+            className="btn-primary text-xs px-3.5 py-2 gap-1.5"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Student</span>
+            <Plus className="w-3.5 h-3.5 text-white" />
+            <span className="text-white">Add Student</span>
           </button>
         </div>
       </div>
@@ -421,10 +421,10 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
               <div className="pt-2">
                 <button
                   onClick={() => handleLoadPredictor(selectedStudent)}
-                  className="w-full py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+                  className="btn-primary w-full py-2.5 px-3 text-xs gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Load Into Predictor</span>
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                  <span className="text-white">Load Into Predictor</span>
                 </button>
               </div>
             </div>
@@ -613,16 +613,16 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3.5 py-1.5 text-xs rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="btn-secondary text-xs px-3.5 py-1.5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+                  className="btn-primary text-xs px-4 py-1.5"
                 >
-                  {isSubmitting ? 'Saving...' : 'Save to SQLite'}
+                  <span className="text-white">{isSubmitting ? 'Saving...' : 'Save to SQLite'}</span>
                 </button>
               </div>
             </form>
