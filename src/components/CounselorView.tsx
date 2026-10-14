@@ -122,6 +122,17 @@ export const CounselorView: React.FC = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
             Personalized guidance on exam strategies, motivation, study techniques, time management, and recovering from academic setbacks.
           </p>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-edupredict-chatbot'))}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#6D28D9] to-[#4F46E5] text-white text-xs font-bold hover:shadow-md transition-all cursor-pointer shadow-xs active:scale-95"
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>Open EduPredict AI Assistant</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            </button>
+          </div>
         </div>
 
         {/* Education Level selector */}

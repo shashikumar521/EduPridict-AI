@@ -41,6 +41,7 @@ import { ProfileSetupModal } from './components/ProfileSetupModal';
 import { AcademicAnalysisView } from './components/AcademicAnalysisView';
 import { ExamSchedulerView } from './components/ExamSchedulerView';
 import { LearnPracticeView } from './components/LearnPracticeView';
+import { EduPredictChatbot } from './components/EduPredictChatbot';
 import {
   fetchStudents,
   fetchPredictions,
@@ -334,6 +335,10 @@ function AppContent() {
             onComplete={handleProfileSetupComplete}
           />
         )}
+        <EduPredictChatbot
+          currentSection={currentSection}
+          onNavigate={handleNavigate}
+        />
       </>
     );
   }
@@ -357,6 +362,10 @@ function AppContent() {
             onComplete={handleProfileSetupComplete}
           />
         )}
+        <EduPredictChatbot
+          currentSection={currentSection}
+          onNavigate={handleNavigate}
+        />
       </>
     );
   }
@@ -528,6 +537,12 @@ function AppContent() {
           </div>
         </main>
       </div>
+
+      {/* Global AI Academic Assistant Chatbot */}
+      <EduPredictChatbot
+        currentSection={currentSection}
+        onNavigate={handleNavigate}
+      />
 
       {/* Global Modals */}
       <AuthModal

@@ -123,7 +123,7 @@ export async function buildStudentContext(user: User | null): Promise<{
     const recentQuizzes =
       quizAttempts.length > 0
         ? quizAttempts
-            .map((q) => `• Topic: ${q.topic_name}, Score: ${q.score_percent}% (${q.score}/${q.total_questions}) on ${q.attempt_date}`)
+            .map((q) => `• Topic: ${q.topic}, Score: ${q.percentage}% (${q.score}/${q.total_questions}) on ${q.completed_at}`)
             .join('\n')
         : 'No diagnostic practice quizzes recorded yet';
 
@@ -211,6 +211,7 @@ export async function generateChatResponse(params: {
   messages: ChatMessage[];
   user: User | null;
   enableSearch?: boolean;
+  pageContext?: string;
 }): Promise<ChatResponsePayload> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.trim().length === 0) {
@@ -219,7 +220,7 @@ export async function generateChatResponse(params: {
     );
   }
 
-  const { messages, user, enableSearch } = params;
+  const { messages, user, enableSearch, pageContext } = params;
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     throw new Error('Messages array is required and must contain at least one user message.');
   }
@@ -253,6 +254,7 @@ MISSION & CHARACTER:
    • EduPredict AI Navigation: Explain how to use the Student Dashboard, Academic Analysis view, Exam Scheduler, Learn & Practice Studio (Theory + 30-Question Quizzes), and Recommended Courses.
 3. PERSONALIZATION RULES:
    ${contextText}
+   ${pageContext ? `\n   Active Viewport: Student is currently viewing the "${pageContext}" screen in EduPredict AI. Provide relevant navigation or workflow advice if they ask about this view.` : ''}
    - When addressing an authenticated student, acknowledge their degree, enrolled subjects, weak topics, or target exams when relevant.
    - If they ask "What should I study next?" or "How am I performing in OS?", inspect the verified profile above and give exact, data-driven advice.
    - NEVER invent marks, attendance, or exam schedules not present in the profile.
@@ -339,27 +341,52 @@ MISSION & CHARACTER:
 
   // If search was not attempted or failed gracefully, run standard model generation
   if (!replyText) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: formattedContents,
-        config: {
-          systemInstruction,
-          temperature: 0.7
+    let attempts = 0;
+    while (attempts < 2 && !replyText) {
+      attempts++;
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: formattedContents,
+          config: {
+            systemInstruction,
+            temperature: 0.7
+          }
+        });
+
+        replyText = response.text || '';
+
+        // If the query was time-sensitive but search was unavailable, append verification disclaimer
+        if (shouldSearch && !searchUsed) {
+          replyText += `\n\n> ℹ️ **Notice on Time-Sensitive Information**: Live web verification is currently unavailable. Please check the official organization or university portal directly for real-time dates, circulars, and deadlines.`;
         }
-      });
+      } catch (genErr: any) {
+        const errMsg = String(genErr?.message || '');
+        const isTransient = errMsg.includes('503') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE');
 
-      replyText = response.text || '';
+        if (isTransient && attempts < 2) {
+          console.warn('Transient upstream high demand, waiting 1s before retry attempt 2...');
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+          continue;
+        }
 
-      // If the query was time-sensitive but search was unavailable, append verification disclaimer
-      if (shouldSearch && !searchUsed) {
-        replyText += `\n\n> ℹ️ **Notice on Time-Sensitive Information**: Live web verification is currently unavailable. Please check the official organization or university portal directly for real-time dates, circulars, and deadlines.`;
+        console.error('Error in Gemini generateContent:', genErr);
+        let userMessage = 'The AI model is temporarily unavailable due to high demand. Please retry in a few moments.';
+        try {
+          if (errMsg.includes('{')) {
+            const parsed = JSON.parse(errMsg.substring(errMsg.indexOf('{')));
+            if (parsed.error?.message) {
+              userMessage = parsed.error.message;
+            }
+          } else if (errMsg) {
+            userMessage = errMsg;
+          }
+        } catch {
+          // ignore parse error
+        }
+
+        throw new Error(userMessage);
       }
-    } catch (genErr: any) {
-      console.error('Error in Gemini generateContent:', genErr);
-      throw new Error(
-        `Failed to generate response from EduPredict AI Assistant: ${genErr?.message || 'Upstream service error'}`
-      );
     }
   }
 

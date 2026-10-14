@@ -2151,7 +2151,7 @@ How can I assist you today? You can ask about:
         });
       }
 
-      const { messages, enableSearch } = req.body;
+      const { messages, enableSearch, pageContext } = req.body;
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: 'Messages array is required.' });
       }
@@ -2159,7 +2159,8 @@ How can I assist you today? You can ask about:
       const responsePayload = await generateChatResponse({
         messages,
         user: user || null,
-        enableSearch: Boolean(enableSearch)
+        enableSearch: Boolean(enableSearch),
+        pageContext: typeof pageContext === 'string' ? pageContext : undefined
       });
 
       return res.json(responsePayload);

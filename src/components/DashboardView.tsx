@@ -23,6 +23,7 @@ import {
   Zap,
   GraduationCap,
   ShieldCheck,
+  Bot,
   Sliders,
   Bookmark,
   BookmarkCheck
@@ -1138,7 +1139,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* ========================================================================= */}
       {/* 7. FLOATING QUICK ACTIONS SPEED DIAL */}
       {/* ========================================================================= */}
-      <div ref={quickActionsRef} className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40">
+      <div ref={quickActionsRef} className="fixed bottom-20 right-5 sm:bottom-22 sm:right-6 z-40">
         {/* Expanded Speed-Dial Card */}
         {isQuickActionsOpen && (
           <div
@@ -1263,6 +1264,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
                 <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
               </button>
+
+              {/* Action 4: Ask EduPredict AI Assistant */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsQuickActionsOpen(false);
+                  window.dispatchEvent(new CustomEvent('open-edupredict-chatbot'));
+                }}
+                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-3 ${
+                  isLight
+                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#F3E8FF]/40 hover:border-[#7C3AED]/40'
+                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#A78BFA]/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#4F46E5] text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>AI Academic Assistant</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#6D28D9] border border-[#C4B5FD] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
+                        Gemini 3.8
+                      </span>
+                    </div>
+                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
+                      Ask exam prep, code explanations &amp; study questions
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
+              </button>
             </div>
 
             {/* Quick Status / Keyboard Hint */}
@@ -1308,7 +1341,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               isQuickActionsOpen && !isLight ? 'bg-[#0F172A] text-white' : 'bg-white text-[#6D28D9]'
             }`}
           >
-            3
+            4
           </span>
         </button>
       </div>

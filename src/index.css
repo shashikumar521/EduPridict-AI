@@ -17,6 +17,13 @@
     --color-text-muted: #475569;        /* Medium Slate Caption: 7.0:1 on white (AAA) */
     --color-text-faint: #475569;        /* Supporting Text: 7.0:1 on white (AAA) */
 
+    /* Central Heading Typography System Tokens (Light Theme) */
+    --color-heading-page: #0F172A;      /* Refined dark-slate navy (28–32px, 600) */
+    --color-heading-section: #1E293B;   /* Refined dark-slate section heading (20–24px, 600) */
+    --color-heading-card: #1E293B;      /* Refined dark-slate card heading (16–18px, 600) */
+    --color-heading-sub: #334155;       /* Refined medium dark-slate subsection (14–16px, 500-600) */
+    --color-heading-kicker: #6D28D9;    /* Refined indigo/violet category kicker (11–13px, 600) */
+
     /* Primary Brand Palette - Deep Academic Indigo & Violet */
     --color-brand-primary: #4F46E5;     /* Prestigious Indigo: 7.1:1 on white (AAA) */
     --color-brand-hover: #4338CA;       /* Deep Indigo Hover: 8.4:1 on white (AAA) */
@@ -66,10 +73,17 @@
     --color-surface-lavender: rgba(99, 102, 241, 0.14);
     --color-surface-elevated: #1D2A45;
 
-    --color-text-primary: #F8FAFC;      /* Crisp white headings */
+    --color-text-primary: #F1F5F9;      /* Refined light slate headings (non-glaring) */
     --color-text-secondary: #E2E8F0;    /* High-contrast body text */
     --color-text-muted: #CBD5E1;        /* Readable secondary text */
     --color-text-faint: #94A3B8;        /* Soft captions */
+
+    /* Central Heading Typography System Tokens (Dark Theme) */
+    --color-heading-page: #F1F5F9;      /* Refined light-slate page title (comfortable, non-glaring) */
+    --color-heading-section: #E2E8F0;   /* Refined light-slate section heading */
+    --color-heading-card: #E2E8F0;      /* Refined light-slate card heading */
+    --color-heading-sub: #CBD5E1;       /* Soft light-slate subsection heading */
+    --color-heading-kicker: #DDD6FE;    /* Soft luminous violet kicker */
 
     --color-brand-primary: #6366F1;     /* Luminous Indigo in dark mode */
     --color-brand-hover: #4F46E5;
@@ -180,8 +194,107 @@
 }
 
 /* =========================================================================
-   CENTRAL DESIGN SYSTEM REUSABLE UTILITIES
+   CENTRAL HEADING TYPOGRAPHY SYSTEM
    ========================================================================= */
+
+/* Main page headings: 28–32px, font weight 600 */
+.heading-page,
+h1.page-title {
+  font-size: 1.75rem; /* 28px */
+  line-height: 2.125rem; /* 34px */
+  font-weight: 600 !important;
+  letter-spacing: -0.02em;
+  color: var(--color-heading-page);
+}
+@media (min-width: 640px) {
+  .heading-page,
+  h1.page-title {
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem; /* 36px */
+  }
+}
+
+/* Section headings: 20–24px, font weight 500–600 */
+.heading-section,
+h2.section-title {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+  color: var(--color-heading-section);
+}
+@media (min-width: 640px) {
+  .heading-section,
+  h2.section-title {
+    font-size: 1.375rem; /* 22px */
+    line-height: 1.875rem; /* 30px */
+  }
+}
+
+/* Card headings: 16–18px, font weight 500–600 */
+.heading-card,
+h3.card-title {
+  font-size: 1.0625rem; /* 17px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  color: var(--color-heading-card);
+}
+
+/* Subsection headings: 14–16px, font weight 500–600 */
+.heading-sub,
+h4.sub-title {
+  font-size: 0.9375rem; /* 15px */
+  line-height: 1.375rem; /* 22px */
+  font-weight: 600 !important;
+  color: var(--color-heading-sub);
+}
+
+/* Category Kickers / Eyebrows: 11–13px, font weight 600 */
+.heading-kicker {
+  font-size: 0.6875rem; /* 11px */
+  line-height: 1rem;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-heading-kicker);
+}
+
+/* Body text: approx 14–16px with comfortable line spacing */
+.body-base {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+@media (min-width: 640px) {
+  .body-base {
+    font-size: 0.9375rem; /* 15px */
+  }
+}
+
+/* Supporting labels: approx 12–14px clearly readable */
+.label-supporting {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.125rem; /* 18px */
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+/* Global Heading Normalization & Weight Containment */
+/* Prevents headings from appearing excessively heavy, oversized or dominant */
+h1:is(.font-black, .font-extrabold) {
+  font-weight: 600 !important;
+}
+h2:is(.font-black, .font-extrabold) {
+  font-weight: 600 !important;
+}
+h3:is(.font-black, .font-extrabold) {
+  font-weight: 600 !important;
+}
+h4:is(.font-black, .font-extrabold) {
+  font-weight: 600 !important;
+}
 
 /* =========================================================================
    CENTRAL DESIGN SYSTEM REUSABLE UTILITIES

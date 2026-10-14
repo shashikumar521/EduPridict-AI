@@ -915,3 +915,82 @@ export async function fetchQuizAttempts(): Promise<{ status: string; attempts: a
   return res.json();
 }
 
+// -------------------------------------------------------------
+// CORE WORKFLOW 4: EDUPREDICT AI ASSISTANT (CONVERSATIONAL AI)
+// -------------------------------------------------------------
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface GroundingSource {
+  title: string;
+  url: string;
+}
+
+export interface ChatResponsePayload {
+  reply: string;
+  sources?: GroundingSource[];
+  suggestedQuestions?: string[];
+  modelUsed: string;
+  personalized: boolean;
+  searchUsed: boolean;
+}
+
+export interface ChatStatusPayload {
+  isConfigured: boolean;
+  model: string;
+  provider: string;
+  authenticated: boolean;
+  studentName?: string | null;
+}
+
+export async function fetchChatStatus(): Promise<ChatStatusPayload> {
+  try {
+    const res = await fetch(`${API_BASE}/chat/status`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      return {
+        isConfigured: false,
+        model: 'gemini-3.8-flash',
+        provider: 'Google Gemini AI',
+        authenticated: false
+      };
+    }
+    return res.json();
+  } catch {
+    return {
+      isConfigured: false,
+      model: 'gemini-3.8-flash',
+      provider: 'Google Gemini AI',
+      authenticated: false
+    };
+  }
+}
+
+export async function sendChatMessage(
+  messages: ChatMessage[],
+  enableSearch = false,
+  pageContext?: string,
+  signal?: AbortSignal
+): Promise<ChatResponsePayload> {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ messages, enableSearch, pageContext }),
+    signal
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    const err: any = new Error(errorData.error || 'Failed to communicate with EduPredict AI Assistant');
+    err.status = res.status;
+    err.missingConfig = Boolean(errorData.missingConfig);
+    err.retryAfter = errorData.retryAfter;
+    throw err;
+  }
+
+  return res.json();
+}
+

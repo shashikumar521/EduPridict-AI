@@ -9,7 +9,9 @@ import {
   Settings,
   ShieldCheck,
   ChevronDown,
-  Check
+  Check,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -235,6 +237,23 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
           </div>
+
+          {/* EduPredict AI Assistant Launch Button */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-edupredict-chatbot'))}
+            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border transition cursor-pointer active:scale-95 ${
+              isLight
+                ? 'bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#6D28D9] border-[#C4B5FD]'
+                : 'bg-[#6D28D9]/25 hover:bg-[#6D28D9]/40 text-[#DDD6FE] border-[#7C3AED]/40'
+            }`}
+            title="Ask EduPredict AI Assistant"
+            aria-label="Ask EduPredict AI Assistant"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AI Assistant</span>
+            <Sparkles className="w-3 h-3 text-amber-500" />
+          </button>
 
           {/* Theme Toggle Button (Sun / Moon) */}
           <ThemeToggle />
