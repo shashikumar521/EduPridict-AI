@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard,
-  Sparkles,
-  Sliders,
   TrendingUp,
   BookOpen,
   Calendar,
-  Compass,
-  GraduationCap,
-  ShieldCheck,
-  Bot,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -19,7 +13,9 @@ import {
   LogIn,
   Sun,
   Moon,
-  Target
+  Bot,
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -32,19 +28,17 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   studentCount?: number;
-}
-
-interface NavItem {
-  id: SectionId;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  isChatbotOpen?: boolean;
+  onToggleChatbot?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentSection,
   onNavigate,
   isOpen,
-  onClose
+  onClose,
+  isChatbotOpen,
+  onToggleChatbot
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
@@ -56,29 +50,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onNavigate('home');
   };
 
-  const navGroups: { group: string; items: NavItem[] }[] = [
-    {
-      group: 'Workspace',
-      items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }
-      ]
-    },
-    {
-      group: 'Core Workflows',
-      items: [
-        { id: 'analysis', label: 'Academic Analysis', icon: TrendingUp },
-        { id: 'scheduler', label: 'Exam Scheduler', icon: Calendar },
-        { id: 'learn', label: 'Learn & Practice', icon: BookOpen }
-      ]
-    },
-    {
-      group: 'Secondary & Tools',
-      items: [
-        { id: 'settings', label: 'Account & Settings', icon: Settings },
-        { id: 'home', label: 'Public Portal', icon: Home }
-      ]
+  const handleChatbotClick = () => {
+    if (onToggleChatbot) {
+      onToggleChatbot();
+    } else {
+      window.dispatchEvent(new CustomEvent('open-edupredict-chatbot'));
     }
-  ];
+    onClose();
+  };
 
   return (
     <>
@@ -167,68 +146,354 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Navigation Menu Items */}
+        {/* Navigation Menu Items with strictly specified order */}
         <div className="px-2.5 py-3 flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-4">
-          {navGroups.map((group) => (
-            <div key={group.group}>
-              {!isCollapsed && (
-                <p
-                  className={`px-3 text-[11px] font-extrabold uppercase tracking-wider mb-1.5 ${
-                    isLight ? 'text-[#334155]' : 'text-slate-200'
+          
+          {/* WORKSPACE */}
+          <div>
+            {!isCollapsed && (
+              <p
+                className={`px-3 text-[11px] font-extrabold uppercase tracking-wider mb-1.5 ${
+                  isLight ? 'text-[#334155]' : 'text-slate-200'
+                }`}
+              >
+                Workspace
+              </p>
+            )}
+
+            <nav className="space-y-0.5">
+              {/* 1. Dashboard */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('dashboard');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Dashboard' : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'dashboard'
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <LayoutDashboard
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'dashboard'
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
                   }`}
-                >
-                  {group.group}
-                </p>
-              )}
-              <nav className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive =
-                    currentSection === item.id ||
-                    (item.id === 'analysis' &&
-                      ['dashboard', 'predict', 'whatif', 'subjects', 'progress', 'students'].includes(currentSection)) ||
-                    (item.id === 'scheduler' && ['planner', 'readiness'].includes(currentSection)) ||
-                    (item.id === 'learn' && ['courses', 'counselor', 'roadmap'].includes(currentSection));
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        onNavigate(item.id);
-                        onClose();
-                      }}
-                      title={isCollapsed ? item.label : undefined}
-                      className={`w-full flex items-center ${
-                        isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
-                      } rounded-xl text-xs transition-all text-left cursor-pointer ${
-                        isActive
+                />
+                {!isCollapsed && <span className="truncate">Dashboard</span>}
+              </button>
+            </nav>
+          </div>
+
+          {/* CORE WORKFLOWS */}
+          <div>
+            {!isCollapsed && (
+              <p
+                className={`px-3 text-[11px] font-extrabold uppercase tracking-wider mb-1.5 ${
+                  isLight ? 'text-[#334155]' : 'text-slate-200'
+                }`}
+              >
+                Core Workflows
+              </p>
+            )}
+
+            <nav className="space-y-0.5">
+              {/* 2. Academic Analysis */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('analysis');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Academic Analysis' : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'analysis' ||
+                  ['predict', 'whatif', 'subjects', 'progress', 'students'].includes(currentSection)
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <TrendingUp
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'analysis' ||
+                    ['predict', 'whatif', 'subjects', 'progress', 'students'].includes(currentSection)
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Academic Analysis</span>}
+              </button>
+
+              {/* 3. Exam Scheduler */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('scheduler');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Exam Scheduler' : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'scheduler' ||
+                  ['planner', 'readiness', 'roadmap'].includes(currentSection)
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <Calendar
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'scheduler' ||
+                    ['planner', 'readiness', 'roadmap'].includes(currentSection)
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Exam Scheduler</span>}
+              </button>
+
+              {/* 4. Courses & Certifications — Dedicated sidebar item */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('courses');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Courses & Certifications' : undefined}
+                aria-label="Courses & Certifications"
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'courses'
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <GraduationCap
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'courses'
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Courses &amp; Certifications</span>}
+              </button>
+
+              {/* 5. Learn & Practice */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('learn');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Learn & Practice' : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'learn' ||
+                  ['counselor'].includes(currentSection)
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <BookOpen
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'learn' ||
+                    ['counselor'].includes(currentSection)
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Learn &amp; Practice</span>}
+              </button>
+
+              {/* EduPredict AI Assistant — Positioned directly below Learn & Practice */}
+              <button
+                type="button"
+                onClick={handleChatbotClick}
+                title={isCollapsed ? 'EduPredict AI Assistant' : undefined}
+                aria-label="EduPredict AI Assistant"
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'justify-between px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  isChatbotOpen
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold border border-transparent hover:border-[#DDD6FE]/60'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium border border-transparent hover:border-[#8B5CF6]/30'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="relative shrink-0 flex items-center justify-center">
+                    <Bot
+                      className={`w-4 h-4 ${
+                        isChatbotOpen
                           ? isLight
-                            ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
-                            : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                            ? 'text-[#6D28D9]'
+                            : 'text-[#DDD6FE]'
                           : isLight
-                          ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
-                          : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                          ? 'text-[#7C3AED]'
+                          : 'text-[#A78BFA]'
                       }`}
-                    >
-                      <Icon
-                        className={`w-4 h-4 shrink-0 ${
-                          isActive
-                            ? isLight
-                              ? 'text-[#6D28D9]'
-                              : 'text-[#DDD6FE]'
-                            : isLight
-                            ? 'text-[#475569]'
-                            : 'text-slate-300'
-                        }`}
-                      />
-                      {!isCollapsed && (
-                        <span className="truncate">{item.label}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-          ))}
+                    />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  {!isCollapsed && (
+                    <span className="truncate font-semibold">EduPredict AI Assistant</span>
+                  )}
+                </div>
+
+                {!isCollapsed && (
+                  <span
+                    className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 border ml-1.5 ${
+                      isChatbotOpen
+                        ? isLight
+                          ? 'bg-[#6D28D9] text-white border-[#5B21B6]'
+                          : 'bg-[#8B5CF6] text-white border-[#7C3AED]'
+                        : isLight
+                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]'
+                        : 'bg-[#6D28D9]/30 text-[#DDD6FE] border-[#8B5CF6]/30'
+                    }`}
+                  >
+                    AI
+                  </span>
+                )}
+              </button>
+            </nav>
+          </div>
+
+          {/* SECONDARY & TOOLS */}
+          <div>
+            {!isCollapsed && (
+              <p
+                className={`px-3 text-[11px] font-extrabold uppercase tracking-wider mb-1.5 ${
+                  isLight ? 'text-[#334155]' : 'text-slate-200'
+                }`}
+              >
+                Secondary &amp; Tools
+              </p>
+            )}
+
+            <nav className="space-y-0.5">
+              {/* 7. Account & Settings */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('settings');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Account & Settings' : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'settings'
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <Settings
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'settings'
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Account &amp; Settings</span>}
+              </button>
+
+              {/* 8. Public Portal */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('home');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Public Portal' : undefined}
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'home'
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <Home
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'home'
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Public Portal</span>}
+              </button>
+            </nav>
+          </div>
+
         </div>
 
         {/* Theme Mode Option in Sidebar (accessible on mobile & desktop) */}

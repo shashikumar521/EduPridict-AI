@@ -42,6 +42,7 @@ import { AcademicAnalysisView } from './components/AcademicAnalysisView';
 import { ExamSchedulerView } from './components/ExamSchedulerView';
 import { LearnPracticeView } from './components/LearnPracticeView';
 import { EduPredictChatbot } from './components/EduPredictChatbot';
+import { Footer } from './components/Footer';
 import {
   fetchStudents,
   fetchPredictions,
@@ -129,6 +130,7 @@ function AppContent() {
   const [schedulerInitialTab, setSchedulerInitialTab] = useState<'roadmap' | 'exams' | 'availability' | 'timer'>('roadmap');
   const [schedulerAutoOpenAdd, setSchedulerAutoOpenAdd] = useState<boolean>(false);
   const [learnInitialSubTab, setLearnInitialSubTab] = useState<'theory' | 'quiz'>('theory');
+  const [isChatbotOpen, setIsChatbotOpen] = useState<boolean>(false);
 
   // Navigation handler with protection checks
   const handleNavigate = useCallback(
@@ -338,6 +340,8 @@ function AppContent() {
         <EduPredictChatbot
           currentSection={currentSection}
           onNavigate={handleNavigate}
+          isOpen={isChatbotOpen}
+          onToggleOpen={setIsChatbotOpen}
         />
       </>
     );
@@ -365,6 +369,8 @@ function AppContent() {
         <EduPredictChatbot
           currentSection={currentSection}
           onNavigate={handleNavigate}
+          isOpen={isChatbotOpen}
+          onToggleOpen={setIsChatbotOpen}
         />
       </>
     );
@@ -387,6 +393,8 @@ function AppContent() {
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         studentCount={students.length}
+        isChatbotOpen={isChatbotOpen}
+        onToggleChatbot={() => setIsChatbotOpen((prev) => !prev)}
       />
 
       {/* Main View Area with Header and Content */}
@@ -403,10 +411,11 @@ function AppContent() {
         {/* Viewport: Renders ONLY the active section; ONLY this container scrolls vertically */}
         <main
           id="dashboard-main-content"
-          className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 sm:p-4 md:p-6 w-full"
+          className="flex-1 min-h-0 overflow-y-auto custom-scrollbar w-full flex flex-col justify-between"
         >
-          <div className="site-container pb-10">
-            {/* DASHBOARD: Executive Student Overview & Priority Action Hub */}
+          <div className="flex-1 p-3 sm:p-4 md:p-6 w-full">
+            <div className="site-container pb-6">
+              {/* DASHBOARD: Executive Student Overview & Priority Action Hub */}
             {currentSection === 'dashboard' && (
               <DashboardView
                 onNavigate={handleNavigate}
@@ -534,7 +543,11 @@ function AppContent() {
             )}
 
             {currentSection === 'about' && <AboutView />}
+            </div>
           </div>
+
+          {/* Footer attached at bottom of the main scrollable viewport */}
+          <Footer onNavigate={handleNavigate} />
         </main>
       </div>
 
@@ -542,6 +555,8 @@ function AppContent() {
       <EduPredictChatbot
         currentSection={currentSection}
         onNavigate={handleNavigate}
+        isOpen={isChatbotOpen}
+        onToggleOpen={setIsChatbotOpen}
       />
 
       {/* Global Modals */}

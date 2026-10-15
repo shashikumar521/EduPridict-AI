@@ -558,47 +558,7 @@ export const EduPredictChatbot: React.FC<EduPredictChatbotProps> = ({
 
   return (
     <>
-      {/* ========================================================================= */}
-      {/* 1. FLOATING CHATBOT TRIGGER BUTTON (Bottom-Right, accessible on all pages) */}
-      {/* ========================================================================= */}
-      {!isOpen && (
-        <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50">
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            aria-label="Open EduPredict AI Assistant"
-            className="group relative flex items-center gap-2.5 px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-full font-bold shadow-2xl transition-all duration-300 cursor-pointer active:scale-95 focus:outline-hidden focus:ring-4 bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#4F46E5] hover:from-[#5B21B6] hover:to-[#4338CA] text-white shadow-[#6D28D9]/40 hover:shadow-[#6D28D9]/60 focus:ring-[#7C3AED]/35 hover:-translate-y-1"
-          >
-            {/* Pulsing glow ring */}
-            <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#6366F1] opacity-40 blur-xs group-hover:opacity-75 animate-pulse transition-opacity" />
-
-            <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-white/20 backdrop-blur-xs">
-              <Bot className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
-            </div>
-
-            <div className="relative text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-bold tracking-tight text-white">
-                  EduPredict AI
-                </span>
-                <span className="hidden sm:inline-flex items-center px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider rounded bg-white/20 text-white border border-white/30">
-                  Assistant
-                </span>
-              </div>
-            </div>
-
-            {/* Sparkle icon */}
-            <Sparkles className="relative w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
-
-            {/* Unread badge if messages arrived while closed */}
-            {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white shadow-md animate-bounce">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
-      )}
+      {/* MAIN CONVERSATIONAL CHAT PANEL */}
 
       {/* ========================================================================= */}
       {/* 2. MAIN CONVERSATIONAL CHAT PANEL */}

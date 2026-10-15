@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
     subjects: 'Subject Diagnostics',
     planner: 'Exam Scheduler & Timetable',
     roadmap: 'Academic Learning Roadmap',
-    courses: 'Course Discovery & Recommendations',
+    courses: 'Courses & Certifications',
     counselor: 'AI Academic Coach',
     readiness: 'Examination Readiness Index',
     goals: 'Goals & Achievements',

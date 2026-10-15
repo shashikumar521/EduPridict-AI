@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Mail, User, GraduationCap } from 'lucide-react';
+import { Phone, Mail, Sparkles } from 'lucide-react';
 import { SectionId } from '../types';
 
 interface FooterProps {
@@ -10,40 +10,47 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const handleNav = (section: SectionId) => {
     if (onNavigate) {
       onNavigate(section);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // Smooth scroll to top on both window and dashboard container
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const dashboardMain = document.getElementById('dashboard-main-content');
+    if (dashboardMain) {
+      dashboardMain.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Column 2: EXPLORE EDUPREDICT links connected to existing routes
+  // Column 2: EXPLORE EDUPREDICT AI — verified existing sections
   const exploreLinks: { label: string; section: SectionId }[] = [
-    { label: 'Student Performance Prediction', section: 'predict' },
-    { label: 'AI Exam Planner', section: 'planner' },
-    { label: 'Subject Analysis', section: 'subjects' },
-    { label: 'Learning Roadmap', section: 'roadmap' },
-    { label: 'Academic Progress', section: 'progress' },
+    { label: 'Student Dashboard', section: 'dashboard' },
+    { label: 'Academic Analysis', section: 'analysis' },
+    { label: 'Exam Scheduler', section: 'scheduler' },
+    { label: 'Learn & Practice Studio', section: 'learn' },
+    { label: 'Recommended Courses', section: 'courses' },
+    { label: 'AI Academic Counselor', section: 'counselor' },
   ];
 
-  // Column 3: FEATURES links connected to existing features
-  const featureLinks: { label: string; section: SectionId }[] = [
-    { label: 'Performance & Risk Assessment', section: 'predict' },
-    { label: 'AI Academic Counselor', section: 'counselor' },
-    { label: 'What-If Academic Simulator', section: 'whatif' },
-    { label: 'Study Planner', section: 'planner' },
-    { label: 'Examination Readiness', section: 'readiness' },
+  // Column 3: ABOUT EDUPREDICT AI — verified existing sections & platform features
+  const aboutLinks: { label: string; section: SectionId }[] = [
+    { label: 'About the Platform', section: 'about' },
+    { label: 'Performance Predictor', section: 'predict' },
+    { label: 'What-If Scenario Simulator', section: 'whatif' },
+    { label: 'Exam Readiness Assessment', section: 'readiness' },
+    { label: 'Model Metrics & Analytics', section: 'analytics' },
   ];
 
   return (
-    <footer className="w-full bg-[#10182D] text-[#94A3B8] border-t border-[#263247] transition-colors">
-      <div className="site-container pt-10 pb-7 sm:pt-11 sm:pb-8">
-        {/* 4-column responsive grid: 1 col on mobile, 2 on tablet, 4 on desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7 lg:gap-9">
-          {/* Column 1: EduPredict AI Brand & Description */}
-          <div className="flex flex-col text-left">
-            <div
+    <footer className="w-full bg-[#0B132B] text-slate-300 border-t border-slate-800/80 transition-colors">
+      <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-10 pt-8 pb-4 sm:pt-9 sm:pb-5">
+        {/* 4-column balanced grid: 1 col on mobile, 2 on tablet, 4 on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7 lg:gap-8 items-start">
+          
+          {/* Column 1: EduPredict AI Branding & Description */}
+          <div className="flex flex-col text-left space-y-3">
+            <button
               onClick={() => handleNav('home')}
-              className="flex items-center gap-3 cursor-pointer group select-none"
+              className="flex items-center gap-2.5 cursor-pointer group select-none text-left w-fit"
             >
-              <div className="w-[42px] h-[42px] rounded-xl overflow-hidden bg-[#0B132B] flex items-center justify-center shadow-md shadow-[#8000E8]/25 ring-1 ring-white/15 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 border border-slate-700/80 flex items-center justify-center shrink-0 shadow-sm group-hover:border-indigo-400/80 transition-colors">
                 <img
                   src="/edupredict-ai-logo.png"
                   alt="EduPredict AI Logo"
@@ -51,125 +58,117 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <div className="flex flex-col justify-center text-left leading-tight">
-                <span className="text-[20px] font-bold tracking-tight text-[#F8FAFC] select-none">
-                  EduPredict <span className="text-[#8B5CF6]">AI</span>
-                </span>
-                <span className="text-[11px] font-medium text-[#94A3B8]">
-                  Academic Intelligence Platform
-                </span>
-              </div>
-            </div>
+              <span className="text-[17px] font-bold tracking-tight text-white select-none">
+                EduPredict<span className="text-[#818CF8]">AI</span>
+              </span>
+            </button>
 
-            <p className="text-[13.5px] text-[#94A3B8] leading-snug mt-3 max-w-sm">
-              EduPredict AI helps students understand academic performance, identify learning gaps, and build personalized study plans.
+            <p className="text-[12.5px] text-slate-400 leading-relaxed max-w-xs">
+              EduPredict AI helps students understand academic performance, identify skill gaps, plan their studies, discover learning resources, and explore career opportunities.
             </p>
           </div>
 
-          {/* Column 2: EXPLORE EDUPREDICT */}
+          {/* Column 2: EXPLORE EDUPREDICT AI */}
           <div className="flex flex-col text-left">
-            <h3 className="text-[12.5px] font-bold tracking-wider text-[#F8FAFC] uppercase mb-3 sm:mb-3.5">
-              EXPLORE EDUPREDICT
+            <h3 className="text-xs font-semibold tracking-wider text-slate-200 uppercase mb-3">
+              EXPLORE EDUPREDICT AI
             </h3>
             <ul className="space-y-2">
               {exploreLinks.map((link) => (
                 <li key={link.label}>
                   <button
                     onClick={() => handleNav(link.section)}
-                    className="text-[13.5px] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors duration-150 text-left cursor-pointer flex items-center group py-0.5"
+                    className="text-[12.5px] text-slate-300 hover:text-[#818CF8] transition-colors duration-150 text-left cursor-pointer block"
                   >
-                    <span className="group-hover:translate-x-1 transition-transform duration-150">
-                      {link.label}
-                    </span>
+                    {link.label}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Column 3: FEATURES */}
+          {/* Column 3: ABOUT EDUPREDICT AI */}
           <div className="flex flex-col text-left">
-            <h3 className="text-[12.5px] font-bold tracking-wider text-[#F8FAFC] uppercase mb-3 sm:mb-3.5">
-              FEATURES
+            <h3 className="text-xs font-semibold tracking-wider text-slate-200 uppercase mb-3">
+              ABOUT EDUPREDICT AI
             </h3>
             <ul className="space-y-2">
-              {featureLinks.map((link) => (
+              {aboutLinks.map((link) => (
                 <li key={link.label}>
                   <button
                     onClick={() => handleNav(link.section)}
-                    className="text-[13.5px] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors duration-150 text-left cursor-pointer flex items-center group py-0.5"
+                    className="text-[12.5px] text-slate-300 hover:text-[#818CF8] transition-colors duration-150 text-left cursor-pointer block"
                   >
-                    <span className="group-hover:translate-x-1 transition-transform duration-150">
-                      {link.label}
-                    </span>
+                    {link.label}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Column 4: CREATED BY & CONTACT */}
+          {/* Column 4: CONTACT & SUPPORT */}
           <div className="flex flex-col text-left">
-            {/* Created By Section */}
-            <div>
-              <h3 className="text-[12px] font-bold tracking-wider text-[#F8FAFC] uppercase mb-2">
-                CREATED BY
-              </h3>
-              <div className="flex items-center gap-2 text-[#F8FAFC] font-semibold text-[13px] mb-0.5">
-                <User className="w-3.5 h-3.5 text-[#8B5CF6] shrink-0" />
-                <span>Sudarsi Shashi Kumar</span>
-              </div>
-              <p className="text-[12px] text-[#94A3B8] leading-tight">
-                Academic Intelligence &amp; Student Performance Prediction
-              </p>
-            </div>
+            <h3 className="text-xs font-semibold tracking-wider text-slate-200 uppercase mb-3">
+              CONTACT &amp; SUPPORT
+            </h3>
+            <div className="space-y-2.5">
+              <a
+                href="tel:6303268680"
+                className="flex items-center gap-2.5 text-[12.5px] text-slate-300 hover:text-white transition-colors group"
+                title="Call 6303268680"
+              >
+                <div className="w-7 h-7 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 group-hover:border-[#818CF8]/60 transition-colors">
+                  <Phone className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#818CF8] transition-colors" />
+                </div>
+                <span>6303268680</span>
+              </a>
 
-            {/* Subtle Divider */}
-            <div className="h-px bg-[#263247] my-3" />
+              <a
+                href="mailto:sudarsishashikumar521@gmail.com"
+                className="flex items-center gap-2.5 text-[12.5px] text-slate-300 hover:text-white transition-colors group"
+                title="Email sudarsishashikumar521@gmail.com"
+              >
+                <div className="w-7 h-7 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 group-hover:border-[#818CF8]/60 transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#818CF8] transition-colors" />
+                </div>
+                <span className="truncate">sudarsishashikumar521@gmail.com</span>
+              </a>
 
-            {/* Contact & Support Section */}
-            <div>
-              <h4 className="text-[11.5px] font-bold tracking-wider text-[#F8FAFC] uppercase mb-2">
-                CONTACT &amp; SUPPORT
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <a
-                    href="tel:6303268680"
-                    className="flex items-center gap-2 text-[12.5px] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors group py-0.5"
-                    title="Call 6303268680"
-                  >
-                    <div className="w-5.5 h-5.5 rounded-md bg-[#16213D] border border-[#263247] flex items-center justify-center shrink-0 group-hover:border-[#8B5CF6]/50 transition-colors">
-                      <Phone className="w-3 h-3 text-[#8B5CF6]" />
-                    </div>
-                    <span className="group-hover:text-[#F8FAFC]">6303268680</span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="mailto:shashisudarsi@gmail.com"
-                    className="flex items-center gap-2 text-[12.5px] text-[#94A3B8] hover:text-[#F8FAFC] transition-colors group py-0.5"
-                    title="Email shashisudarsi@gmail.com"
-                  >
-                    <div className="w-5.5 h-5.5 rounded-md bg-[#16213D] border border-[#263247] flex items-center justify-center shrink-0 group-hover:border-[#8B5CF6]/50 transition-colors">
-                      <Mail className="w-3 h-3 text-[#8B5CF6]" />
-                    </div>
-                    <span className="group-hover:text-[#F8FAFC] break-all sm:break-normal">
-                      shashisudarsi@gmail.com
-                    </span>
-                  </a>
-                </li>
-              </ul>
+              <button
+                onClick={() => handleNav('counselor')}
+                className="flex items-center gap-2.5 text-[12.5px] text-slate-300 hover:text-white transition-colors group cursor-pointer text-left"
+                title="Open In-App Academic Support"
+              >
+                <div className="w-7 h-7 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 group-hover:border-[#818CF8]/60 transition-colors">
+                  <Sparkles className="w-3.5 h-3.5 text-[#818CF8]" />
+                </div>
+                <span>In-App Academic Support</span>
+              </button>
             </div>
           </div>
+
         </div>
 
-        {/* Bottom Copyright Bar with Divider */}
-        <div className="border-t border-[#263247] pt-5 mt-7 sm:pt-5 sm:mt-8 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-[12px] text-[#94A3B8] text-center sm:text-left">
+        {/* Bottom Copyright Bar with Subtle Divider */}
+        <div className="border-t border-slate-800/80 pt-4 mt-7 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-[11.5px] text-slate-400">
           <p>© 2026 EduPredict AI. All rights reserved.</p>
-          <p className="text-[#94A3B8]">
-            Empowering Students Through Academic Intelligence
-          </p>
+          <div className="flex items-center gap-3 text-slate-400 flex-wrap justify-center sm:justify-end">
+            <button
+              onClick={() => handleNav('about')}
+              className="hover:text-slate-200 transition-colors cursor-pointer"
+            >
+              Platform Ethics &amp; Privacy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => handleNav('about')}
+              className="hover:text-slate-200 transition-colors cursor-pointer"
+            >
+              Terms of Use
+            </button>
+            <span>•</span>
+            <span className="text-slate-400">AI Academic Engine v2.4</span>
+          </div>
         </div>
       </div>
     </footer>

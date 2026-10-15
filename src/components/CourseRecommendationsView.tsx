@@ -21,13 +21,18 @@ import {
   Tag,
   Award
 } from 'lucide-react';
-import { VERIFIED_COURSES, loadUserCoursePreferences } from '../data/courseCatalogue';
+import { VERIFIED_COURSES, loadUserCoursePreferences, getPersonalizedCourses } from '../data/courseCatalogue';
 import { EDUCATION_LEVELS } from '../data/educationLevels';
 import { EducationLevelId, VerifiedCourse, CoursePreferences, SectionId } from '../types';
 import { CoursePreferencesModal } from './CoursePreferencesModal';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { fetchSavedCourses, toggleSaveCourse } from '../services/api';
+import {
+  fetchSavedCourses,
+  toggleSaveCourse,
+  fetchAcademicProfile,
+  fetchAcademicAnalysis
+} from '../services/api';
 
 interface CourseRecommendationsViewProps {
   onNavigate?: (section: SectionId) => void;
@@ -54,6 +59,58 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
   // Preferences modal
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const [userPrefs, setUserPrefs] = useState<CoursePreferences>(loadUserCoursePreferences);
+
+  // Student academic context (for personalized recommendations)
+  const [profileData, setProfileData] = useState<any>(null);
+  const [analysisData, setAnalysisData] = useState<any>(null);
+
+  // Load genuine academic profile & weak subjects
+  useEffect(() => {
+    const loadAcademicContext = async () => {
+      try {
+        const [profRes, anaRes] = await Promise.all([
+          fetchAcademicProfile().catch(() => null),
+          fetchAcademicAnalysis().catch(() => null)
+        ]);
+        if (profRes && profRes.profile) {
+          setProfileData(profRes.profile);
+        }
+        if (anaRes && anaRes.status === 'success') {
+          setAnalysisData(anaRes);
+        }
+      } catch (err) {
+        console.warn('Could not load academic profile for courses:', err);
+      }
+    };
+    loadAcademicContext();
+  }, [user]);
+
+  const weakSubjects = useMemo(() => {
+    if (!analysisData?.subjects) return [];
+    return analysisData.subjects.filter(
+      (s: any) =>
+        s.status === 'Critical' ||
+        s.status === 'Needs Attention' ||
+        s.percentage < 60 ||
+        (s.attendance && s.attendance < 75)
+    );
+  }, [analysisData]);
+
+  const personalizedCourses = useMemo(() => {
+    return getPersonalizedCourses({
+      educationLevel: profileData?.education_level || user?.education_level || 'btech',
+      courseDegree: profileData?.course_degree || user?.stream_or_branch || 'Computer Science & Engineering',
+      weakSubjects: weakSubjects.map((s: any) => ({
+        name: s.name,
+        percentage: s.percentage,
+        difficult_topics: s.difficult_topics || s.topics_to_improve || []
+      })),
+      preferences: userPrefs,
+      limit: 3
+    });
+  }, [profileData, user, weakSubjects, userPrefs]);
+
+  const degreeLabel = profileData?.course_degree || user?.stream_or_branch || 'Computer Science & Engineering';
 
   // Saved / In-Progress courses state (sync with backend + localStorage fallback)
   const [savedCourses, setSavedCourses] = useState<Record<string, 'saved' | 'in_progress' | 'completed'>>(() => {
@@ -270,11 +327,11 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Recommended Courses &amp; Learning Discovery
+              Courses &amp; Certifications
             </h1>
 
             <p className="text-xs sm:text-sm text-[#526078] dark:text-slate-300 max-w-3xl leading-relaxed">
-              Explore officially verified open-access courses from world-class institutions including Harvard (CS50), MIT OpenCourseWare, NPTEL IITs, Khan Academy, Stanford Online, and Google Cloud. Every link is verified to open the official course homepage.
+              Explore officially verified open-access courses and industry certifications from world-class institutions including Harvard (CS50), MIT OpenCourseWare, NPTEL IITs, Khan Academy, Stanford Online, and Google Cloud. Every link is verified to open the official course homepage.
             </p>
           </div>
 
@@ -285,7 +342,7 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
               className="btn-primary text-xs sm:text-sm px-4 py-2.5 gap-2 cursor-pointer"
             >
               <Sliders className="w-4 h-4 text-white" />
-              <span>Customize Preferences</span>
+              <span>Update Preferences</span>
             </button>
           </div>
         </div>
@@ -335,6 +392,180 @@ export const CourseRecommendationsView: React.FC<CourseRecommendationsViewProps>
             </div>
             <p className="text-[11px] text-[#64748B] mt-0.5">Bookmarked for study</p>
           </div>
+        </div>
+      </div>
+
+      {/* 2. Personalized Learning Recommendations Section */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
+              <Sparkles className="w-5 h-5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#6D28D9] dark:text-[#DDD6FE]">
+                  Personalized Learning
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/25 dark:text-[#86EFAC] border border-[#86EFAC] dark:border-[#15803D]/40">
+                  {degreeLabel}
+                </span>
+              </div>
+              <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                Recommended For Your Academic Profile
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsPreferencesOpen(true)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${
+                isLight
+                  ? 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#526078]'
+                  : 'border-[#334155] bg-[#172033] hover:bg-[#243248] text-slate-300'
+              }`}
+              title="Configure target skills & duration"
+            >
+              <Sliders className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
+              <span>Update Preferences</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3 Personalized Course Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {personalizedCourses.map((course) => {
+            const status = savedCourses[course.id];
+            return (
+              <div
+                key={`personalized-${course.id}`}
+                className={`p-5 rounded-2xl border transition-all flex flex-col justify-between group ${
+                  isLight
+                    ? 'bg-white border-[#E2E8F0] hover:border-[#6D28D9]/50 shadow-xs hover:shadow-md'
+                    : 'bg-[#1E293B] border-[#334155] hover:border-[#8B5CF6]/50 shadow-xs hover:shadow-md'
+                }`}
+              >
+                <div className="space-y-3">
+                  {/* Top Header: Provider and Price */}
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#F1F5F9] text-[#1E293B] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#CBD5E1] dark:border-[#334155] flex items-center gap-1 line-clamp-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#A78BFA] shrink-0" />
+                      <span className="truncate">{course.provider}</span>
+                    </span>
+
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
+                        course.pricing === '100% Free'
+                          ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
+                          : 'bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] dark:border-[#1D4ED8]/50'
+                      }`}
+                    >
+                      {course.pricing}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-white line-clamp-2 leading-snug group-hover:text-[#6D28D9] dark:group-hover:text-[#A78BFA] transition-colors">
+                    {course.name}
+                  </h3>
+
+                  {/* Why recommended badge */}
+                  {course.matchReason && (
+                    <div className="text-[11px] font-bold text-[#5B21B6] dark:text-[#DDD6FE] bg-[#EDE9FE] dark:bg-[#6D28D9]/30 px-2.5 py-1 rounded-lg border border-[#DDD6FE] dark:border-[#8B5CF6]/50 flex items-center gap-1.5 line-clamp-1">
+                      <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                      <span className="truncate">{course.matchReason}</span>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <p className="text-xs font-medium text-[#334155] dark:text-slate-200 line-clamp-2 leading-relaxed">
+                    {course.outcome}
+                  </p>
+
+                  {/* Meta Chips: Subject, Difficulty, Duration */}
+                  <div className="flex items-center gap-2 flex-wrap text-[11px] text-[#475569] dark:text-slate-300 pt-1">
+                    <span className="bg-[#F1F5F9] dark:bg-[#172033] px-2 py-0.5 rounded font-bold text-[#1E293B] dark:text-slate-200 border border-[#CBD5E1] dark:border-[#334155]">
+                      {course.category}
+                    </span>
+                    <span>•</span>
+                    <span
+                      className={`font-bold ${
+                        course.difficulty === 'Beginner'
+                          ? 'text-[#166534] dark:text-[#86EFAC]'
+                          : course.difficulty === 'Intermediate'
+                          ? 'text-[#92400E] dark:text-[#FCD34D]'
+                          : 'text-[#5B21B6] dark:text-[#DDD6FE]'
+                      }`}
+                    >
+                      {course.difficulty}
+                    </span>
+                    {course.duration && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1 font-medium">
+                          <Clock className="w-3 h-3 text-[#475569] dark:text-slate-400" />
+                          <span>{course.duration}</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bottom Actions */}
+                <div className="mt-4 pt-3.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => cycleCourseStatus(course.id)}
+                    className={`text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                      status === 'completed'
+                        ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
+                        : status === 'in_progress'
+                        ? 'bg-[#FEF3C7] text-[#92400E] border-[#FCD34D] dark:bg-[#B45309]/30 dark:text-[#FCD34D] dark:border-[#B45309]/50'
+                        : status === 'saved'
+                        ? 'bg-[#EDE9FE] text-[#5B21B6] border-[#DDD6FE] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/50'
+                        : isLight
+                        ? 'bg-white text-[#334155] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                        : 'bg-[#172033] text-slate-200 border-[#334155] hover:bg-[#243248]'
+                    }`}
+                  >
+                    {status === 'completed' ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#166534] dark:text-[#86EFAC]" />
+                        <span>Completed</span>
+                      </>
+                    ) : status === 'in_progress' ? (
+                      <>
+                        <Clock className="w-3.5 h-3.5 text-[#92400E] dark:text-[#FCD34D]" />
+                        <span>In Progress</span>
+                      </>
+                    ) : status === 'saved' ? (
+                      <>
+                        <BookmarkCheck className="w-3.5 h-3.5 text-[#5B21B6] dark:text-[#DDD6FE]" />
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="w-3.5 h-3.5 text-[#475569] dark:text-slate-400" />
+                        <span>Bookmark</span>
+                      </>
+                    )}
+                  </button>
+
+                  <a
+                    href={course.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-xs transition-colors cursor-pointer"
+                  >
+                    <span>Visit Official Course</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-white" />
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -35,11 +35,8 @@ import {
   fetchAcademicAnalysis,
   fetchAcademicProfile,
   fetchExamsList,
-  fetchQuizAttempts,
-  toggleSaveCourse
+  fetchQuizAttempts
 } from '../services/api';
-import { getPersonalizedCourses, loadUserCoursePreferences } from '../data/courseCatalogue';
-import { CoursePreferencesModal } from './CoursePreferencesModal';
 
 interface DashboardViewProps {
   onNavigate: (section: SectionId) => void;
@@ -261,111 +258,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const handleScheduleRevision = () => {
     if (prioritizedNextStep.hasEvidence && onSelectExamForSchedule) {
       onSelectExamForSchedule(prioritizedNextStep.subject, prioritizedNextStep.topic);
-    } else {
-      onNavigate('scheduler');
-    }
-  };
-
-  // -------------------------------------------------------------
-  // Personalized Course Recommendations State
-  // -------------------------------------------------------------
-  const [coursePrefs, setCoursePrefs] = useState(() => loadUserCoursePreferences());
-  const [isCoursePrefsOpen, setIsCoursePrefsOpen] = useState(false);
-  const [dashboardSavedCourses, setDashboardSavedCourses] = useState<Record<string, string>>(() => {
-    try {
-      const raw = localStorage.getItem('edupredict_saved_courses');
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return {
-      'cs50x-intro-cs': 'saved',
-      'nptel-dsa-python': 'in_progress'
-    };
-  });
-
-  const recommendedCourses = useMemo(() => {
-    return getPersonalizedCourses({
-      educationLevel: profileData?.education_level || user?.education_level || 'btech',
-      courseDegree: profileData?.course_degree || user?.stream_or_branch || 'Computer Science & Engineering',
-      weakSubjects: weakSubjects.map((s: any) => ({
-        name: s.name,
-        percentage: s.percentage,
-        difficult_topics: s.difficult_topics || s.topics_to_improve || []
-      })),
-      preferences: coursePrefs,
-      limit: 3
-    });
-  }, [profileData, user, weakSubjects, coursePrefs]);
-
-  const handleToggleCourseSave = (courseId: string) => {
-    setDashboardSavedCourses(prev => {
-      const current = prev[courseId];
-      const next = current === 'saved' ? 'in_progress' : current === 'in_progress' ? 'completed' : current === 'completed' ? '' : 'saved';
-      const updated = { ...prev };
-      if (!next) {
-        delete updated[courseId];
-      } else {
-        updated[courseId] = next;
-      }
-      localStorage.setItem('edupredict_saved_courses', JSON.stringify(updated));
-      return updated;
-    });
-    const studentId = user?.id || 'demo-student';
-    toggleSaveCourse(studentId, courseId).catch(() => {});
-  };
-
-  // Quick Actions floating menu state
-  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
-  const quickActionsRef = useRef<HTMLDivElement>(null);
-
-  // Keyboard navigation & outside click dismissal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isQuickActionsOpen) {
-        setIsQuickActionsOpen(false);
-      }
-    };
-    const handleClickOutside = (e: MouseEvent) => {
-      if (quickActionsRef.current && !quickActionsRef.current.contains(e.target as Node)) {
-        setIsQuickActionsOpen(false);
-      }
-    };
-    if (isQuickActionsOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isQuickActionsOpen]);
-
-  const handleQuickAddExam = () => {
-    setIsQuickActionsOpen(false);
-    if (onOpenAddExam) {
-      onOpenAddExam();
-    } else if (onSelectExamForSchedule) {
-      onSelectExamForSchedule('', '');
-    } else {
-      onNavigate('scheduler');
-    }
-  };
-
-  const handleQuickPracticeQuiz = () => {
-    setIsQuickActionsOpen(false);
-    const targetTopic = prioritizedNextStep.hasEvidence ? prioritizedNextStep.topic : 'Binary Trees';
-    if (onOpenPracticeQuiz) {
-      onOpenPracticeQuiz(targetTopic);
-    } else if (onSelectTopicForLearn) {
-      onSelectTopicForLearn(targetTopic, degreeLabel);
-    } else {
-      onNavigate('learn');
-    }
-  };
-
-  const handleQuickStudyRoadmap = () => {
-    setIsQuickActionsOpen(false);
-    if (onOpenStudyRoadmap) {
-      onOpenStudyRoadmap();
     } else {
       onNavigate('scheduler');
     }
@@ -806,192 +698,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. RECOMMENDED COURSES (Personalized to profile, degree & weak subjects) */}
-      {/* ========================================================================= */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 border border-[#DDD6FE] dark:border-[#8B5CF6]/40">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#6D28D9] dark:text-[#DDD6FE]">
-                  Personalized Learning
-                </span>
-                <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-[#DCFCE7] text-[#15803D] dark:bg-[#15803D]/25 dark:text-[#86EFAC] border border-[#86EFAC] dark:border-[#15803D]/40">
-                  Verified Courses
-                </span>
-              </div>
-              <h2 className={`text-lg sm:text-xl font-bold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
-                Recommended Courses
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-            <button
-              type="button"
-              onClick={() => setIsCoursePrefsOpen(true)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${
-                isLight
-                  ? 'border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#526078]'
-                  : 'border-[#334155] bg-[#172033] hover:bg-[#243248] text-slate-300'
-              }`}
-              title="Configure target skills & duration"
-            >
-              <Sliders className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE]" />
-              <span>Update Preferences</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('courses')}
-              className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] hover:underline flex items-center gap-1.5 py-1.5 px-3 rounded-xl hover:bg-[#EDE9FE]/50 dark:hover:bg-[#6D28D9]/20 transition cursor-pointer"
-            >
-              <span>View All Courses</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* 3 Personalized Course Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recommendedCourses.map((course) => {
-            const status = dashboardSavedCourses[course.id];
-            return (
-              <div
-                key={course.id}
-                className={`p-5 rounded-2xl border transition-all flex flex-col justify-between group ${
-                  isLight
-                    ? 'bg-white border-[#E2E8F0] hover:border-[#6D28D9]/50 shadow-xs hover:shadow-md'
-                    : 'bg-[#1E293B] border-[#334155] hover:border-[#8B5CF6]/50 shadow-xs hover:shadow-md'
-                }`}
-              >
-                <div className="space-y-3">
-                  {/* Top Header: Provider and Price */}
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#F1F5F9] text-[#1E293B] dark:bg-[#172033] dark:text-[#CBD5E1] border border-[#CBD5E1] dark:border-[#334155] flex items-center gap-1 line-clamp-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#A78BFA] shrink-0" />
-                      <span className="truncate">{course.provider}</span>
-                    </span>
-
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
-                        course.pricing === '100% Free'
-                          ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
-                          : 'bg-[#DBEAFE] text-[#1E40AF] border-[#93C5FD] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] dark:border-[#1D4ED8]/50'
-                      }`}
-                    >
-                      {course.pricing}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-white line-clamp-2 leading-snug group-hover:text-[#6D28D9] dark:group-hover:text-[#A78BFA] transition-colors">
-                    {course.name}
-                  </h3>
-
-                  {/* Why recommended badge */}
-                  {course.matchReason && (
-                    <div className="text-[11px] font-bold text-[#5B21B6] dark:text-[#DDD6FE] bg-[#EDE9FE] dark:bg-[#6D28D9]/30 px-2.5 py-1 rounded-lg border border-[#DDD6FE] dark:border-[#8B5CF6]/50 flex items-center gap-1.5 line-clamp-1">
-                      <Sparkles className="w-3.5 h-3.5 shrink-0 text-[#6D28D9] dark:text-[#DDD6FE]" />
-                      <span className="truncate">{course.matchReason}</span>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  <p className="text-xs font-medium text-[#334155] dark:text-slate-200 line-clamp-2 leading-relaxed">
-                    {course.outcome}
-                  </p>
-
-                  {/* Meta Chips: Subject, Difficulty, Duration */}
-                  <div className="flex items-center gap-2 flex-wrap text-[11px] text-[#475569] dark:text-slate-300 pt-1">
-                    <span className="bg-[#F1F5F9] dark:bg-[#172033] px-2 py-0.5 rounded font-bold text-[#1E293B] dark:text-slate-200 border border-[#CBD5E1] dark:border-[#334155]">
-                      {course.category}
-                    </span>
-                    <span>•</span>
-                    <span
-                      className={`font-bold ${
-                        course.difficulty === 'Beginner'
-                          ? 'text-[#166534] dark:text-[#86EFAC]'
-                          : course.difficulty === 'Intermediate'
-                          ? 'text-[#92400E] dark:text-[#FCD34D]'
-                          : 'text-[#5B21B6] dark:text-[#DDD6FE]'
-                      }`}
-                    >
-                      {course.difficulty}
-                    </span>
-                    {course.duration && (
-                      <>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 font-medium">
-                          <Clock className="w-3 h-3 text-[#475569] dark:text-slate-400" />
-                          <span>{course.duration}</span>
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom Actions */}
-                <div className="mt-4 pt-3.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleCourseSave(course.id)}
-                    className={`text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition cursor-pointer border ${
-                      status === 'completed'
-                        ? 'bg-[#DCFCE7] text-[#166534] border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#86EFAC] dark:border-[#15803D]/50'
-                        : status === 'in_progress'
-                        ? 'bg-[#FEF3C7] text-[#92400E] border-[#FCD34D] dark:bg-[#B45309]/30 dark:text-[#FCD34D] dark:border-[#B45309]/50'
-                        : status === 'saved'
-                        ? 'bg-[#EDE9FE] text-[#5B21B6] border-[#DDD6FE] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/50'
-                        : isLight
-                        ? 'bg-white text-[#334155] border-[#CBD5E1] hover:bg-[#F8FAFC]'
-                        : 'bg-[#172033] text-slate-200 border-[#334155] hover:bg-[#243248]'
-                    }`}
-                  >
-                    {status === 'completed' ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#166534] dark:text-[#86EFAC]" />
-                        <span>Completed</span>
-                      </>
-                    ) : status === 'in_progress' ? (
-                      <>
-                        <Clock className="w-3.5 h-3.5 text-[#92400E] dark:text-[#FCD34D]" />
-                        <span>In Progress</span>
-                      </>
-                    ) : status === 'saved' ? (
-                      <>
-                        <BookmarkCheck className="w-3.5 h-3.5 text-[#5B21B6] dark:text-[#DDD6FE]" />
-                        <span>Saved</span>
-                      </>
-                    ) : (
-                      <>
-                        <Bookmark className="w-3.5 h-3.5 text-[#475569] dark:text-slate-400" />
-                        <span>Bookmark</span>
-                      </>
-                    )}
-                  </button>
-
-                  <a
-                    href={course.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-xs transition-colors cursor-pointer"
-                  >
-                    <span>Visit Official Course</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-white" />
-                  </a>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* 5. FIVE USEFUL DASHBOARD CAPABILITIES (Clean navigation hub) */}
+      {/* 4. ACADEMIC CAPABILITIES (Clean navigation hub) */}
       {/* ========================================================================= */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -1108,9 +815,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
           </div>
 
-          {/* 5. Personalized Improvement Plan */}
+          {/* 5. Courses & Certifications */}
           <div
-            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between md:col-span-2 lg:col-span-2 ${
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+              isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
+            }`}
+          >
+            <div className="space-y-2">
+              <div className="w-9 h-9 rounded-xl bg-[#EDE9FE] text-[#6D28D9] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
+                5. Courses &amp; Certifications
+              </h3>
+              <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
+                Discover officially verified courses from Harvard, MIT, and NPTEL mapped to your degree and weak subjects.
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigate('courses')}
+              className="mt-4 pt-3 border-t border-[#E8ECF3] dark:border-[#334155] text-xs font-bold text-[#6D28D9] dark:text-[#A78BFA] hover:text-[#5B21B6] dark:hover:text-[#DDD6FE] flex items-center gap-1.5 cursor-pointer hover:underline transition-colors"
+            >
+              <span>Explore Courses</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* 6. Personalized Study Roadmap */}
+          <div
+            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
           >
@@ -1119,10 +852,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <Target className="w-5 h-5" />
               </div>
               <h3 className={`text-sm font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>
-                5. Personalized Improvement Plan
+                6. Personalized Study Roadmap
               </h3>
               <p className={`text-xs font-medium leading-relaxed ${isLight ? 'text-[#334155]' : 'text-slate-200'}`}>
-                Set target score milestones, rebalance missed study sessions across remaining days, and track statutory attendance compliance.
+                Set target milestones, rebalance study workload across days, and track daily session completion.
               </p>
             </div>
             <button
@@ -1135,227 +868,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* ========================================================================= */}
-      {/* 7. FLOATING QUICK ACTIONS SPEED DIAL */}
-      {/* ========================================================================= */}
-      <div ref={quickActionsRef} className="fixed bottom-20 right-5 sm:bottom-22 sm:right-6 z-40">
-        {/* Expanded Speed-Dial Card */}
-        {isQuickActionsOpen && (
-          <div
-            role="dialog"
-            aria-label="Quick Actions Menu"
-            className={`absolute bottom-16 right-0 mb-2 w-80 sm:w-96 rounded-2xl shadow-2xl border p-4.5 origin-bottom-right animate-quick-actions-menu ${
-              isLight
-                ? 'bg-white/95 backdrop-blur-md border-[#E2E8F0] text-[#172033] shadow-slate-900/15'
-                : 'bg-[#1E293B]/95 backdrop-blur-md border-[#334155] text-white shadow-black/50'
-            }`}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E8ECF3] dark:border-[#334155]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center">
-                  <Zap className="w-4 h-4 fill-current" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold tracking-tight text-[#0F172A] dark:text-white">Quick Actions</h4>
-                  <p className="text-[11px] font-medium text-[#475569] dark:text-slate-300">Immediate access to core workflows</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsQuickActionsOpen(false)}
-                className="p-1 rounded-lg text-[#475569] hover:text-[#0F172A] dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                aria-label="Close Quick Actions"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Actions list */}
-            <div className="space-y-2">
-              {/* Action 1: Add New Exam */}
-              <button
-                type="button"
-                onClick={handleQuickAddExam}
-                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-1 ${
-                  isLight
-                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#DBEAFE]/40 hover:border-[#1E40AF]/40'
-                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#3B82F6]/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#DBEAFE] text-[#1E40AF] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <CalendarPlus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>Add New Exam</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DBEAFE] text-[#1E40AF] border border-[#93C5FD] dark:bg-[#1D4ED8]/30 dark:text-[#93C5FD]">
-                        Scheduler
-                      </span>
-                    </div>
-                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
-                      Schedule test date, syllabus chapters &amp; priority
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#1E40AF] dark:group-hover:text-[#93C5FD] group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              {/* Action 2: Start New Practice Quiz */}
-              <button
-                type="button"
-                onClick={handleQuickPracticeQuiz}
-                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-2 ${
-                  isLight
-                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#DCFCE7]/40 hover:border-[#166534]/40'
-                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#10B981]/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#DCFCE7] text-[#166534] dark:bg-[#15803D]/30 dark:text-[#6EE7B7] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <BrainCircuit className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>Start New Practice Quiz</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] dark:bg-[#15803D]/30 dark:text-[#6EE7B7]">
-                        30 Questions
-                      </span>
-                    </div>
-                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
-                      {prioritizedNextStep.hasEvidence
-                        ? `Practice ${prioritizedNextStep.topic} (${prioritizedNextStep.subject})`
-                        : 'Interactive diagnostic quiz & curriculum mastery'}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#166534] dark:group-hover:text-[#6EE7B7] group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              {/* Action 3: View Study Roadmap */}
-              <button
-                type="button"
-                onClick={handleQuickStudyRoadmap}
-                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-3 ${
-                  isLight
-                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#EDE9FE]/50 hover:border-[#6D28D9]/40'
-                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#8B5CF6]/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] text-[#5B21B6] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Layers className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>View Study Roadmap</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
-                        Daily Roadmap
-                      </span>
-                    </div>
-                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
-                      {nextExam
-                        ? `${nextExam.subject_name} (${getExamCountdown(nextExam.exam_date)}) • Daily plan & timer`
-                        : 'Day-by-day task distribution & focus sessions'}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              {/* Action 4: Ask EduPredict AI Assistant */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsQuickActionsOpen(false);
-                  window.dispatchEvent(new CustomEvent('open-edupredict-chatbot'));
-                }}
-                className={`w-full group p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer animate-quick-action-item-3 ${
-                  isLight
-                    ? 'border-[#CBD5E1] bg-[#F8FAFC] hover:bg-[#F3E8FF]/40 hover:border-[#7C3AED]/40'
-                    : 'border-[#334155] bg-[#172033] hover:bg-[#1E293B] hover:border-[#A78BFA]/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#4F46E5] text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                    <Bot className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold ${isLight ? 'text-[#0F172A]' : 'text-white'}`}>AI Academic Assistant</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#6D28D9] border border-[#C4B5FD] dark:bg-[#6D28D9]/30 dark:text-[#DDD6FE]">
-                        Gemini 3.8
-                      </span>
-                    </div>
-                    <p className={`text-[11px] font-medium mt-0.5 line-clamp-1 ${isLight ? 'text-[#334155]' : 'text-slate-300'}`}>
-                      Ask exam prep, code explanations &amp; study questions
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#475569] dark:text-slate-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#DDD6FE] group-hover:translate-x-0.5 transition-all" />
-              </button>
-            </div>
-
-            {/* Quick Status / Keyboard Hint */}
-            <div className={`mt-3 pt-2.5 border-t border-[#E8ECF3] dark:border-[#334155] flex items-center justify-between text-[11px] font-medium ${isLight ? 'text-[#475569]' : 'text-slate-300'}`}>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                <span>Active intelligence hub</span>
-              </span>
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 font-semibold">
-                ESC to close
-              </kbd>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Action Button */}
-        <button
-          type="button"
-          onClick={() => setIsQuickActionsOpen(prev => !prev)}
-          aria-expanded={isQuickActionsOpen}
-          aria-haspopup="dialog"
-          aria-label="Toggle Quick Actions Floating Menu"
-          className={`flex items-center gap-2.5 px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-full font-bold shadow-2xl transition-all duration-200 cursor-pointer active:scale-95 focus:outline-hidden focus:ring-4 ${
-            isQuickActionsOpen
-              ? isLight
-                ? 'bg-[#0F172A] text-white shadow-slate-900/30 focus:ring-[#0F172A]/25'
-                : 'bg-white text-[#0B0F19] shadow-black/50 focus:ring-white/30'
-              : 'bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-[#6D28D9]/40 hover:shadow-[#6D28D9]/60 focus:ring-[#6D28D9]/30 hover:-translate-y-0.5'
-          }`}
-        >
-          <div className={`transition-transform duration-300 ${isQuickActionsOpen ? 'rotate-90' : 'rotate-0'}`}>
-            {isQuickActionsOpen ? (
-              <X className={`w-5 h-5 ${isQuickActionsOpen && !isLight ? 'text-[#0B0F19]' : 'text-white'}`} />
-            ) : (
-              <Sparkles className="w-5 h-5 text-white" />
-            )}
-          </div>
-          <span className={`text-sm font-bold tracking-wide ${isQuickActionsOpen && !isLight ? 'text-[#0B0F19]' : 'text-white'}`}>
-            Quick Actions
-          </span>
-          <span
-            className={`inline-flex items-center justify-center text-xs font-black px-2 py-0.5 rounded-full shadow-xs ${
-              isQuickActionsOpen && !isLight ? 'bg-[#0F172A] text-white' : 'bg-white text-[#6D28D9]'
-            }`}
-          >
-            4
-          </span>
-        </button>
-      </div>
-
-      {/* Course Preferences Modal */}
-      {isCoursePrefsOpen && (
-        <CoursePreferencesModal
-          isOpen={isCoursePrefsOpen}
-          onClose={() => setIsCoursePrefsOpen(false)}
-          onSaved={(newPrefs) => {
-            setCoursePrefs(newPrefs);
-          }}
-        />
-      )}
     </div>
   );
 };
