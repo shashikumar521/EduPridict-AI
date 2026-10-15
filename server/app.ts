@@ -164,28 +164,74 @@ export function createExpressApp(): express.Application {
     app.use(express.static(publicDir));
   }
 
-  // Authentication Middleware
+  // Cookie Parsing and Session Helpers
+  function parseCookies(req: express.Request): Record<string, string> {
+    const list: Record<string, string> = {};
+    const rc = req.headers.cookie;
+    if (!rc) return list;
+    rc.split(';').forEach((cookie) => {
+      const parts = cookie.split('=');
+      const name = parts.shift()?.trim();
+      if (name) {
+        list[name] = decodeURIComponent(parts.join('='));
+      }
+    });
+    return list;
+  }
+
+  function setSessionCookie(res: express.Response, token: string) {
+    const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+    res.cookie('edupredict_token', token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+  }
+
+  // Authentication Middleware supporting Bearer tokens and HTTP session cookies
   const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    let token = '';
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim();
+    } else {
+      const cookies = parseCookies(req);
+      if (cookies.edupredict_token) {
+        token = cookies.edupredict_token.trim();
+      }
+    }
+
+    if (!token) {
       return res.status(401).json({ error: 'Authentication required. Please sign in to access your student records.' });
     }
-    const token = authHeader.substring(7).trim();
     const user = await getSessionUser(token);
     if (!user) {
       return res.status(401).json({ error: 'Invalid or expired session. Please sign in again.' });
     }
     (req as any).user = user;
+    (req as any).token = token;
     next();
   };
 
   const optionalAuthMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    let token = '';
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7).trim();
+      token = authHeader.substring(7).trim();
+    } else {
+      const cookies = parseCookies(req);
+      if (cookies.edupredict_token) {
+        token = cookies.edupredict_token.trim();
+      }
+    }
+
+    if (token) {
       const user = await getSessionUser(token);
       if (user) {
         (req as any).user = user;
+        (req as any).token = token;
       }
     }
     next();
