@@ -559,7 +559,24 @@ export const EduPredictChatbot: React.FC<EduPredictChatbotProps> = ({
 
   return (
     <>
-      {/* MAIN CONVERSATIONAL CHAT PANEL */}
+      {/* ========================================================================= */}
+      {/* 1. FLOATING LAUNCHER BUTTON WHEN CHAT IS CLOSED */}
+      {/* ========================================================================= */}
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 p-3 sm:p-3.5 rounded-full bg-gradient-to-r from-[#6D28D9] to-[#4F46E5] hover:from-[#5B21B6] hover:to-[#4338CA] text-white shadow-xl shadow-purple-600/30 hover:shadow-purple-600/50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer group"
+          title="Open AI Academic Tutor (Ask about BTech subjects, code & exam prep)"
+          aria-label="Open AI Academic Tutor"
+        >
+          <div className="relative">
+            <Bot className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-purple-900" />
+          </div>
+          <span className="hidden md:inline font-bold text-xs pr-1">Ask AI Mentor</span>
+        </button>
+      )}
 
       {/* ========================================================================= */}
       {/* 2. MAIN CONVERSATIONAL CHAT PANEL */}
@@ -571,8 +588,8 @@ export const EduPredictChatbot: React.FC<EduPredictChatbotProps> = ({
           aria-modal="false"
           className={`fixed z-50 transition-all duration-300 flex flex-col shadow-2xl rounded-2xl border overflow-hidden ${
             isExpanded
-              ? 'inset-3 sm:inset-6 md:inset-10 w-auto h-auto'
-              : 'bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-[420px] md:w-[460px] h-[calc(100dvh-5rem)] max-h-[640px]'
+              ? 'inset-2 sm:inset-6 md:inset-10 w-auto h-auto'
+              : 'inset-x-2 bottom-2 sm:inset-x-auto sm:bottom-6 sm:right-6 w-auto sm:w-[420px] md:w-[460px] h-[calc(100dvh-2rem)] sm:h-[calc(100dvh-5rem)] max-h-[640px]'
           } ${
             isLight
               ? 'bg-white border-[#CBD5E1] text-[#0F172A] shadow-slate-900/20'

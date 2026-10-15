@@ -93,13 +93,13 @@ export const TopicAICoachModal: React.FC<TopicAICoachModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in">
       <div
-        className="bg-white dark:bg-[#111827] rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transition-all"
+        className="bg-white dark:bg-[#111827] rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#161F33]">
+        <div className="p-3.5 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#161F33]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-700 text-white flex items-center justify-center shadow-sm shrink-0">
               <Sparkles className="w-5 h-5 text-white" />
@@ -124,7 +124,7 @@ export const TopicAICoachModal: React.FC<TopicAICoachModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5 custom-scrollbar text-slate-800 dark:text-slate-200">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 custom-scrollbar text-slate-800 dark:text-slate-200">
           {isLoading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-600 dark:text-slate-400">
               <Loader2 className="w-8 h-8 text-purple-600 dark:text-purple-400 animate-spin" />

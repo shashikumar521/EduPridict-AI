@@ -61,6 +61,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onClose();
   };
 
+  // Lock background body scroll when mobile drawer is open
+  React.useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   return (
     <>
       {/* Mobile Backdrop */}

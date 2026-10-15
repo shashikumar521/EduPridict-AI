@@ -1048,7 +1048,7 @@ export const ExamSchedulerView: React.FC<ExamSchedulerViewProps> = ({
 
       {/* 4. Tab Navigation Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] dark:border-[#334155] pb-3">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F8FAFC] dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F8FAFC] dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap shrink-0">
           <button
             onClick={() => setActiveTab('roadmap')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${

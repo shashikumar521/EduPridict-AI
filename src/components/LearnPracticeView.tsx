@@ -316,7 +316,7 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
 
       {/* 2. Primary Navigation Tabs: Study Workspace vs Directory vs History */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 shrink-0">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 shrink-0 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
           <button
             onClick={() => setActiveTab('study')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
@@ -379,7 +379,7 @@ export const LearnPracticeView: React.FC<LearnPracticeViewProps> = ({
         <div className="space-y-4">
           {/* Sub-tab switcher: Concept Theory vs Practice Quiz */}
           <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#334155] pb-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap py-0.5">
               <button
                 onClick={() => setStudySubTab('theory')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${

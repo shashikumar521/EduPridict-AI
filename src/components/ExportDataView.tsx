@@ -303,12 +303,12 @@ export const ExportDataView: React.FC<ExportDataViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleOpenPreview}
               disabled={!isEligibleForExport || isLoading}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs border transition cursor-pointer min-h-[42px] ${
+              className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs border transition cursor-pointer min-h-[42px] ${
                 !isEligibleForExport || isLoading
                   ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'
                   : isLight
@@ -325,7 +325,7 @@ export const ExportDataView: React.FC<ExportDataViewProps> = ({
               type="button"
               onClick={handleDownloadPdf}
               disabled={!isEligibleForExport || isGeneratingPdf || isLoading}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white shadow-md transition cursor-pointer min-h-[42px] active:scale-95 ${
+              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white shadow-md transition cursor-pointer min-h-[42px] active:scale-95 ${
                 !isEligibleForExport || isLoading
                   ? 'opacity-50 cursor-not-allowed bg-slate-400 shadow-none'
                   : 'bg-[#4F46E5] hover:bg-[#4338CA] shadow-[#4F46E5]/20'
@@ -340,7 +340,8 @@ export const ExportDataView: React.FC<ExportDataViewProps> = ({
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  <span>Download Performance Report (PDF)</span>
+                  <span className="hidden sm:inline">Download Performance Report (PDF)</span>
+                  <span className="sm:hidden">Download Performance PDF</span>
                 </>
               )}
             </button>
@@ -973,15 +974,15 @@ export const ExportDataView: React.FC<ExportDataViewProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <span className="text-xs text-slate-500">
                 Format: Vector A4 PDF with selectable text &amp; multi-page flow
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-end gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsPreviewOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer min-h-[38px]"
                 >
                   Close
                 </button>
@@ -989,10 +990,11 @@ export const ExportDataView: React.FC<ExportDataViewProps> = ({
                   type="button"
                   onClick={handleDownloadPdf}
                   disabled={isGeneratingPdf}
-                  className="btn-primary text-xs !py-2 !px-4 gap-2 cursor-pointer"
+                  className="btn-primary text-xs !py-2 !px-4 gap-2 cursor-pointer min-h-[38px]"
                 >
                   <Download className="w-4 h-4 text-white" />
-                  <span>Download Performance Report (PDF)</span>
+                  <span className="hidden sm:inline">Download Performance Report (PDF)</span>
+                  <span className="sm:hidden">Download Report (PDF)</span>
                 </button>
               </div>
             </div>

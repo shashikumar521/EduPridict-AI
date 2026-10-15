@@ -524,7 +524,7 @@ export const StudentAssessmentWorkflow: React.FC<StudentAssessmentWorkflowProps>
 
             {/* Stepper Navigation Indicator */}
             <div className="mt-6">
-              <div className="grid grid-cols-4 gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                 {[
                   { step: 1, title: '1. Student Details', desc: 'Identity & Program' },
                   { step: 2, title: '2. Study & Attendance', desc: 'Hours & Presence' },

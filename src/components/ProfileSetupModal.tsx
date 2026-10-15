@@ -442,9 +442,9 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-5 bg-black/75 backdrop-blur-sm animate-in fade-in overflow-y-auto">
       <div
-        className={`w-full max-w-4xl my-auto rounded-3xl border shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden transition-all ${
+        className={`w-full max-w-4xl my-auto rounded-2xl sm:rounded-3xl border shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden transition-all ${
           isLight
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-300/60'
             : 'bg-[#111827] border-slate-800 text-slate-100 shadow-black/90'
@@ -453,14 +453,14 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
       >
         {/* Modal Banner */}
         <div
-          className={`p-4 sm:p-5 border-b relative flex items-center justify-between shrink-0 ${
+          className={`p-3.5 sm:p-5 border-b relative flex items-center justify-between shrink-0 ${
             isLight
               ? 'bg-slate-50/90 border-slate-200'
               : 'bg-[#161F33] border-slate-800'
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-md bg-[#0B132B] flex items-center justify-center border border-teal-500/40 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl overflow-hidden shadow-md bg-[#0B132B] flex items-center justify-center border border-teal-500/40 shrink-0">
               <img
                 src="/edupredict-ai-logo.png"
                 alt="EduPredict AI"
@@ -468,16 +468,16 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
                 referrerPolicy="no-referrer"
               />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className={`text-base sm:text-lg font-extrabold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h2 className={`text-sm sm:text-lg font-extrabold tracking-tight truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Student Registration & Academic Profile
                 </h2>
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30">
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/30 shrink-0">
                   Step {currentStep} of 5
                 </span>
               </div>
-              <p className={`text-xs font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className={`text-[11px] sm:text-xs font-medium truncate ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 Enter your academic details once to unlock personalized intelligence, weak topic diagnosis, and your exam trajectory.
               </p>
             </div>
@@ -485,7 +485,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white transition cursor-pointer shrink-0"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -493,8 +493,8 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
         </div>
 
         {/* Multi-step progress bar */}
-        <div className={`px-4 sm:px-6 py-3 border-b shrink-0 ${isLight ? 'bg-slate-100/60 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
-          <div className="grid grid-cols-5 gap-2">
+        <div className={`px-2.5 sm:px-6 py-2.5 sm:py-3 border-b shrink-0 ${isLight ? 'bg-slate-100/60 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
+          <div className="grid grid-cols-5 gap-1 sm:gap-2">
             {STEPS_NAV.map((s) => {
               const isActive = s.num === currentStep;
               const isDone = s.num < currentStep;
@@ -1413,7 +1413,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
 
         {/* Modal Footer Controls */}
         <div
-          className={`p-4 sm:p-5 border-t shrink-0 flex items-center justify-between gap-3 ${
+          className={`p-3.5 sm:p-5 border-t shrink-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 ${
             isLight ? 'bg-slate-50/90 border-slate-200' : 'bg-[#161F33] border-slate-800'
           }`}
         >
@@ -1421,7 +1421,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
             <button
               type="button"
               onClick={handlePrevStep}
-              className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border font-bold text-xs transition cursor-pointer ${
+              className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border font-bold text-xs transition cursor-pointer min-h-[42px] ${
                 isLight
                   ? 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
                   : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
@@ -1434,7 +1434,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-2.5 rounded-xl border font-bold text-xs transition cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl border font-bold text-xs transition cursor-pointer min-h-[42px] text-center ${
                 isLight
                   ? 'bg-white hover:bg-slate-100 text-slate-600 border-slate-300'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'
@@ -1448,7 +1448,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
             <button
               type="button"
               onClick={handleNextStep}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition cursor-pointer min-h-[42px]"
             >
               <span>Continue to Step {currentStep + 1}</span>
               <ArrowRight className="w-4 h-4" />
@@ -1458,7 +1458,7 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
               type="button"
               onClick={handleFinalSubmit}
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs shadow-lg transition cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs shadow-lg transition cursor-pointer disabled:opacity-50 min-h-[42px]"
             >
               {isSubmitting ? (
                 <>
@@ -1468,7 +1468,8 @@ export const ProfileSetupModal: React.FC<ProfileSetupModalProps> = ({
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Confirm Profile & Launch Academic Analysis</span>
+                  <span className="hidden sm:inline">Confirm Profile &amp; Launch Academic Analysis</span>
+                  <span className="sm:hidden">Confirm &amp; Launch Analysis</span>
                 </>
               )}
             </button>

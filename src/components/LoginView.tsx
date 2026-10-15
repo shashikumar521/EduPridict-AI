@@ -104,6 +104,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           if (googleButtonRef.current) {
             googleButtonRef.current.innerHTML = '';
+            const measuredWidth = googleButtonRef.current.clientWidth || (typeof window !== 'undefined' ? window.innerWidth - 64 : 320);
+            const buttonWidth = Math.min(340, Math.max(210, Math.floor(measuredWidth)));
             window.google.accounts.id.renderButton(googleButtonRef.current, {
               theme: isLight ? 'outline' : 'filled_blue',
               size: 'large',
@@ -111,7 +113,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               shape: 'rectangular',
               text: 'signin_with',
               logo_alignment: 'left',
-              width: 340
+              width: buttonWidth
             });
           }
         } catch (e) {

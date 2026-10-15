@@ -1424,42 +1424,126 @@ async function updateUserProfile(userId, updates) {
   saveDbToFile(db);
   return await getUserById(userId);
 }
+var SESSION_SECRET = process.env.SESSION_SECRET || "edupredict_jwt_hmac_session_secret_key_2026";
 async function createSession(userId) {
   const db = await getDb();
-  const token = crypto.randomBytes(32).toString("hex");
-  const now = /* @__PURE__ */ new Date();
-  const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1e3).toISOString();
-  db.run(
-    `INSERT INTO sessions (token, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)`,
-    [token, userId, expires, now.toISOString()]
-  );
-  saveDbToFile(db);
+  const user = await getUserById(userId);
+  const now = Date.now();
+  const expiresMs = now + 30 * 24 * 60 * 60 * 1e3;
+  const randomSalt = crypto.randomBytes(16).toString("hex");
+  const payloadStr = JSON.stringify({
+    userId,
+    email: user?.email || "",
+    name: user?.name || "",
+    picture: user?.picture || "",
+    google_id: user?.google_id || "",
+    education_level: user?.education_level || "",
+    institution: user?.institution || "",
+    stream_or_branch: user?.stream_or_branch || "",
+    exp: expiresMs,
+    salt: randomSalt
+  });
+  const payloadBase64 = Buffer.from(payloadStr).toString("base64url");
+  const signature = crypto.createHmac("sha256", SESSION_SECRET).update(payloadBase64).digest("base64url");
+  const token = `eps_${payloadBase64}.${signature}`;
+  try {
+    db.run(
+      `INSERT INTO sessions (token, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)`,
+      [token, userId, new Date(expiresMs).toISOString(), new Date(now).toISOString()]
+    );
+    saveDbToFile(db);
+  } catch (err) {
+    console.warn("Session DB insert notice (non-fatal):", err);
+  }
   return token;
 }
 async function getSessionUser(token) {
-  if (!token) return null;
-  const db = await getDb();
+  if (!token || typeof token !== "string") return null;
   const now = (/* @__PURE__ */ new Date()).toISOString();
-  const res = db.exec("SELECT user_id, expires_at FROM sessions WHERE token = ?", [token]);
-  if (!res.length || !res[0].values.length) return null;
-  const userId = res[0].values[0][0];
-  const expiresAt = res[0].values[0][1];
-  if (expiresAt < now) {
-    db.run("DELETE FROM sessions WHERE token = ?", [token]);
-    saveDbToFile(db);
-    return null;
+  const nowMs = Date.now();
+  if (token.startsWith("eps_")) {
+    const raw = token.slice(4);
+    const dotIndex = raw.lastIndexOf(".");
+    if (dotIndex !== -1) {
+      const payloadBase64 = raw.slice(0, dotIndex);
+      const signature = raw.slice(dotIndex + 1);
+      const expectedSig = crypto.createHmac("sha256", SESSION_SECRET).update(payloadBase64).digest("base64url");
+      const sigBuf = Buffer.from(signature);
+      const expectedBuf = Buffer.from(expectedSig);
+      if (sigBuf.length === expectedBuf.length && crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+        try {
+          const payload = JSON.parse(Buffer.from(payloadBase64, "base64url").toString("utf8"));
+          if (payload.exp && payload.exp > nowMs && payload.userId) {
+            let user = await getUserById(payload.userId);
+            if (!user && payload.email) {
+              const db = await getDb();
+              db.run(
+                `INSERT INTO users (id, google_id, email, name, picture, education_level, institution, stream_or_branch, created_at, last_login_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO NOTHING`,
+                [
+                  payload.userId,
+                  payload.google_id || "",
+                  payload.email.toLowerCase(),
+                  payload.name || payload.email.split("@")[0],
+                  payload.picture || "",
+                  payload.education_level || "",
+                  payload.institution || "",
+                  payload.stream_or_branch || "",
+                  now,
+                  now
+                ]
+              );
+              saveDbToFile(db);
+              user = await getUserById(payload.userId);
+            }
+            if (user) {
+              try {
+                const db = await getDb();
+                db.run("UPDATE users SET last_login_at = ? WHERE id = ?", [now, user.id]);
+                saveDbToFile(db);
+              } catch {
+              }
+              return user;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to parse signed session token payload:", e);
+        }
+      }
+    }
   }
-  const user = await getUserById(userId);
-  if (user) {
-    db.run("UPDATE users SET last_login_at = ? WHERE id = ?", [now, user.id]);
-    saveDbToFile(db);
+  try {
+    const db = await getDb();
+    const res = db.exec("SELECT user_id, expires_at FROM sessions WHERE token = ?", [token]);
+    if (res.length && res[0].values.length) {
+      const userId = res[0].values[0][0];
+      const expiresAt = res[0].values[0][1];
+      if (expiresAt >= now) {
+        const user = await getUserById(userId);
+        if (user) {
+          db.run("UPDATE users SET last_login_at = ? WHERE id = ?", [now, user.id]);
+          saveDbToFile(db);
+          return user;
+        }
+      } else {
+        db.run("DELETE FROM sessions WHERE token = ?", [token]);
+        saveDbToFile(db);
+      }
+    }
+  } catch (err) {
+    console.warn("Session DB lookup notice:", err);
   }
-  return user;
+  return null;
 }
 async function deleteSession(token) {
-  const db = await getDb();
-  db.run("DELETE FROM sessions WHERE token = ?", [token]);
-  saveDbToFile(db);
+  if (!token) return;
+  try {
+    const db = await getDb();
+    db.run("DELETE FROM sessions WHERE token = ?", [token]);
+    saveDbToFile(db);
+  } catch {
+  }
 }
 async function getLatestExamStudyPlan(studentId) {
   const db = await getDb();
@@ -1741,6 +1825,44 @@ async function upsertStudentAcademicProfile(data) {
       profile.updated_at
     ]
   );
+  try {
+    const avgMarks = subjects.length > 0 ? subjects.reduce((acc, s) => acc + (s.percentage || s.marks_obtained / (s.max_marks || 100) * 100), 0) / subjects.length : 70;
+    const avgAtt = overallAttendance;
+    const avgAssign = subjects.length > 0 && subjects.some((s) => typeof s.assignment_marks === "number") ? subjects.reduce((acc, s) => acc + (s.assignment_marks || 20), 0) / subjects.length * 3.33 : 70;
+    const studyHrs = (profile.daily_study_hours_weekday * 5 + profile.daily_study_hours_weekend * 2) / 7;
+    const composite = avgAtt * 0.35 + avgAssign * 0.3 + avgMarks * 0.35;
+    const risk = composite < 60 ? "critical" : composite < 75 ? "borderline" : "good";
+    db.run(
+      `INSERT INTO students (id, name, education_level, stream_or_branch, course, attendance, study_hours, previous_marks, assignment_score, practical_score, predicted_risk, is_demo, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         name = excluded.name,
+         education_level = excluded.education_level,
+         stream_or_branch = excluded.stream_or_branch,
+         course = excluded.course,
+         attendance = excluded.attendance,
+         study_hours = excluded.study_hours,
+         previous_marks = excluded.previous_marks,
+         assignment_score = excluded.assignment_score,
+         predicted_risk = excluded.predicted_risk`,
+      [
+        profile.user_id,
+        profile.full_name,
+        profile.course_degree,
+        profile.department_branch,
+        profile.course_degree,
+        avgAtt,
+        Math.round(studyHrs),
+        Math.round(avgMarks),
+        Math.round(avgAssign),
+        75,
+        risk,
+        now
+      ]
+    );
+  } catch (syncErr) {
+    console.warn("Students table sync notice (non-fatal):", syncErr);
+  }
   saveDbToFile(db);
   return profile;
 }
@@ -4776,26 +4898,68 @@ function createExpressApp() {
   if (fs2.existsSync(publicDir)) {
     app2.use(express.static(publicDir));
   }
+  function parseCookies(req) {
+    const list = {};
+    const rc = req.headers.cookie;
+    if (!rc) return list;
+    rc.split(";").forEach((cookie) => {
+      const parts = cookie.split("=");
+      const name = parts.shift()?.trim();
+      if (name) {
+        list[name] = decodeURIComponent(parts.join("="));
+      }
+    });
+    return list;
+  }
+  function setSessionCookie(res, token) {
+    const isProd = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
+    res.cookie("edupredict_token", token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60 * 1e3
+      // 30 days
+    });
+  }
   const authMiddleware = async (req, res, next) => {
+    let token = "";
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7).trim();
+    } else {
+      const cookies = parseCookies(req);
+      if (cookies.edupredict_token) {
+        token = cookies.edupredict_token.trim();
+      }
+    }
+    if (!token) {
       return res.status(401).json({ error: "Authentication required. Please sign in to access your student records." });
     }
-    const token = authHeader.substring(7).trim();
     const user = await getSessionUser(token);
     if (!user) {
       return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
     }
     req.user = user;
+    req.token = token;
     next();
   };
   const optionalAuthMiddleware = async (req, res, next) => {
+    let token = "";
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
-      const token = authHeader.substring(7).trim();
+      token = authHeader.substring(7).trim();
+    } else {
+      const cookies = parseCookies(req);
+      if (cookies.edupredict_token) {
+        token = cookies.edupredict_token.trim();
+      }
+    }
+    if (token) {
       const user = await getSessionUser(token);
       if (user) {
         req.user = user;
+        req.token = token;
       }
     }
     next();

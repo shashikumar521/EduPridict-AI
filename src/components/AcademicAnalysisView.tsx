@@ -617,7 +617,7 @@ export const AcademicAnalysisView: React.FC<AcademicAnalysisViewProps> = ({
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F8FAFC] dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] shrink-0">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F8FAFC] dark:bg-[#172033] border border-[#E2E8F0] dark:border-[#334155] shrink-0 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap">
             {(['all', 'weak', 'moderate', 'strong'] as const).map(tab => (
               <button
                 key={tab}

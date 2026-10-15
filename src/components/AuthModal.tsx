@@ -100,6 +100,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
           if (googleButtonRef.current) {
             googleButtonRef.current.innerHTML = '';
+            const measuredWidth = googleButtonRef.current.clientWidth || (typeof window !== 'undefined' ? window.innerWidth - 80 : 280);
+            const buttonWidth = Math.min(320, Math.max(200, Math.floor(measuredWidth)));
             window.google.accounts.id.renderButton(googleButtonRef.current, {
               theme: isLight ? 'outline' : 'filled_blue',
               size: 'large',
@@ -107,7 +109,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               shape: 'pill',
               text: 'signin_with',
               logo_alignment: 'left',
-              width: 320
+              width: buttonWidth
             });
           }
         } catch (e) {

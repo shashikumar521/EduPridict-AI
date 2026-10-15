@@ -196,7 +196,7 @@ export const Header: React.FC<HeaderProps> = ({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl py-2 z-50 text-xs ${
+                  className={`absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-2xl border shadow-xl py-2 z-50 text-xs ${
                     isLight
                       ? 'bg-white border-[#E2E8F0] text-[#172033]'
                       : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC]'
@@ -296,7 +296,7 @@ export const Header: React.FC<HeaderProps> = ({
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className={`absolute right-0 mt-2 w-64 rounded-2xl border shadow-xl py-2 z-50 text-xs ${
+                    className={`absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-2xl border shadow-xl py-2 z-50 text-xs ${
                       isLight
                         ? 'bg-white border-[#E2E8F0] text-[#172033]'
                         : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC]'
