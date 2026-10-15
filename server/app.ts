@@ -72,19 +72,65 @@ const __dirname = path.dirname(__filename);
 export function createExpressApp(): express.Application {
   const app = express();
 
-  // CORS middleware to support preview origins and local development
+  // CORS middleware to support preview origins, production domains, and local development
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    const origin = req.headers.origin;
+    if (origin) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
     if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
+      return res.sendStatus(204);
     }
     next();
   });
 
   app.use(express.json());
+
+  // URL Normalization Middleware for Vercel, reverse proxies, and serverless runtimes
+  app.use((req, res, next) => {
+    // 1. Check if Vercel provided the original matched path in headers
+    const matchedPath =
+      (req.headers['x-matched-path'] as string) ||
+      (req.headers['x-vercel-matched-path'] as string) ||
+      (req.headers['x-rewrite-url'] as string);
+
+    if (matchedPath && typeof matchedPath === 'string' && matchedPath.startsWith('/api')) {
+      const queryIdx = req.url ? req.url.indexOf('?') : -1;
+      const query = queryIdx !== -1 ? req.url.slice(queryIdx) : '';
+      req.url = matchedPath + (matchedPath.includes('?') ? '' : query);
+    } else if (req.url && !req.url.startsWith('/api')) {
+      // 2. If Vercel or proxy stripped /api prefix, prepend /api for known API routes
+      const apiPrefixes = [
+        '/auth',
+        '/academic-',
+        '/exams',
+        '/learn',
+        '/courses',
+        '/predict',
+        '/what-if',
+        '/students',
+        '/predictions',
+        '/planner-',
+        '/goals',
+        '/roadmap',
+        '/notifications',
+        '/counselor',
+        '/model-metrics',
+        '/dashboard-summary',
+        '/chat',
+        '/health'
+      ];
+      if (apiPrefixes.some(prefix => req.url.startsWith(prefix))) {
+        req.url = `/api${req.url}`;
+      }
+    }
+    next();
+  });
 
   // Serve public static assets (logos, favicons, robots.txt, sitemap.xml)
   const publicDir = path.resolve(__dirname, '../public');
@@ -128,7 +174,8 @@ export function createExpressApp(): express.Application {
       trimmed.includes('your-google-client-id') ||
       trimmed.includes('your-client-id') ||
       trimmed.includes('PLACEHOLDER') ||
-      trimmed.startsWith('<')
+      trimmed.startsWith('<') ||
+      trimmed.length < 25
     ) {
       return true;
     }
@@ -139,7 +186,15 @@ export function createExpressApp(): express.Application {
   // AUTHENTICATION ROUTES (Google Identity Services & Student Accounts)
   // -------------------------------------------------------------
   app.get('/api/auth/config', (req, res) => {
-    const rawClientId = (process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
+    const clientCandidates = [
+      process.env.VITE_GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_ID
+    ]
+      .map(id => (id || '').trim())
+      .filter(Boolean);
+
+    const validId = clientCandidates.find(id => !isPlaceholderClientId(id)) || '';
+    const rawClientId = clientCandidates[0] || '';
     
     // Resolve public origin from request headers, proxy headers, or host
     const forwardedProto = (req.headers['x-forwarded-proto'] as string) || (req.secure ? 'https' : 'http');
@@ -153,8 +208,8 @@ export function createExpressApp(): express.Application {
       } catch {}
     }
 
-    const isConfigured = !isPlaceholderClientId(rawClientId);
-    const googleClientId = isConfigured ? rawClientId : '';
+    const isConfigured = Boolean(validId);
+    const googleClientId = isConfigured ? validId : '';
 
     res.json({
       googleClientId,
@@ -179,18 +234,75 @@ export function createExpressApp(): express.Application {
 
       if (credential && typeof credential === 'string') {
         // Verify ID token with Google's public tokeninfo endpoint
-        const tokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`;
-        const tokenRes = await fetch(tokenInfoUrl);
-        if (!tokenRes.ok) {
-          const errorBody = await tokenRes.json().catch(() => ({}));
-          const errorMsg =
-            errorBody.error_description ||
-            (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
-            'Invalid or expired Google credential.';
-          return res.status(401).json({ error: errorMsg });
+        let tokenData: any = null;
+        let tokenError: string = '';
+
+        const primaryTokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`;
+        try {
+          const tokenRes = await fetch(primaryTokenInfoUrl);
+          if (tokenRes.ok) {
+            tokenData = await tokenRes.json();
+          } else {
+            const errorBody = await tokenRes.json().catch(() => ({}));
+            tokenError =
+              errorBody.error_description ||
+              (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
+              '';
+          }
+        } catch (fetchErr: any) {
+          tokenError = fetchErr?.message || 'Network error reaching Google token verification service';
         }
 
-        const tokenData = await tokenRes.json();
+        // Secondary fallback tokeninfo endpoint if primary encountered a network failure
+        if (!tokenData && (!tokenError || tokenError.includes('Network error'))) {
+          try {
+            const fallbackTokenInfoUrl = `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${encodeURIComponent(credential)}`;
+            const fallbackRes = await fetch(fallbackTokenInfoUrl);
+            if (fallbackRes.ok) {
+              tokenData = await fallbackRes.json();
+              tokenError = '';
+            } else {
+              const errorBody = await fallbackRes.json().catch(() => ({}));
+              tokenError =
+                errorBody.error_description ||
+                (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
+                tokenError;
+            }
+          } catch {}
+        }
+
+        if (!tokenData) {
+          return res.status(401).json({
+            error: tokenError || 'Invalid, expired, or untrusted Google credential.'
+          });
+        }
+
+        // 1. Verify Issuer
+        const validIssuers = ['https://accounts.google.com', 'accounts.google.com'];
+        if (tokenData.iss && !validIssuers.includes(tokenData.iss)) {
+          return res.status(401).json({
+            error: `Untrusted Google token issuer: "${tokenData.iss}". Expected accounts.google.com.`
+          });
+        }
+
+        // 2. Verify Expiration
+        if (tokenData.exp) {
+          const expSeconds = Number(tokenData.exp);
+          const nowSeconds = Math.floor(Date.now() / 1000);
+          if (!isNaN(expSeconds) && expSeconds < nowSeconds) {
+            return res.status(401).json({
+              error: 'Google ID token has expired. Please sign in again.'
+            });
+          }
+        }
+
+        // 3. Verify Email is verified by Google
+        if (tokenData.email_verified !== 'true' && tokenData.email_verified !== true) {
+          return res.status(401).json({
+            error: 'Google account email address is not verified by Google.'
+          });
+        }
+
         sub = tokenData.sub || tokenData.user_id || '';
         email = tokenData.email || '';
         name = tokenData.name || '';
@@ -215,6 +327,10 @@ export function createExpressApp(): express.Application {
         if (tokenData.issued_to) validAudiences.push(tokenData.issued_to);
         if (tokenData.azp) validAudiences.push(tokenData.azp);
 
+        if (tokenData.expires_in && Number(tokenData.expires_in) <= 0) {
+          return res.status(401).json({ error: 'Google access token has expired.' });
+        }
+
         email = tokenData.email || '';
         sub = tokenData.sub || tokenData.user_id || '';
 
@@ -225,6 +341,9 @@ export function createExpressApp(): express.Application {
           });
           if (userInfoRes.ok) {
             const profile = await userInfoRes.json();
+            if (profile.email_verified !== undefined && profile.email_verified !== true && profile.email_verified !== 'true') {
+              return res.status(401).json({ error: 'Google account email address is not verified.' });
+            }
             sub = profile.sub || sub;
             email = profile.email || email;
             name = profile.name || name;
@@ -239,17 +358,31 @@ export function createExpressApp(): express.Application {
         return res.status(400).json({ error: 'Google token does not contain verified user identity.' });
       }
 
-      // Determine expected client ID: server env takes precedence if valid, then valid client-provided id
-      const serverEnvClientId = (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
-      const expectedClientId = (!isPlaceholderClientId(serverEnvClientId) ? serverEnvClientId : '') ||
-                               (!isPlaceholderClientId(clientId) ? clientId : '');
+      // Determine valid allowed client IDs from server environment and request
+      const allowedClientIds = [
+        process.env.VITE_GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_ID,
+        clientId
+      ]
+        .map(id => (typeof id === 'string' ? id.trim() : ''))
+        .filter(id => id && !isPlaceholderClientId(id));
 
-      if (expectedClientId && validAudiences.length > 0) {
-        const matchesClient = validAudiences.some(a => a.trim() === expectedClientId);
+      const uniqueAllowedIds = Array.from(new Set(allowedClientIds));
+
+      if (uniqueAllowedIds.length > 0 && validAudiences.length > 0) {
+        const matchesClient = validAudiences.some(aud =>
+          uniqueAllowedIds.some(allowed => allowed.toLowerCase() === aud.trim().toLowerCase())
+        );
         if (!matchesClient) {
-          console.warn(`Audience mismatch: received [${validAudiences.join(', ')}], expected ${expectedClientId}`);
-          return res.status(401).json({ error: 'Google credential was issued for a different client ID.' });
+          console.warn(`Audience mismatch: received token audience [${validAudiences.join(', ')}], expected one of [${uniqueAllowedIds.join(', ')}]`);
+          return res.status(401).json({
+            error: `Audience mismatch: Google credential was issued for Client ID "${validAudiences[0]}", but server expected "${uniqueAllowedIds[0]}". Please verify VITE_GOOGLE_CLIENT_ID and GOOGLE_CLIENT_ID match in your environment settings.`
+          });
         }
+      } else if (uniqueAllowedIds.length === 0) {
+        return res.status(400).json({
+          error: 'Google Client ID is not configured on the server. Please set VITE_GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID in your environment variables.'
+        });
       }
 
       const user = await upsertGoogleUser({

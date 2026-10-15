@@ -49,6 +49,27 @@ export async function fetchAuthConfig(): Promise<{
   }
 }
 
+async function parseErrorFromResponse(res: Response, defaultMsg: string): Promise<string> {
+  try {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const json = await res.json().catch(() => ({}));
+      if (json && (json.error || json.message)) {
+        return String(json.error || json.message);
+      }
+    }
+    const text = await res.text().catch(() => '');
+    if (text) {
+      // Strip any HTML tags from proxy/serverless error pages (e.g. 404, 502, 500)
+      const clean = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (clean) {
+        return `Server error (${res.status}): ${clean.slice(0, 160)}`;
+      }
+    }
+  } catch {}
+  return `${defaultMsg} (HTTP ${res.status}: ${res.statusText || 'Error'})`;
+}
+
 export async function loginWithGoogleCredential(
   credential: string,
   clientId?: string
@@ -60,8 +81,8 @@ export async function loginWithGoogleCredential(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Google authentication failed');
+    const errorMsg = await parseErrorFromResponse(res, 'Google authentication failed');
+    throw new Error(errorMsg);
   }
 
   const data = await res.json();
@@ -82,8 +103,8 @@ export async function loginWithGoogleAccessToken(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Google authentication failed');
+    const errorMsg = await parseErrorFromResponse(res, 'Google access token verification failed');
+    throw new Error(errorMsg);
   }
 
   const data = await res.json();
@@ -101,8 +122,8 @@ export async function loginWithEmailPassword(email: string, password: string): P
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Invalid credentials');
+    const errorMsg = await parseErrorFromResponse(res, 'Invalid credentials');
+    throw new Error(errorMsg);
   }
 
   const data = await res.json();
@@ -120,8 +141,8 @@ export async function registerWithEmailPassword(name: string, email: string, pas
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Registration failed');
+    const errorMsg = await parseErrorFromResponse(res, 'Registration failed');
+    throw new Error(errorMsg);
   }
 
   const data = await res.json();

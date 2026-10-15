@@ -313,7 +313,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
         {/* ========================================================================= */}
         {/* 2. HERO SECTION — Matches reference style, centered typography & lavender glow */}
         {/* ========================================================================= */}
-        <section className="relative overflow-hidden min-h-[580px] lg:min-h-[640px] flex items-center justify-center py-16 sm:py-20 lg:py-24 transition-colors">
+        <section className="relative overflow-hidden min-h-[500px] lg:min-h-[560px] flex items-center justify-center py-14 sm:py-18 lg:py-22 transition-colors">
           
           {/* Subtle lavender/purple radial glow with gentle ambient breathing */}
           <motion.div
@@ -327,35 +327,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
           <div className="site-container relative z-10 w-full">
             <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
               
-              {/* Signature EduPredict AI Logo Introduction */}
-              <motion.div
-                initial={{ opacity: 0, y: -12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: EASINGS.smooth }}
-                className="mb-5 flex justify-center"
-              >
-                <EduPredictLogoAnimation variant="hero" />
-              </motion.div>
-
-              {/* Stage 0: Introductory badge */}
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.1, ease: EASINGS.smooth }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-200/90 dark:border-purple-800/60 bg-white dark:bg-[#162035] shadow-xs mb-6"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] dark:bg-[#A78BFA] animate-pulse" />
-                <span className="text-[11px] sm:text-xs font-bold tracking-wider text-[#7C3AED] dark:text-[#A78BFA] uppercase">
-                  AI-POWERED STUDENT PERFORMANCE
-                </span>
-              </motion.div>
-
-              {/* Stage 1 & 2: Coordinated Two-Stage Headline */}
+              {/* Coordinated Two-Stage Headline */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[66px] font-extrabold tracking-tight leading-[1.12] sm:leading-[1.12] max-w-4xl mx-auto mb-4 text-balance">
                 <motion.span
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.12, ease: EASINGS.smooth }}
+                  transition={{ duration: 0.5, delay: 0.05, ease: EASINGS.smooth }}
                   className="block text-[#0F172A] dark:text-white"
                 >
                   Understand Your Performance.
@@ -363,28 +340,28 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                 <motion.span
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.24, ease: EASINGS.smooth }}
+                  transition={{ duration: 0.5, delay: 0.15, ease: EASINGS.smooth }}
                   className="block text-[#7C3AED] dark:text-[#A78BFA] mt-1 sm:mt-2"
                 >
                   Plan Your Success.
                 </motion.span>
               </h1>
 
-              {/* Stage 3: Supporting Description */}
+              {/* Supporting Description */}
               <motion.p
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.36, ease: EASINGS.smooth }}
+                transition={{ duration: 0.5, delay: 0.25, ease: EASINGS.smooth }}
                 className="text-base sm:text-lg lg:text-[21px] text-[#475569] dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mt-4 mb-9 font-normal text-balance"
               >
                 Predict your academic performance, discover learning gaps, and build a personalized study plan.
               </motion.p>
 
-              {/* Stage 4: Two Call-to-Action Buttons */}
+              {/* Two Call-to-Action Buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.48, ease: EASINGS.smooth }}
+                transition={{ duration: 0.5, delay: 0.35, ease: EASINGS.smooth }}
                 className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full sm:w-auto"
               >
                 {/* Primary Button */}
