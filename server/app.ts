@@ -35,11 +35,8 @@ import {
   User,
   getUserById,
   getUserByEmail,
-  getUserByPhone,
   upsertGoogleUser,
   createEmailUser,
-  createPhoneUser,
-  linkPhoneToUser,
   updateUserProfile,
   createSession,
   getSessionUser,
@@ -60,14 +57,6 @@ import {
   getOrGenerateTopicModule,
   normalizeTopicKey
 } from './learnPractice';
-import {
-  getSmsProviderConfig,
-  normalizePhoneNumber,
-  sendOtp,
-  verifyOtp,
-  generateVerifiedPhoneToken,
-  verifyPhoneProofToken
-} from './sms';
 import {
   generateIntelligentSchedule,
   rebalanceSchedule,
@@ -130,31 +119,54 @@ export function createExpressApp(): express.Application {
     next();
   };
 
+  function isPlaceholderClientId(id?: string | null): boolean {
+    if (!id) return true;
+    const trimmed = id.trim();
+    if (
+      trimmed === '' ||
+      trimmed === 'Not configured' ||
+      trimmed.includes('your-google-client-id') ||
+      trimmed.includes('your-client-id') ||
+      trimmed.includes('PLACEHOLDER') ||
+      trimmed.startsWith('<')
+    ) {
+      return true;
+    }
+    return !trimmed.endsWith('.apps.googleusercontent.com');
+  }
+
   // -------------------------------------------------------------
   // AUTHENTICATION ROUTES (Google Identity Services & Student Accounts)
   // -------------------------------------------------------------
   app.get('/api/auth/config', (req, res) => {
-    const clientId = (process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
-    const sms = getSmsProviderConfig();
-    const host = req.get('host') || 'localhost:3000';
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-    const currentOrigin = (req.headers.origin as string) || `${protocol}://${host}`;
+    const rawClientId = (process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim();
+    
+    // Resolve public origin from request headers, proxy headers, or host
+    const forwardedProto = (req.headers['x-forwarded-proto'] as string) || (req.secure ? 'https' : 'http');
+    const forwardedHost = (req.headers['x-forwarded-host'] || req.get('host') || 'localhost:3000') as string;
+    const originHeader = (req.headers.origin || req.headers.referer) as string;
+    let currentOrigin = `${forwardedProto}://${forwardedHost}`;
+    if (originHeader) {
+      try {
+        const u = new URL(originHeader);
+        currentOrigin = u.origin;
+      } catch {}
+    }
+
+    const isConfigured = !isPlaceholderClientId(rawClientId);
+    const googleClientId = isConfigured ? rawClientId : '';
 
     res.json({
-      googleClientId: clientId,
-      isConfigured: Boolean(clientId && clientId.length > 0),
-      currentOrigin,
-      sms: {
-        isConfigured: sms.isConfigured,
-        provider: sms.provider,
-        message: sms.message
-      }
+      googleClientId,
+      rawGoogleClientId: rawClientId,
+      isConfigured,
+      currentOrigin
     });
   });
 
   app.post('/api/auth/google', async (req, res) => {
     try {
-      const { credential, access_token } = req.body;
+      const { credential, access_token, clientId } = req.body;
       if (!credential && !access_token) {
         return res.status(400).json({ error: 'Google credential (ID token) or access token is required.' });
       }
@@ -171,9 +183,11 @@ export function createExpressApp(): express.Application {
         const tokenRes = await fetch(tokenInfoUrl);
         if (!tokenRes.ok) {
           const errorBody = await tokenRes.json().catch(() => ({}));
-          return res.status(401).json({
-            error: errorBody.error_description || errorBody.error || 'Invalid or expired Google credential.'
-          });
+          const errorMsg =
+            errorBody.error_description ||
+            (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
+            'Invalid or expired Google credential.';
+          return res.status(401).json({ error: errorMsg });
         }
 
         const tokenData = await tokenRes.json();
@@ -189,9 +203,11 @@ export function createExpressApp(): express.Application {
         const tokenRes = await fetch(tokenInfoUrl);
         if (!tokenRes.ok) {
           const errorBody = await tokenRes.json().catch(() => ({}));
-          return res.status(401).json({
-            error: errorBody.error_description || errorBody.error || 'Invalid or expired Google access token.'
-          });
+          const errorMsg =
+            errorBody.error_description ||
+            (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
+            'Invalid or expired Google access token.';
+          return res.status(401).json({ error: errorMsg });
         }
         const tokenData = await tokenRes.json();
         if (tokenData.aud) validAudiences.push(tokenData.aud);
@@ -223,8 +239,11 @@ export function createExpressApp(): express.Application {
         return res.status(400).json({ error: 'Google token does not contain verified user identity.' });
       }
 
-      // Verify audience matches if client id is configured
-      const expectedClientId = (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+      // Determine expected client ID: server env takes precedence if valid, then valid client-provided id
+      const serverEnvClientId = (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+      const expectedClientId = (!isPlaceholderClientId(serverEnvClientId) ? serverEnvClientId : '') ||
+                               (!isPlaceholderClientId(clientId) ? clientId : '');
+
       if (expectedClientId && validAudiences.length > 0) {
         const matchesClient = validAudiences.some(a => a.trim() === expectedClientId);
         if (!matchesClient) {
@@ -349,222 +368,6 @@ export function createExpressApp(): express.Application {
     } catch (err: any) {
       console.error('Error in /api/auth/login:', err);
       return res.status(500).json({ error: 'Login failed: ' + (err?.message || 'Internal error') });
-    }
-  });
-
-  // -------------------------------------------------------------
-  // MOBILE NUMBER & SMS OTP AUTHENTICATION
-  // -------------------------------------------------------------
-  app.post('/api/auth/otp/send', async (req, res) => {
-    try {
-      const { phone } = req.body;
-      if (!phone || typeof phone !== 'string') {
-        return res.status(400).json({ error: 'Mobile number is required.' });
-      }
-
-      const clientIp =
-        (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() ||
-        req.socket.remoteAddress ||
-        '127.0.0.1';
-
-      const sendResult = await sendOtp(phone, clientIp);
-      if (!sendResult.success) {
-        return res.status(sendResult.status).json({
-          error: sendResult.error,
-          cooldownSeconds: sendResult.cooldownSeconds
-        });
-      }
-
-      const norm = normalizePhoneNumber(phone);
-      const existing = await getUserByPhone(norm.normalized);
-
-      return res.json({
-        status: 'success',
-        message: sendResult.message,
-        isExistingUser: Boolean(existing),
-        cooldownSeconds: sendResult.cooldownSeconds || 60,
-        maskedPhone: sendResult.maskedPhone
-      });
-    } catch (err: any) {
-      console.error('Error in /api/auth/otp/send:', err);
-      return res.status(500).json({ error: 'Failed to dispatch SMS OTP: ' + (err?.message || 'Internal server error') });
-    }
-  });
-
-  app.post('/api/auth/otp/verify', async (req, res) => {
-    try {
-      const { phone, code } = req.body;
-      if (!phone || !code) {
-        return res.status(400).json({ error: 'Both mobile number and 6-digit OTP code are required.' });
-      }
-
-      const verifyResult = await verifyOtp(phone, code);
-      if (!verifyResult.success) {
-        return res.status(verifyResult.status).json({ error: verifyResult.error });
-      }
-
-      const norm = normalizePhoneNumber(phone);
-      const existingUser = await getUserByPhone(norm.normalized);
-
-      if (existingUser) {
-        // Existing student: Log them in and return active session
-        const token = await createSession(existingUser.id);
-        return res.json({
-          status: 'success',
-          action: 'login',
-          user: {
-            id: existingUser.id,
-            email: existingUser.email,
-            phone_number: existingUser.phone_number,
-            name: existingUser.name,
-            picture: existingUser.picture,
-            education_level: existingUser.education_level,
-            institution: existingUser.institution,
-            stream_or_branch: existingUser.stream_or_branch,
-            created_at: existingUser.created_at
-          },
-          token,
-          isNewUser: !existingUser.education_level || existingUser.education_level.trim() === ''
-        });
-      } else {
-        // New mobile number: Issue secure HMAC verification proof token
-        const verificationToken = generateVerifiedPhoneToken(norm.normalized);
-        return res.json({
-          status: 'verified_new_user',
-          action: 'register',
-          verificationToken,
-          phone: norm.normalized
-        });
-      }
-    } catch (err: any) {
-      console.error('Error in /api/auth/otp/verify:', err);
-      return res.status(500).json({ error: 'Verification failed: ' + (err?.message || 'Internal error') });
-    }
-  });
-
-  app.post('/api/auth/otp/register', async (req, res) => {
-    try {
-      const { verificationToken, name, email } = req.body;
-      if (!verificationToken) {
-        return res.status(400).json({ error: 'Verification token is required.' });
-      }
-      if (!name || typeof name !== 'string' || !name.trim()) {
-        return res.status(400).json({ error: 'Full student name is required to complete registration.' });
-      }
-
-      const proof = verifyPhoneProofToken(verificationToken);
-      if (!proof.isValid || !proof.phone) {
-        return res.status(401).json({ error: proof.error || 'Invalid or expired phone verification proof.' });
-      }
-
-      // Check if user already exists with this phone
-      const existingByPhone = await getUserByPhone(proof.phone);
-      if (existingByPhone) {
-        const token = await createSession(existingByPhone.id);
-        return res.json({
-          status: 'success',
-          user: {
-            id: existingByPhone.id,
-            email: existingByPhone.email,
-            phone_number: existingByPhone.phone_number,
-            name: existingByPhone.name,
-            picture: existingByPhone.picture,
-            education_level: existingByPhone.education_level,
-            institution: existingByPhone.institution,
-            stream_or_branch: existingByPhone.stream_or_branch,
-            created_at: existingByPhone.created_at
-          },
-          token,
-          isNewUser: false
-        });
-      }
-
-      // If student provided an optional email, verify it's not already in use
-      if (email && typeof email === 'string' && email.trim()) {
-        const cleanEmail = email.trim().toLowerCase();
-        const existingByEmail = await getUserByEmail(cleanEmail);
-        if (existingByEmail) {
-          return res.status(409).json({
-            error: 'An account with this email address already exists. Please choose "Link to Existing Account" to attach your mobile number.'
-          });
-        }
-      }
-
-      const newUser = await createPhoneUser(proof.phone, name.trim(), email);
-      const token = await createSession(newUser.id);
-
-      return res.status(201).json({
-        status: 'success',
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          phone_number: newUser.phone_number,
-          name: newUser.name,
-          picture: newUser.picture,
-          education_level: newUser.education_level,
-          institution: newUser.institution,
-          stream_or_branch: newUser.stream_or_branch,
-          created_at: newUser.created_at
-        },
-        token,
-        isNewUser: true
-      });
-    } catch (err: any) {
-      console.error('Error in /api/auth/otp/register:', err);
-      return res.status(500).json({ error: 'Student registration failed: ' + (err?.message || 'Internal error') });
-    }
-  });
-
-  app.post('/api/auth/otp/link', async (req, res) => {
-    try {
-      const { verificationToken, email, password } = req.body;
-      if (!verificationToken || !email || !password) {
-        return res.status(400).json({ error: 'Verification token, email, and password are required to link your account.' });
-      }
-
-      const proof = verifyPhoneProofToken(verificationToken);
-      if (!proof.isValid || !proof.phone) {
-        return res.status(401).json({ error: proof.error || 'Invalid or expired phone verification proof.' });
-      }
-
-      const existingUser = await getUserByEmail(email);
-      if (!existingUser || !existingUser.password_hash) {
-        return res.status(401).json({ error: 'Invalid email or password for linking.' });
-      }
-
-      const [storedHash, salt] = existingUser.password_hash.split(':');
-      if (!storedHash || !salt) {
-        return res.status(401).json({ error: 'Invalid credentials stored for this account.' });
-      }
-
-      const computedHash = crypto.scryptSync(password, salt, 64).toString('hex');
-      if (computedHash !== storedHash) {
-        return res.status(401).json({ error: 'Incorrect email or password.' });
-      }
-
-      // Link verified mobile to the user's existing account
-      const updatedUser = await linkPhoneToUser(existingUser.id, proof.phone);
-      const token = await createSession(updatedUser.id);
-
-      return res.json({
-        status: 'success',
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          phone_number: updatedUser.phone_number,
-          name: updatedUser.name,
-          picture: updatedUser.picture,
-          education_level: updatedUser.education_level,
-          institution: updatedUser.institution,
-          stream_or_branch: updatedUser.stream_or_branch,
-          created_at: updatedUser.created_at
-        },
-        token,
-        isNewUser: !updatedUser.education_level || updatedUser.education_level.trim() === ''
-      });
-    } catch (err: any) {
-      console.error('Error in /api/auth/otp/link:', err);
-      return res.status(500).json({ error: 'Account linking failed: ' + (err?.message || 'Internal error') });
     }
   });
 

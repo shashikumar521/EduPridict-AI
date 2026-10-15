@@ -15,10 +15,7 @@ import {
   AuthUser,
   ExamStudyPlan,
   ExamSubject,
-  StudyAvailability,
-  SmsAuthConfig,
-  OtpSendResponse,
-  OtpVerifyResponse
+  StudyAvailability
 } from '../types';
 
 const API_BASE = '/api';
@@ -39,24 +36,27 @@ export function getAuthHeaders(): Record<string, string> {
 // -------------------------------------------------------------
 export async function fetchAuthConfig(): Promise<{
   googleClientId: string;
+  rawGoogleClientId?: string;
   isConfigured: boolean;
   currentOrigin?: string;
-  sms?: SmsAuthConfig;
 }> {
   try {
     const res = await fetch(`${API_BASE}/auth/config`);
-    if (!res.ok) return { googleClientId: '', isConfigured: false, currentOrigin: '', sms: { isConfigured: false, provider: 'none' } };
+    if (!res.ok) return { googleClientId: '', isConfigured: false, currentOrigin: '' };
     return res.json();
   } catch {
-    return { googleClientId: '', isConfigured: false, currentOrigin: '', sms: { isConfigured: false, provider: 'none' } };
+    return { googleClientId: '', isConfigured: false, currentOrigin: '' };
   }
 }
 
-export async function loginWithGoogleCredential(credential: string): Promise<{ user: AuthUser; token: string; isNewUser: boolean }> {
+export async function loginWithGoogleCredential(
+  credential: string,
+  clientId?: string
+): Promise<{ user: AuthUser; token: string; isNewUser: boolean }> {
   const res = await fetch(`${API_BASE}/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential })
+    body: JSON.stringify({ credential, clientId })
   });
 
   if (!res.ok) {
@@ -71,11 +71,14 @@ export async function loginWithGoogleCredential(credential: string): Promise<{ u
   return data;
 }
 
-export async function loginWithGoogleAccessToken(accessToken: string): Promise<{ user: AuthUser; token: string; isNewUser: boolean }> {
+export async function loginWithGoogleAccessToken(
+  accessToken: string,
+  clientId?: string
+): Promise<{ user: AuthUser; token: string; isNewUser: boolean }> {
   const res = await fetch(`${API_BASE}/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ access_token: accessToken })
+    body: JSON.stringify({ access_token: accessToken, clientId })
   });
 
   if (!res.ok) {
@@ -125,93 +128,6 @@ export async function registerWithEmailPassword(name: string, email: string, pas
   if (data.token) {
     localStorage.setItem('edupredict_token', data.token);
   }
-  return data;
-}
-
-// -------------------------------------------------------------
-// MOBILE NUMBER & OTP SERVICES
-// -------------------------------------------------------------
-export async function sendMobileOtp(phone: string): Promise<OtpSendResponse> {
-  const res = await fetch(`${API_BASE}/auth/otp/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone })
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const errorMsg = data.error || 'Failed to dispatch verification code';
-    const err: any = new Error(errorMsg);
-    err.status = res.status;
-    err.cooldownSeconds = data.cooldownSeconds;
-    throw err;
-  }
-
-  return data;
-}
-
-export async function verifyMobileOtp(phone: string, code: string): Promise<OtpVerifyResponse> {
-  const res = await fetch(`${API_BASE}/auth/otp/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, code })
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.error || 'Invalid or expired verification code');
-  }
-
-  if (data.token) {
-    localStorage.setItem('edupredict_token', data.token);
-  }
-
-  return data;
-}
-
-export async function registerWithMobileOtp(
-  verificationToken: string,
-  name: string,
-  email?: string
-): Promise<{ user: AuthUser; token: string; isNewUser: boolean }> {
-  const res = await fetch(`${API_BASE}/auth/otp/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ verificationToken, name, email })
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.error || 'Registration failed');
-  }
-
-  if (data.token) {
-    localStorage.setItem('edupredict_token', data.token);
-  }
-
-  return data;
-}
-
-export async function linkMobileToExistingAccount(
-  verificationToken: string,
-  email: string,
-  password: string
-): Promise<{ user: AuthUser; token: string; isNewUser: boolean }> {
-  const res = await fetch(`${API_BASE}/auth/otp/link`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ verificationToken, email, password })
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.error || 'Failed to link account');
-  }
-
-  if (data.token) {
-    localStorage.setItem('edupredict_token', data.token);
-  }
-
   return data;
 }
 

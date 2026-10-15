@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { AuthUser, SmsAuthConfig, OtpSendResponse, OtpVerifyResponse } from '../types';
+import { AuthUser } from '../types';
 import {
   fetchCurrentUser,
   fetchAuthConfig,
@@ -8,11 +8,7 @@ import {
   loginWithEmailPassword,
   registerWithEmailPassword,
   updateUserAcademicProfile,
-  logoutUser,
-  sendMobileOtp,
-  verifyMobileOtp,
-  registerWithMobileOtp,
-  linkMobileToExistingAccount
+  logoutUser
 } from '../services/api';
 
 interface AuthContextType {
@@ -23,15 +19,10 @@ interface AuthContextType {
   googleClientId: string;
   isGoogleConfigured: boolean;
   currentOrigin: string;
-  smsConfig: SmsAuthConfig;
   loginGoogle: (credential: string) => Promise<{ user: AuthUser; isNewUser: boolean }>;
   loginGoogleAccessToken: (accessToken: string) => Promise<{ user: AuthUser; isNewUser: boolean }>;
   loginEmail: (email: string, pass: string) => Promise<{ user: AuthUser; isNewUser: boolean }>;
   registerEmail: (name: string, email: string, pass: string) => Promise<{ user: AuthUser; isNewUser: boolean }>;
-  sendOtp: (phone: string) => Promise<OtpSendResponse>;
-  verifyOtp: (phone: string, code: string) => Promise<OtpVerifyResponse>;
-  registerPhone: (verificationToken: string, name: string, email?: string) => Promise<{ user: AuthUser; isNewUser: boolean }>;
-  linkPhone: (verificationToken: string, email: string, pass: string) => Promise<{ user: AuthUser; isNewUser: boolean }>;
   updateProfile: (updates: { name?: string; education_level?: string; institution?: string; stream_or_branch?: string }) => Promise<AuthUser>;
   logout: () => Promise<void>;
   openAuthModal: (requestedSection?: string) => void;
@@ -43,6 +34,22 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function isValidGoogleClientId(id?: string | null): boolean {
+  if (!id) return false;
+  const trimmed = id.trim();
+  if (
+    trimmed === '' ||
+    trimmed === 'Not configured' ||
+    trimmed.includes('your-google-client-id') ||
+    trimmed.includes('your-client-id') ||
+    trimmed.includes('PLACEHOLDER') ||
+    trimmed.startsWith('<')
+  ) {
+    return false;
+  }
+  return trimmed.endsWith('.apps.googleusercontent.com') && trimmed.length > 25;
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -61,13 +68,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
-  const initialEffectiveClientId = envClientId || getStoredDevClientId();
-  const [googleClientId, setGoogleClientId] = useState(initialEffectiveClientId);
-  const [isGoogleConfigured, setIsGoogleConfigured] = useState(Boolean(initialEffectiveClientId));
+  const initialCustomId = getStoredDevClientId();
+  const initialEffective = isValidGoogleClientId(envClientId)
+    ? envClientId
+    : isValidGoogleClientId(initialCustomId)
+    ? initialCustomId
+    : '';
+
+  const [googleClientId, setGoogleClientId] = useState<string>(initialEffective);
+  const [isGoogleConfigured, setIsGoogleConfigured] = useState<boolean>(isValidGoogleClientId(initialEffective));
   const [currentOrigin, setCurrentOrigin] = useState<string>(() => {
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   });
-  const [smsConfig, setSmsConfig] = useState<SmsAuthConfig>({ isConfigured: false, provider: 'none' });
 
   // Modal control
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -77,16 +89,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const trimmed = newId.trim();
     if (typeof window !== 'undefined') {
       try {
-        if (trimmed) {
+        if (trimmed && isValidGoogleClientId(trimmed)) {
           localStorage.setItem('edupredict_dev_google_client_id', trimmed);
-        } else {
+        } else if (!trimmed) {
           localStorage.removeItem('edupredict_dev_google_client_id');
         }
       } catch {}
     }
-    const effective = envClientId || trimmed;
+    const effective = isValidGoogleClientId(envClientId)
+      ? envClientId
+      : isValidGoogleClientId(trimmed)
+      ? trimmed
+      : '';
     setGoogleClientId(effective);
-    setIsGoogleConfigured(Boolean(effective && effective.length > 0));
+    setIsGoogleConfigured(isValidGoogleClientId(effective));
   };
 
   // Hydrate user on mount
@@ -95,14 +111,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const config = await fetchAuthConfig();
       const devId = getStoredDevClientId();
-      const effectiveClientId = envClientId || (config.googleClientId || '').trim() || devId;
-      setGoogleClientId(effectiveClientId);
-      setIsGoogleConfigured(Boolean(effectiveClientId && effectiveClientId.length > 0));
+
+      // Priority resolution: valid build env -> valid backend config -> stored dev client ID
+      let resolvedId = '';
+      if (isValidGoogleClientId(envClientId)) {
+        resolvedId = envClientId;
+      } else if (isValidGoogleClientId(config.googleClientId)) {
+        resolvedId = config.googleClientId;
+      } else if (isValidGoogleClientId(devId)) {
+        resolvedId = devId;
+      }
+
+      setGoogleClientId(resolvedId);
+      setIsGoogleConfigured(isValidGoogleClientId(resolvedId));
       if (config.currentOrigin) {
         setCurrentOrigin(config.currentOrigin);
-      }
-      if (config.sms) {
-        setSmsConfig(config.sms);
       }
 
       // Check for OAuth redirect tokens in URL hash or query params
@@ -171,14 +194,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshAuthConfig = async () => {
     try {
       const config = await fetchAuthConfig();
-      if (config.sms) setSmsConfig(config.sms);
+      if (isValidGoogleClientId(config.googleClientId) && !isValidGoogleClientId(envClientId)) {
+        setGoogleClientId(config.googleClientId);
+        setIsGoogleConfigured(true);
+      }
+      if (config.currentOrigin) {
+        setCurrentOrigin(config.currentOrigin);
+      }
     } catch (err) {
       console.warn('Failed to refresh auth config:', err);
     }
   };
 
   const loginGoogle = async (credential: string) => {
-    const data = await loginWithGoogleCredential(credential);
+    const data = await loginWithGoogleCredential(credential, googleClientId);
     setUser(data.user);
     setToken(data.token);
     setIsAuthModalOpen(false);
@@ -186,7 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginGoogleAccessToken = async (accessToken: string) => {
-    const data = await loginWithGoogleAccessToken(accessToken);
+    const data = await loginWithGoogleAccessToken(accessToken, googleClientId);
     setUser(data.user);
     setToken(data.token);
     setIsAuthModalOpen(false);
@@ -203,36 +232,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerEmail = async (name: string, email: string, pass: string) => {
     const data = await registerWithEmailPassword(name, email, pass);
-    setUser(data.user);
-    setToken(data.token);
-    setIsAuthModalOpen(false);
-    return { user: data.user, isNewUser: data.isNewUser };
-  };
-
-  const sendOtp = async (phone: string) => {
-    return await sendMobileOtp(phone);
-  };
-
-  const verifyOtp = async (phone: string, code: string) => {
-    const data = await verifyMobileOtp(phone, code);
-    if (data.status === 'success' && data.user && data.token) {
-      setUser(data.user);
-      setToken(data.token);
-      setIsAuthModalOpen(false);
-    }
-    return data;
-  };
-
-  const registerPhone = async (verificationToken: string, name: string, email?: string) => {
-    const data = await registerWithMobileOtp(verificationToken, name, email);
-    setUser(data.user);
-    setToken(data.token);
-    setIsAuthModalOpen(false);
-    return { user: data.user, isNewUser: data.isNewUser };
-  };
-
-  const linkPhone = async (verificationToken: string, email: string, pass: string) => {
-    const data = await linkMobileToExistingAccount(verificationToken, email, pass);
     setUser(data.user);
     setToken(data.token);
     setIsAuthModalOpen(false);
@@ -277,22 +276,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         googleClientId,
         isGoogleConfigured,
         currentOrigin,
-        smsConfig,
         loginGoogle,
         loginGoogleAccessToken,
         loginEmail,
         registerEmail,
-        sendOtp,
-        verifyOtp,
-        registerPhone,
-        linkPhone,
         updateProfile,
         logout,
         openAuthModal,
         closeAuthModal,
         isAuthModalOpen,
         pendingRedirectSection,
-        refreshAuthConfig
+        refreshAuthConfig,
+        setCustomGoogleClientId
       }}
     >
       {children}

@@ -36,30 +36,6 @@ export interface AuthUser {
   created_at?: string;
 }
 
-export interface SmsAuthConfig {
-  isConfigured: boolean;
-  provider: 'twilio_verify' | 'twilio_sms' | 'none';
-  message?: string;
-}
-
-export interface OtpSendResponse {
-  status: 'success';
-  message: string;
-  isExistingUser: boolean;
-  cooldownSeconds: number;
-  maskedPhone?: string;
-}
-
-export interface OtpVerifyResponse {
-  status: 'success' | 'verified_new_user';
-  action: 'login' | 'register';
-  user?: AuthUser;
-  token?: string;
-  isNewUser?: boolean;
-  verificationToken?: string;
-  phone?: string;
-}
-
 export type EducationLevelId =
   | 'primary_school'
   | 'middle_school'
