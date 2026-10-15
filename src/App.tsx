@@ -44,7 +44,6 @@ import { LearnPracticeView } from './components/LearnPracticeView';
 import { ExportDataView } from './components/ExportDataView';
 import { EduPredictChatbot } from './components/EduPredictChatbot';
 import { EduPredictLogoAnimation } from './components/EduPredictLogoAnimation';
-import { FloatingLogoBackground } from './components/FloatingLogoBackground';
 import { motion, AnimatePresence } from 'motion/react';
 import { Footer } from './components/Footer';
 import {
@@ -305,7 +304,6 @@ function AppContent() {
           isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0B0F19] text-slate-100'
         }`}
       >
-        <FloatingLogoBackground />
         <EduPredictLogoAnimation variant="splash" />
       </div>
     );
@@ -375,9 +373,6 @@ function AppContent() {
         isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0F172A] text-slate-100'
       }`}
     >
-      {/* Subtle Floating Logo Background Animation */}
-      <FloatingLogoBackground />
-
       {/* Sidebar Navigation - Fixed & stationary on desktop */}
       <Sidebar
         currentSection={currentSection}

@@ -21,7 +21,6 @@ import { ThemeToggle } from './ThemeToggle';
 import { Footer } from './Footer';
 import { motion } from 'motion/react';
 import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
-import { FloatingLogoBackground } from './FloatingLogoBackground';
 import { EASINGS, cardVariants, containerVariants } from '../utils/motionPresets';
 
 interface HomeViewProps {
@@ -153,9 +152,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
           : 'bg-[#0B0F19] text-slate-100 selection:bg-[#7C3AED]/30 selection:text-purple-200'
       }`}
     >
-      {/* Signature Floating Logo Background Animation */}
-      <FloatingLogoBackground />
-
       {/* 1. Header & Navigation */}
       <header
         className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${

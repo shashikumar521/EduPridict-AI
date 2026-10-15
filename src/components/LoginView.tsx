@@ -18,7 +18,6 @@ import { useAuth, isValidGoogleClientId } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
 import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
-import { FloatingLogoBackground } from './FloatingLogoBackground';
 
 interface LoginViewProps {
   onNavigate: (section: SectionId) => void;
@@ -323,9 +322,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
           : 'bg-[#0B0F19] text-slate-100'
       }`}
     >
-      {/* Subtle Floating Logo Background Animation */}
-      <FloatingLogoBackground />
-
       {/* Top Navigation Bar */}
       <header
         className={`px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between border-b backdrop-blur-md shrink-0 ${
