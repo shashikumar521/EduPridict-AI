@@ -41,7 +41,10 @@ import { ProfileSetupModal } from './components/ProfileSetupModal';
 import { AcademicAnalysisView } from './components/AcademicAnalysisView';
 import { ExamSchedulerView } from './components/ExamSchedulerView';
 import { LearnPracticeView } from './components/LearnPracticeView';
+import { ExportDataView } from './components/ExportDataView';
 import { EduPredictChatbot } from './components/EduPredictChatbot';
+import { EduPredictLogoAnimation } from './components/EduPredictLogoAnimation';
+import { motion, AnimatePresence } from 'motion/react';
 import { Footer } from './components/Footer';
 import {
   fetchStudents,
@@ -56,6 +59,7 @@ const ALL_SECTIONS: SectionId[] = [
   'analysis',
   'scheduler',
   'learn',
+  'export',
   'dashboard',
   'predict',
   'whatif',
@@ -292,32 +296,15 @@ function AppContent() {
     handleNavigate(dest);
   };
 
-  // 0. Initial Session Hydration Screen with Official Logo
+  // 0. Initial Session Hydration Screen with Signature Logo Animation
   if (isAuthLoading) {
     return (
       <div
         className={`h-[100dvh] w-full flex flex-col items-center justify-center transition-colors ${
-          isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0F172A] text-slate-100'
+          isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0B0F19] text-slate-100'
         }`}
       >
-        <div className="relative flex items-center justify-center">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-[#1E293B] flex items-center justify-center border-2 border-[#6D28D9]/40 dark:border-[#8B5CF6]/40 animate-pulse p-2">
-            <img
-              src="/edupredict-ai-logo.png"
-              alt="EduPredict AI"
-              className="w-full h-full object-cover rounded-2xl"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        </div>
-        <div className="mt-5 text-center space-y-1">
-          <p className={`text-base font-black tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>
-            EduPredict AI
-          </p>
-          <p className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] uppercase tracking-widest animate-pulse">
-            Academic Intelligence Platform
-          </p>
-        </div>
+        <EduPredictLogoAnimation variant="splash" />
       </div>
     );
   }
@@ -415,6 +402,13 @@ function AppContent() {
         >
           <div className="flex-1 p-3 sm:p-4 md:p-6 w-full">
             <div className="site-container pb-6">
+              <motion.div
+                key={currentSection}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full"
+              >
               {/* DASHBOARD: Executive Student Overview & Priority Action Hub */}
             {currentSection === 'dashboard' && (
               <DashboardView
@@ -513,6 +507,14 @@ function AppContent() {
               <CourseRecommendationsView onNavigate={handleNavigate} />
             )}
 
+            {/* EXPORT DATA: Downloadable Academic Performance PDF Report */}
+            {currentSection === 'export' && (
+              <ExportDataView
+                onNavigate={handleNavigate}
+                onOpenProfileSetup={() => setShowProfileSetup(true)}
+              />
+            )}
+
             {/* Secondary Workflows & Utility Screens */}
             {currentSection === 'goals' && <GoalsAchievementsView />}
 
@@ -543,6 +545,7 @@ function AppContent() {
             )}
 
             {currentSection === 'about' && <AboutView />}
+              </motion.div>
             </div>
           </div>
 

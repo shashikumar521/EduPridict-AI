@@ -31,6 +31,8 @@ import {
 import { SectionId, SavedPrediction, StudentRecord, DashboardSummary } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { motion } from 'motion/react';
+import { EASINGS, containerVariants, cardVariants } from '../utils/motionPresets';
 import {
   fetchAcademicAnalysis,
   fetchAcademicProfile,
@@ -268,7 +270,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* ========================================================================= */}
       {/* 1. CONCISE WELCOME AREA (No distracting calculation banner) */}
       {/* ========================================================================= */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: EASINGS.smooth }}
         className={`p-5 sm:p-6 rounded-2xl border transition-all ${
           isLight
             ? 'bg-white border-[#E2E8F0] text-[#172033] shadow-xs'
@@ -328,14 +333,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* ========================================================================= */}
       {/* 2. FOUR PRIMARY SUMMARY CARDS (No more than four, distinct real metrics) */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {/* CARD 1: Academic Performance */}
-        <div
+        <motion.div
+          variants={cardVariants}
+          whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
             isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
@@ -395,10 +407,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* CARD 2: Subjects Needing Attention */}
-        <div
+        <motion.div
+          variants={cardVariants}
+          whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
             isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
@@ -464,10 +478,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* CARD 3: Next Examination */}
-        <div
+        <motion.div
+          variants={cardVariants}
+          whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
             isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
@@ -498,9 +514,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="font-extrabold text-[#0F172A] dark:text-white">{nextExam.syllabus_completion_percent || 0}%</span>
                   </div>
                   <div className="w-full bg-[#CBD5E1] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-[#6D28D9] dark:bg-[#8B5CF6] h-full rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(4, Math.min(100, nextExam.syllabus_completion_percent || 0))}%` }}
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max(4, Math.min(100, nextExam.syllabus_completion_percent || 0))}%` }}
+                      transition={{ duration: 0.6, ease: EASINGS.smooth }}
+                      className="bg-[#6D28D9] dark:bg-[#8B5CF6] h-full rounded-full"
                     />
                   </div>
                 </div>
@@ -526,10 +544,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* CARD 4: Learning Progress */}
-        <div
+        <motion.div
+          variants={cardVariants}
+          whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
           className={`p-5 rounded-2xl border flex flex-col justify-between transition-all ${
             isLight ? 'bg-white border-[#CBD5E1] shadow-xs' : 'bg-[#1E293B] border-[#334155] shadow-xs'
           }`}
@@ -580,13 +600,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <ArrowRight className="w-3.5 h-3.5 text-[#6D28D9] dark:text-[#DDD6FE] shrink-0" />
             </button>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* ========================================================================= */}
       {/* 3. PERSONALIZED NEXT-STEP SECTION (One concise, evidence-backed recommendation) */}
       {/* ========================================================================= */}
-      <div
+      {/* ========================================================================= */}
+      {/* 3. PERSONALIZED NEXT-STEP SECTION (One concise, evidence-backed recommendation) */}
+      {/* ========================================================================= */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-30px' }}
+        transition={{ duration: 0.35, ease: EASINGS.smooth }}
         className={`p-6 rounded-2xl border transition-all ${
           isLight
             ? 'bg-white border-[#E2E8F0] text-[#0F172A] shadow-xs'
@@ -695,7 +722,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Calendar className="w-4 h-4 shrink-0 text-[#6D28D9] dark:text-[#A78BFA]" />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* ========================================================================= */}
       {/* 4. ACADEMIC CAPABILITIES (Clean navigation hub) */}
@@ -710,9 +737,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-30px' }}
+          variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
           {/* 1. Academic Performance & Progress */}
-          <div
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
             className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
@@ -735,10 +770,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Open Academic Analysis</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
+          </motion.div>
 
           {/* 2. Weak-Subject & Topic Diagnosis */}
-          <div
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
             className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
@@ -761,10 +798,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>View Topic Diagnostics</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
+          </motion.div>
 
           {/* 3. Exam Scheduling & Timetable */}
-          <div
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
             className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
@@ -787,10 +826,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Open Exam Scheduler</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
+          </motion.div>
 
           {/* 4. Topic Theory & 30-Question Quizzes */}
-          <div
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
             className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
@@ -813,10 +854,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Open Learn &amp; Practice</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
+          </motion.div>
 
           {/* 5. Courses & Certifications */}
-          <div
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
             className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
@@ -839,10 +882,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Explore Courses</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
+          </motion.div>
 
           {/* 6. Personalized Study Roadmap */}
-          <div
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ y: -3, transition: { duration: 0.16, ease: EASINGS.smooth } }}
             className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
               isLight ? 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]' : 'bg-[#1E293B] border-[#334155] hover:border-[#475569]'
             }`}
@@ -865,8 +910,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span>Build Revision Timetable</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );

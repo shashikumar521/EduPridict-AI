@@ -9,14 +9,13 @@ import {
   Settings,
   ShieldCheck,
   ChevronDown,
-  Check,
-  Bot,
-  Sparkles
+  Check
 } from 'lucide-react';
 import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { ThemeToggle } from './ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
+import { motion, AnimatePresence } from 'motion/react';
+import { dropdownVariants } from '../utils/motionPresets';
 
 interface HeaderProps {
   currentSection: SectionId;
@@ -70,6 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
     analysis: 'Academic Analysis & Trajectory',
     scheduler: 'Exam Scheduler & Study Planner',
     learn: 'Learn & Practice Studio',
+    export: 'Export Academic Report',
     dashboard: 'Student Dashboard',
     predict: 'Academic Assessment & Predictor',
     whatif: 'What-If Sensitivity Simulator',
@@ -173,7 +173,7 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
         </div>
 
-        {/* Right Side: Academic Year Selector, Theme Toggle, User Profile */}
+        {/* Right Side: Academic Year Selector & User Profile Menu */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Academic Year Selector with Interactive Dropdown */}
           <div className="relative" ref={yearMenuRef}>
@@ -193,70 +193,56 @@ export const Header: React.FC<HeaderProps> = ({
               <ChevronDown className={`w-3 h-3 transition-transform ${isYearMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {isYearMenuOpen && (
-              <div
-                className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl py-2 z-50 text-xs animate-in fade-in ${
-                  isLight
-                    ? 'bg-white border-[#E2E8F0] text-[#172033]'
-                    : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC]'
-                }`}
-              >
-                <div className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
-                  Academic Term
-                </div>
-                {ACADEMIC_YEARS.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setSelectedYear(item.label);
-                      setIsYearMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 flex items-center justify-between transition cursor-pointer ${
-                      selectedYear === item.label
-                        ? isLight
-                          ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold'
-                          : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold'
-                        : isLight
-                        ? 'hover:bg-[#F8FAFC] text-[#172033]'
-                        : 'hover:bg-[#172033] text-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{item.label}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
-                        item.badge === 'Current'
-                          ? 'bg-[#DCFCE7] text-[#15803D] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC]'
-                          : 'bg-slate-100 text-[#64748B] dark:bg-slate-800 dark:text-slate-400'
-                      }`}>
-                        {item.badge}
-                      </span>
-                    </div>
-                    {selectedYear === item.label && <Check className="w-3.5 h-3.5" />}
-                  </button>
-                ))}
-              </div>
-            )}
+            <AnimatePresence>
+              {isYearMenuOpen && (
+                <motion.div
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl py-2 z-50 text-xs ${
+                    isLight
+                      ? 'bg-white border-[#E2E8F0] text-[#172033]'
+                      : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC]'
+                  }`}
+                >
+                  <div className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${isLight ? 'text-[#526078]' : 'text-slate-400'}`}>
+                    Academic Term
+                  </div>
+                  {ACADEMIC_YEARS.map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedYear(item.label);
+                        setIsYearMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between transition cursor-pointer ${
+                        selectedYear === item.label
+                          ? isLight
+                            ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold'
+                            : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold'
+                          : isLight
+                          ? 'hover:bg-[#F8FAFC] text-[#172033]'
+                          : 'hover:bg-[#172033] text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{item.label}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                          item.badge === 'Current'
+                            ? 'bg-[#DCFCE7] text-[#15803D] dark:bg-[rgba(21,128,61,0.22)] dark:text-[#86EFAC]'
+                            : 'bg-slate-100 text-[#64748B] dark:bg-slate-800 dark:text-slate-400'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      </div>
+                      {selectedYear === item.label && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-          {/* EduPredict AI Assistant Launch Button */}
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new CustomEvent('open-edupredict-chatbot'))}
-            className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border transition cursor-pointer active:scale-95 ${
-              isLight
-                ? 'bg-[#EDE9FE] hover:bg-[#DDD6FE] text-[#6D28D9] border-[#C4B5FD]'
-                : 'bg-[#6D28D9]/25 hover:bg-[#6D28D9]/40 text-[#DDD6FE] border-[#7C3AED]/40'
-            }`}
-            title="Ask EduPredict AI Assistant"
-            aria-label="Ask EduPredict AI Assistant"
-          >
-            <Bot className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">AI Assistant</span>
-            <Sparkles className="w-3 h-3 text-amber-500" />
-          </button>
-
-          {/* Theme Toggle Button (Sun / Moon) */}
-          <ThemeToggle />
 
           {/* Authenticated User Menu or Sign In Button */}
           {isAuthenticated ? (
@@ -307,77 +293,83 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {/* User Dropdown */}
-              {isUserMenuOpen && (
-                <div
-                  className={`absolute right-0 mt-2 w-64 rounded-2xl border shadow-xl py-2 z-50 text-xs animate-in fade-in ${
-                    isLight
-                      ? 'bg-white border-[#E2E8F0] text-[#172033]'
-                      : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC]'
-                  }`}
-                >
-                  <div className={`px-4 py-2.5 border-b ${isLight ? 'border-[#E2E8F0]' : 'border-[#334155]'}`}>
-                    <p className={`font-bold truncate text-sm ${isLight ? 'text-[#172033]' : 'text-white'}`}>
-                      {displayName}
-                    </p>
-                    <p className={`text-xs truncate mt-0.5 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
-                      {displayEmail}
-                    </p>
-                    <div
-                      className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${
-                        isLight
-                          ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]'
-                          : 'bg-[#6D28D9]/25 text-[#DDD6FE] border-[#8B5CF6]/40'
-                      }`}
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Authenticated Student</span>
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    variants={dropdownVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className={`absolute right-0 mt-2 w-64 rounded-2xl border shadow-xl py-2 z-50 text-xs ${
+                      isLight
+                        ? 'bg-white border-[#E2E8F0] text-[#172033]'
+                        : 'bg-[#1E293B] border-[#334155] text-[#F8FAFC]'
+                    }`}
+                  >
+                    <div className={`px-4 py-2.5 border-b ${isLight ? 'border-[#E2E8F0]' : 'border-[#334155]'}`}>
+                      <p className={`font-bold truncate text-sm ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                        {displayName}
+                      </p>
+                      <p className={`text-xs truncate mt-0.5 font-medium ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+                        {displayEmail}
+                      </p>
+                      <div
+                        className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${
+                          isLight
+                            ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]'
+                            : 'bg-[#6D28D9]/25 text-[#DDD6FE] border-[#8B5CF6]/40'
+                        }`}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Authenticated Student</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="py-1">
-                    {onOpenProfileSetup && (
+                    <div className="py-1">
+                      {onOpenProfileSetup && (
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            onOpenProfileSetup();
+                          }}
+                          className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
+                            isLight
+                              ? 'hover:bg-[#EDE9FE] text-[#6D28D9]'
+                              : 'hover:bg-[#6D28D9]/25 text-[#DDD6FE]'
+                          }`}
+                        >
+                          <ShieldCheck className="w-4 h-4 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                          <span>Academic Onboarding (5-Step)</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setIsUserMenuOpen(false);
-                          onOpenProfileSetup();
+                          onNavigate('settings');
                         }}
                         className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
                           isLight
-                            ? 'hover:bg-[#EDE9FE] text-[#6D28D9]'
-                            : 'hover:bg-[#6D28D9]/25 text-[#DDD6FE]'
+                            ? 'hover:bg-[#F8FAFC] text-[#526078] hover:text-[#172033]'
+                            : 'hover:bg-[#172033] text-slate-200 hover:text-white'
                         }`}
                       >
-                        <ShieldCheck className="w-4 h-4 text-[#6D28D9] dark:text-[#DDD6FE]" />
-                        <span>Academic Onboarding (5-Step)</span>
+                        <Settings className="w-4 h-4 text-[#6D28D9] dark:text-[#DDD6FE]" />
+                        <span>Profile &amp; Academic Settings</span>
                       </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        onNavigate('settings');
-                      }}
-                      className={`w-full text-left px-4 py-2 flex items-center gap-2 font-medium cursor-pointer ${
-                        isLight
-                          ? 'hover:bg-[#F8FAFC] text-[#526078] hover:text-[#172033]'
-                          : 'hover:bg-[#172033] text-slate-200 hover:text-white'
-                      }`}
-                    >
-                      <Settings className="w-4 h-4 text-[#6D28D9] dark:text-[#DDD6FE]" />
-                      <span>Profile &amp; Academic Settings</span>
-                    </button>
-                  </div>
+                    </div>
 
-                  <div className={`pt-1 border-t ${isLight ? 'border-[#E2E8F0]' : 'border-[#334155]'}`}>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 hover:bg-[#FEE2E2] dark:hover:bg-[rgba(185,28,28,0.2)] flex items-center gap-2 text-[#B91C1C] dark:text-[#FCA5A5] font-semibold cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 text-[#B91C1C] dark:text-[#FCA5A5]" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+                    <div className={`pt-1 border-t ${isLight ? 'border-[#E2E8F0]' : 'border-[#334155]'}`}>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-2 hover:bg-[#FEE2E2] dark:hover:bg-[rgba(185,28,28,0.2)] flex items-center gap-2 text-[#B91C1C] dark:text-[#FCA5A5] font-semibold cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-[#B91C1C] dark:text-[#FCA5A5]" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <button

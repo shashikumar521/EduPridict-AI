@@ -10,18 +10,18 @@ import {
   Sliders,
   CheckCircle2,
   Zap,
-  Play,
-  Shield,
   Layers,
   BookOpen,
-  GraduationCap,
-  Award
+  GraduationCap
 } from 'lucide-react';
 import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
 import { Footer } from './Footer';
+import { motion } from 'motion/react';
+import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
+import { EASINGS, cardVariants, containerVariants } from '../utils/motionPresets';
 
 interface HomeViewProps {
   onNavigateToDashboard: (section?: SectionId) => void;
@@ -201,12 +201,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               Key Features
             </button>
             <button
-              onClick={() => scrollToSection('journey')}
-              className="hover:text-[#7C3AED] dark:hover:text-[#A78BFA] transition-colors cursor-pointer py-1"
-            >
-              Learning Journey
-            </button>
-            <button
               onClick={() => onNavigateToDashboard('about')}
               className="hover:text-[#7C3AED] dark:hover:text-[#A78BFA] transition-colors cursor-pointer py-1"
             >
@@ -283,12 +277,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               Key Features
             </button>
             <button
-              onClick={() => scrollToSection('journey')}
-              className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            >
-              Learning Journey
-            </button>
-            <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 onNavigateToDashboard('about');
@@ -334,59 +322,104 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
         {/* ========================================================================= */}
         <section className="relative overflow-hidden min-h-[580px] lg:min-h-[640px] flex items-center justify-center py-16 sm:py-20 lg:py-24 transition-colors">
           
-          {/* Subtle lavender/purple radial glow behind center */}
-          <div
+          {/* Subtle lavender/purple radial glow with gentle ambient breathing */}
+          <motion.div
             aria-hidden="true"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] h-[380px] rounded-full pointer-events-none blur-[110px] bg-purple-300/30 dark:bg-purple-900/20"
+            initial={{ opacity: 0.25, scale: 0.95 }}
+            animate={{ opacity: [0.25, 0.4, 0.25], scale: [0.95, 1.05, 0.95] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[400px] rounded-full pointer-events-none blur-[110px] bg-purple-300/30 dark:bg-purple-900/25"
           />
 
           <div className="site-container relative z-10 w-full">
             <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
               
-              {/* Pill-shaped badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-200/90 dark:border-purple-800/60 bg-white dark:bg-[#162035] shadow-xs mb-6">
+              {/* Signature EduPredict AI Logo Introduction */}
+              <motion.div
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASINGS.smooth }}
+                className="mb-5 flex justify-center"
+              >
+                <EduPredictLogoAnimation variant="hero" />
+              </motion.div>
+
+              {/* Stage 0: Introductory badge */}
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1, ease: EASINGS.smooth }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-200/90 dark:border-purple-800/60 bg-white dark:bg-[#162035] shadow-xs mb-6"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] dark:bg-[#A78BFA] animate-pulse" />
                 <span className="text-[11px] sm:text-xs font-bold tracking-wider text-[#7C3AED] dark:text-[#A78BFA] uppercase">
                   AI-POWERED STUDENT PERFORMANCE
                 </span>
-              </div>
+              </motion.div>
 
-              {/* Main Headline: Two visually balanced lines */}
+              {/* Stage 1 & 2: Coordinated Two-Stage Headline */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[66px] font-extrabold tracking-tight leading-[1.12] sm:leading-[1.12] max-w-4xl mx-auto mb-4 text-balance">
-                <span className="block text-[#0F172A] dark:text-white">
+                <motion.span
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.12, ease: EASINGS.smooth }}
+                  className="block text-[#0F172A] dark:text-white"
+                >
                   Understand Your Performance.
-                </span>
-                <span className="block text-[#7C3AED] dark:text-[#A78BFA] mt-1 sm:mt-2">
+                </motion.span>
+                <motion.span
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.24, ease: EASINGS.smooth }}
+                  className="block text-[#7C3AED] dark:text-[#A78BFA] mt-1 sm:mt-2"
+                >
                   Plan Your Success.
-                </span>
+                </motion.span>
               </h1>
 
-              {/* Supporting Description */}
-              <p className="text-base sm:text-lg lg:text-[21px] text-[#475569] dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mt-4 mb-9 font-normal text-balance">
+              {/* Stage 3: Supporting Description */}
+              <motion.p
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.36, ease: EASINGS.smooth }}
+                className="text-base sm:text-lg lg:text-[21px] text-[#475569] dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mt-4 mb-9 font-normal text-balance"
+              >
                 Predict your academic performance, discover learning gaps, and build a personalized study plan.
-              </p>
+              </motion.p>
 
-              {/* Two Call-to-Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full sm:w-auto">
+              {/* Stage 4: Two Call-to-Action Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.48, ease: EASINGS.smooth }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full sm:w-auto"
+              >
                 {/* Primary Button */}
-                <button
+                <motion.button
                   type="button"
                   onClick={handleGetStarted}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-sm sm:text-base text-white bg-[#7C3AED] hover:bg-[#6D28D9] shadow-md shadow-purple-600/20 hover:shadow-purple-600/35 active:scale-98 transition-all cursor-pointer"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.18, ease: EASINGS.smooth }}
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold text-sm sm:text-base text-white bg-[#7C3AED] hover:bg-[#6D28D9] shadow-md shadow-purple-600/20 hover:shadow-purple-600/35 transition-all cursor-pointer"
                 >
                   <span>Get Started</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
 
                 {/* Secondary Button */}
-                <button
+                <motion.button
                   type="button"
                   onClick={handleCreateStudyPlan}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-semibold text-sm sm:text-base text-[#0F172A] dark:text-white bg-white dark:bg-[#162035] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-98 transition-all cursor-pointer shadow-xs"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.18, ease: EASINGS.smooth }}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-semibold text-sm sm:text-base text-[#0F172A] dark:text-white bg-white dark:bg-[#162035] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs"
                 >
                   <Calendar className="w-4 h-4 text-[#7C3AED] dark:text-[#A78BFA]" />
                   <span>Create Study Plan</span>
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
 
             </div>
           </div>
@@ -400,7 +433,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
         {/* ========================================================================= */}
         <section id="how-it-works" className="py-16 sm:py-20 lg:py-24 bg-white dark:bg-[#0D1322] border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
           <div className="site-container">
-            <div className="max-w-3xl mx-auto text-center mb-12 sm:mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.45, ease: EASINGS.smooth }}
+              className="max-w-3xl mx-auto text-center mb-12 sm:mb-16"
+            >
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-purple-200 dark:border-purple-800/50 bg-purple-50 dark:bg-purple-950/40 text-[#7C3AED] dark:text-[#A78BFA] text-xs font-bold uppercase tracking-wider mb-3.5">
                 <Zap className="w-3.5 h-3.5" />
                 <span>Simple Academic Workflow</span>
@@ -411,12 +450,22 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
                 Transform historical coursework, test scores, and study habits into early diagnosis and confident exam preparation.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-40px' }}
+              variants={containerVariants}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto"
+            >
               
               {/* Step 1 */}
-              <div className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] text-left flex flex-col justify-between shadow-xs">
+              <motion.div
+                variants={cardVariants}
+                whileHover={{ y: -4, transition: { duration: 0.18, ease: EASINGS.smooth } }}
+                className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] text-left flex flex-col justify-between shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 transition-colors"
+              >
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[11px] font-black tracking-wider uppercase px-2.5 py-1 rounded-md bg-white dark:bg-[#1E2B45] text-[#7C3AED] dark:text-[#DDD6FE] border border-purple-200 dark:border-purple-800/50">
@@ -435,10 +484,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Supports School, B.Tech &amp; Higher Ed</span>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Step 2 */}
-              <div className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] text-left flex flex-col justify-between shadow-xs">
+              <motion.div
+                variants={cardVariants}
+                whileHover={{ y: -4, transition: { duration: 0.18, ease: EASINGS.smooth } }}
+                className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] text-left flex flex-col justify-between shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 transition-colors"
+              >
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[11px] font-black tracking-wider uppercase px-2.5 py-1 rounded-md bg-white dark:bg-[#1E2B45] text-[#7C3AED] dark:text-[#DDD6FE] border border-purple-200 dark:border-purple-800/50">
@@ -457,10 +510,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Sub-second diagnostic evaluation</span>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Step 3 */}
-              <div className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] text-left flex flex-col justify-between shadow-xs">
+              <motion.div
+                variants={cardVariants}
+                whileHover={{ y: -4, transition: { duration: 0.18, ease: EASINGS.smooth } }}
+                className="p-6 sm:p-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] text-left flex flex-col justify-between shadow-xs hover:border-purple-300 dark:hover:border-purple-700/60 transition-colors"
+              >
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[11px] font-black tracking-wider uppercase px-2.5 py-1 rounded-md bg-white dark:bg-[#1E2B45] text-[#7C3AED] dark:text-[#DDD6FE] border border-purple-200 dark:border-purple-800/50">
@@ -479,9 +536,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Aligned to your real exam deadlines</span>
                 </div>
-              </div>
+              </motion.div>
 
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -490,7 +547,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
         {/* ========================================================================= */}
         <section id="features" className="py-16 sm:py-20 lg:py-24 bg-[#F8FAFC] dark:bg-[#0B0F19] border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
           <div className="site-container">
-            <div className="max-w-3xl mx-auto text-center mb-12 sm:mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ duration: 0.45, ease: EASINGS.smooth }}
+              className="max-w-3xl mx-auto text-center mb-12 sm:mb-16"
+            >
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-purple-200 dark:border-purple-800/50 bg-white dark:bg-[#162035] text-[#7C3AED] dark:text-[#A78BFA] text-xs font-bold uppercase tracking-wider mb-3.5 shadow-xs">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Academic Capabilities</span>
@@ -501,14 +564,23 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
                 Purpose-built tools designed to give students transparent academic visibility and disciplined preparation.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 max-w-7xl mx-auto">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-40px' }}
+              variants={containerVariants}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 max-w-7xl mx-auto"
+            >
               {featureTools.map((feature) => {
                 const IconComponent = feature.icon;
                 return (
-                  <div
+                  <motion.div
                     key={feature.id}
+                    variants={cardVariants}
+                    whileHover={{ y: -4, transition: { duration: 0.18, ease: EASINGS.smooth } }}
+                    whileTap={{ scale: 0.985 }}
                     onClick={() => onNavigateToDashboard(feature.actionSection)}
                     className="p-6 sm:p-7 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#111A2E] flex flex-col justify-between hover:border-purple-300 dark:hover:border-purple-700/60 hover:shadow-lg transition-all duration-200 group cursor-pointer text-left"
                   >
@@ -538,123 +610,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                       </span>
                       <span className="text-[11px] font-medium text-slate-400">Available</span>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 5. LEARNING JOURNEY — Grounded in the student's own verified data */}
-        {/* ========================================================================= */}
-        <section id="journey" className="py-16 sm:py-20 lg:py-24 bg-white dark:bg-[#0D1322] border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
-          <div className="site-container">
-            <div className="max-w-5xl mx-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#111A2E] p-8 sm:p-12 text-left relative overflow-hidden shadow-xs">
-              
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 text-[#7C3AED] dark:text-[#A78BFA] text-xs font-bold uppercase tracking-wider mb-3">
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Personalized Academic Trajectory</span>
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0F172A] dark:text-white mb-4">
-                  Your Learning Journey, Guided by Your Real Data
-                </h2>
-
-                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-                  EduPredict AI avoids generic advice. By connecting directly to your entered academic profile, the system adjusts daily study velocity, enforces attendance safety margins, and reserves critical buffer days before major exams.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-slate-700 dark:text-slate-300 font-medium mb-8">
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white dark:bg-[#172033] border border-slate-200 dark:border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Dynamic daily study caps per weekday &amp; weekend</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white dark:bg-[#172033] border border-slate-200 dark:border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Weak-topic active recall prioritization</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white dark:bg-[#172033] border border-slate-200 dark:border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Timed 30-question diagnostic quizzes with explanations</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white dark:bg-[#172033] border border-slate-200 dark:border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>2–3 day buffer protection before subject test dates</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleGetStarted}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold text-xs sm:text-sm text-white bg-[#7C3AED] hover:bg-[#6D28D9] shadow-sm transition cursor-pointer"
-                  >
-                    <span>Start Your Assessment</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onNavigateToDashboard('whatif')}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full font-semibold text-xs sm:text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-[#172033] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
-                  >
-                    <Sliders className="w-3.5 h-3.5 text-[#7C3AED] dark:text-[#A78BFA]" />
-                    <span>Simulate What-If Scenarios</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 6. FINAL GET STARTED CTA */}
-        {/* ========================================================================= */}
-        <section className="py-16 sm:py-20 bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors">
-          <div className="site-container">
-            <div className="max-w-4xl mx-auto rounded-3xl border border-purple-200 dark:border-purple-900/60 bg-gradient-to-br from-white via-purple-50/30 to-indigo-50/30 dark:from-[#111A2E] dark:via-[#162035] dark:to-[#1E1B4B] p-8 sm:p-12 text-center shadow-xs">
-              
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white dark:bg-[#1E2B45] border border-purple-200 dark:border-purple-800/50 text-[#7C3AED] dark:text-[#A78BFA] text-xs font-bold uppercase tracking-wider mb-4 shadow-xs">
-                <Shield className="w-3.5 h-3.5" />
-                <span>Supervised Predictive Engine</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#0F172A] dark:text-white mb-3">
-                Understand Your Performance. Plan Your Success.
-              </h2>
-
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto mb-8">
-                Join students using EduPredict AI to turn academic uncertainty into actionable study velocity and top exam results.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
-                <button
-                  type="button"
-                  onClick={handleGetStarted}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-bold text-sm sm:text-base text-white bg-[#7C3AED] hover:bg-[#6D28D9] shadow-md shadow-purple-600/20 hover:shadow-purple-600/35 active:scale-98 transition-all cursor-pointer"
-                >
-                  <span>Get Started Now</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCreateStudyPlan}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-semibold text-sm sm:text-base text-[#0F172A] dark:text-white bg-white dark:bg-[#162035] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-98 transition cursor-pointer"
-                >
-                  <Calendar className="w-4 h-4 text-[#7C3AED] dark:text-[#A78BFA]" />
-                  <span>Create Study Plan</span>
-                </button>
-              </div>
-
-            </div>
-          </div>
+            </motion.div>
         </section>
 
       </main>
 
-      {/* 7. Redesigned Compact Four-Column Footer */}
+      {/* Redesigned Compact Four-Column Footer */}
       <Footer onNavigate={onNavigateToDashboard} />
     </div>
   );

@@ -15,7 +15,8 @@ import {
   Moon,
   Bot,
   Sparkles,
-  GraduationCap
+  GraduationCap,
+  FileDown
 } from 'lucide-react';
 import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -42,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const isLight = theme === 'light';
 
   const handleSignOut = async () => {
@@ -408,6 +409,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 )}
               </button>
+
+              {/* 6. Export Data — Positioned directly below EduPredict AI Assistant */}
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate('export');
+                  onClose();
+                }}
+                title={isCollapsed ? 'Export Data' : undefined}
+                aria-label="Export Data"
+                className={`w-full flex items-center ${
+                  isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2.5 px-3 py-2'
+                } rounded-xl text-xs transition-all text-left cursor-pointer ${
+                  currentSection === 'export'
+                    ? isLight
+                      ? 'bg-[#EDE9FE] text-[#6D28D9] font-bold border border-[#DDD6FE] shadow-xs'
+                      : 'bg-[#6D28D9]/25 text-[#DDD6FE] font-bold border border-[#8B5CF6]/40 shadow-xs'
+                    : isLight
+                    ? 'text-[#334155] hover:bg-[#F5F3FF] hover:text-[#0F172A] font-semibold'
+                    : 'text-slate-200 hover:bg-[#172033] hover:text-white font-medium'
+                }`}
+              >
+                <FileDown
+                  className={`w-4 h-4 shrink-0 ${
+                    currentSection === 'export'
+                      ? isLight
+                        ? 'text-[#6D28D9]'
+                        : 'text-[#DDD6FE]'
+                      : isLight
+                      ? 'text-[#475569]'
+                      : 'text-slate-300'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">Export Data</span>}
+              </button>
             </nav>
           </div>
 
@@ -503,18 +539,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isLight ? 'bg-white border-[#E2E8F0]' : 'bg-[#1E293B] border-[#334155]'
             }`}
           >
-            <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center gap-2.5 cursor-pointer text-left focus:outline-none group"
+              title={isLight ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
+              aria-label={isLight ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
+            >
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                  isLight ? 'bg-[#F8FAFC] text-[#6D28D9]' : 'bg-[#172033] text-amber-400'
+                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                  isLight ? 'bg-[#F8FAFC] text-[#6D28D9] group-hover:bg-[#EDE9FE]' : 'bg-[#172033] text-amber-400 group-hover:bg-[#243248]'
                 }`}
               >
                 {isLight ? <Sun className="w-3.5 h-3.5 text-amber-600" /> : <Moon className="w-3.5 h-3.5 text-[#DDD6FE]" />}
               </div>
-              <span className={`text-xs font-bold ${isLight ? 'text-[#172033]' : 'text-[#F8FAFC]'}`}>
+              <span className={`text-xs font-bold transition-colors ${isLight ? 'text-[#172033] group-hover:text-[#6D28D9]' : 'text-[#F8FAFC] group-hover:text-[#DDD6FE]'}`}>
                 {isLight ? 'Light Theme' : 'Dark Theme'}
               </span>
-            </div>
+            </button>
             <ThemeToggle className="scale-90" />
           </div>
         ) : (
