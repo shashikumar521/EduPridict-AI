@@ -2107,10 +2107,11 @@ How can I assist you today? You can ask about:
 
   app.post('/api/chat', optionalAuthMiddleware, async (req, res) => {
     try {
+      const forwardedHeader = req.headers['x-forwarded-for'];
       const clientIp =
-        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-        req.socket.remoteAddress ||
-        'unknown';
+        (typeof forwardedHeader === 'string' ? forwardedHeader.split(',')[0].trim() : '') ||
+        (req.socket && typeof req.socket.remoteAddress === 'string' ? req.socket.remoteAddress : '') ||
+        '127.0.0.1';
       const user = (req as any).user;
       const rateKey = user ? `user:${user.id}` : `ip:${clientIp}`;
 
