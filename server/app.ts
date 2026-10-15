@@ -2149,8 +2149,8 @@ How can I assist you today? You can ask about:
     }
   });
 
-  // Global 404 handler for unrecognized routes (prevents serverless invocation hangs)
-  app.all(['/api', '/api/*', '*'], (req, res) => {
+  // 404 handler for unrecognized API routes (prevents requests from hanging)
+  app.all(['/api', '/api/*'], (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });
 

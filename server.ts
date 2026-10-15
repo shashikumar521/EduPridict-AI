@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { app } from './server/app.js';
+import { app } from './server/app.ts';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import express from 'express';
@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
-  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const PORT = 3000;
   const isProd = process.env.NODE_ENV === 'production';
 
   // Mount Vite or static dist
