@@ -46,9 +46,24 @@ export default async function handler(req: any, res: any) {
 
     // 3. Keep the serverless lambda invocation alive until the Express response completes
     return await new Promise<void>((resolve, reject) => {
-      res.on('finish', resolve);
-      res.on('close', resolve);
-      res.on('error', reject);
+      const safetyTimer = setTimeout(() => {
+        if (!res.headersSent) {
+          res.status(504).json({ error: 'Gateway timeout: Request took longer than 28 seconds to complete.' });
+        }
+        resolve();
+      }, 28000);
+
+      const cleanup = () => {
+        clearTimeout(safetyTimer);
+        resolve();
+      };
+
+      res.on('finish', cleanup);
+      res.on('close', cleanup);
+      res.on('error', (err: any) => {
+        clearTimeout(safetyTimer);
+        reject(err);
+      });
 
       app(req, res, (err?: any) => {
         if (err) {
@@ -58,7 +73,7 @@ export default async function handler(req: any, res: any) {
               error: 'Serverless execution error: ' + (err?.message || 'Internal error')
             });
           }
-          resolve();
+          cleanup();
         }
       });
     });

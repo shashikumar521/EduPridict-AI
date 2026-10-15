@@ -61,7 +61,8 @@ import {
   generateIntelligentSchedule,
   rebalanceSchedule,
   getGeminiScheduleAdvice,
-  getTopicAIAssistance
+  getTopicAIAssistance,
+  getSafeGeminiModel
 } from './scheduler';
 import { VERIFIED_COURSES, getCoursesForEducationLevel } from './courses';
 import { generateChatResponse, checkRateLimit } from './chat';
@@ -1981,7 +1982,7 @@ Guidelines:
 5. Do not make false promises or predict exact scores. Keep suggestions realistic and actionable.`;
 
           const response = await ai.models.generateContent({
-            model: 'gemini-3.8-flash',
+            model: getSafeGeminiModel('gemini-3.1-flash-lite'),
             contents: [
               { role: 'user', parts: [{ text: `${systemInstruction}\n\nStudent asks: ${userText}` }] }
             ]
@@ -2098,7 +2099,7 @@ How can I assist you today? You can ask about:
     const user = (req as any).user;
     res.json({
       isConfigured: Boolean(apiKey && apiKey.trim().length > 0),
-      model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      model: getSafeGeminiModel('gemini-3.1-flash-lite'),
       provider: 'Google Gemini AI',
       authenticated: Boolean(user),
       studentName: user?.name || null
@@ -2148,8 +2149,8 @@ How can I assist you today? You can ask about:
     }
   });
 
-  // Global 404 handler for unrecognized /api routes
-  app.all('/api/*', (req, res) => {
+  // Global 404 handler for unrecognized routes (prevents serverless invocation hangs)
+  app.all(['/api', '/api/*', '*'], (req, res) => {
     res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
   });
 

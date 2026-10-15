@@ -506,17 +506,37 @@ export function generateDefaultStrategyTips(
   return tips;
 }
 
+export function getSafeGeminiModel(preferred: string = 'gemini-3.1-flash-lite'): string {
+  const envModel = process.env.GEMINI_MODEL;
+  if (
+    envModel &&
+    !envModel.includes('2.5') &&
+    !envModel.includes('2.0') &&
+    !envModel.includes('1.5')
+  ) {
+    return envModel;
+  }
+  return preferred;
+}
+
 /**
  * Calls Gemini AI to generate customized study schedule advice and strategic commentary.
  */
 export async function getGeminiScheduleAdvice(plan: ExamStudyPlan): Promise<string[]> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  if (!apiKey || apiKey.trim().length === 0) {
     return plan.aiStrategyTips || generateDefaultStrategyTips(plan.subjects, plan.availability, plan.totalHoursPlanned);
   }
 
+  let timer: NodeJS.Timeout | null = null;
   try {
-    const ai = new GoogleGenAI({});
+    const ai = new GoogleGenAI({
+      apiKey: apiKey.trim(),
+      httpOptions: {
+        timeout: 15000
+      }
+    });
+    const modelName = getSafeGeminiModel('gemini-3.1-flash-lite');
     const prompt = `You are the EduPredict AI Exam Strategist & Academic Advisor.
 Analyze this student's exam study schedule:
 - Exam Name: ${plan.examName}
@@ -529,16 +549,21 @@ Generate 4 to 5 concise, highly practical, strategic study tips for this exact s
 Format: Return a JSON array of 4-5 strings (no markdown enclosing, just valid JSON array of strings).
 Example format: ["Tip 1: ...", "Tip 2: ...", "Tip 3: ...", "Tip 4: ..."]`;
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Gemini API timeout')), 4000)
-    );
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Gemini API timeout')), 15000);
+    });
 
     const generatePromise = ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      model: modelName,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: 'application/json',
+        temperature: 0.5
+      }
     });
 
     const response = await Promise.race([generatePromise, timeoutPromise]);
+    if (timer) clearTimeout(timer);
 
     const text = response.text?.trim() || '';
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -547,6 +572,7 @@ Example format: ["Tip 1: ...", "Tip 2: ...", "Tip 3: ...", "Tip 4: ..."]`;
       return parsed.map(String);
     }
   } catch (err: any) {
+    if (timer) clearTimeout(timer);
     console.warn('Gemini API call for schedule advice timed out or failed, using rule-based strategy tips:', err?.message);
   }
 
@@ -570,9 +596,16 @@ export async function getTopicAIAssistance(params: {
   const { subjectName, topicName, difficulty = 'Medium', confidence = 'Average' } = params;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (apiKey) {
+  if (apiKey && apiKey.trim().length > 0) {
+    let timer: NodeJS.Timeout | null = null;
     try {
-      const ai = new GoogleGenAI({});
+      const ai = new GoogleGenAI({
+        apiKey: apiKey.trim(),
+        httpOptions: {
+          timeout: 15000
+        }
+      });
+      const modelName = getSafeGeminiModel('gemini-3.1-flash-lite');
       const prompt = `You are the EduPredict AI Academic Coach.
 A student is preparing for an exam in "${subjectName}" on the topic "${topicName}".
 Difficulty: ${difficulty}, Student Confidence: ${confidence}.
@@ -585,16 +618,21 @@ Provide a quick, high-impact revision breakdown in JSON:
 }
 Return only valid JSON.`;
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Gemini API timeout')), 4000)
-      );
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Gemini API timeout')), 15000);
+      });
 
       const generatePromise = ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        model: modelName,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.5
+        }
       });
 
       const response = await Promise.race([generatePromise, timeoutPromise]);
+      if (timer) clearTimeout(timer);
 
       const text = response.text?.trim() || '';
       const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -610,6 +648,7 @@ Return only valid JSON.`;
         source: 'gemini'
       };
     } catch (err: any) {
+      if (timer) clearTimeout(timer);
       console.warn('Gemini topic advice call failed, falling back to heuristic engine:', err?.message);
     }
   }

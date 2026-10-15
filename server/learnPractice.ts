@@ -6,6 +6,7 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { getCachedTopicModule, cacheTopicModule } from './db';
+import { getSafeGeminiModel } from './scheduler.js';
 
 export interface QuizQuestion {
   id: number;
@@ -208,7 +209,18 @@ export async function getOrGenerateTopicModule(topicRaw: string, courseContext =
  * Invokes Gemini 2.5 Flash to synthesize high-fidelity theory & 30 distinct questions
  */
 async function generateWithGemini(topicName: string, courseContext: string): Promise<TopicLearningModule | null> {
-  const ai = new GoogleGenAI({});
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.trim().length === 0) {
+    return null;
+  }
+
+  const ai = new GoogleGenAI({
+    apiKey: apiKey.trim(),
+    httpOptions: {
+      timeout: 25000
+    }
+  });
+  const modelName = getSafeGeminiModel('gemini-3.1-flash-lite');
 
   const prompt = `You are a distinguished university professor and academic curriculum architect.
 Create a comprehensive, structured study module and exactly 30 distinct quiz questions for the topic: "${topicName}" (Academic context: ${courseContext}).
@@ -280,12 +292,13 @@ CRITICAL RULES:
 4. No duplicate questions or minor paraphrases.
 5. Return ONLY pure valid JSON, without markdown formatting or backticks.`;
 
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Gemini API timeout')), 14000)
-  );
+  let timer: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Gemini API timeout')), 25000);
+  });
 
   const generatePromise = ai.models.generateContent({
-    model: 'gemini-3.8-flash',
+    model: modelName,
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: {
       responseMimeType: 'application/json'
@@ -293,6 +306,7 @@ CRITICAL RULES:
   });
 
   const response = await Promise.race([generatePromise, timeoutPromise]);
+  if (timer) clearTimeout(timer);
   const text = response.text?.trim() || '';
   const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
   const parsed = JSON.parse(cleanJson);

@@ -6,6 +6,7 @@ import {
   getQuizAttempts,
   User
 } from './db';
+import { getSafeGeminiModel } from './scheduler.js';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -283,7 +284,7 @@ MISSION & CHARACTER:
     }
   });
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  const modelName = getSafeGeminiModel('gemini-3.1-flash-lite');
 
   // Format messages into Gemini contents structure
   const formattedContents = recentMessages.map((m) => ({
