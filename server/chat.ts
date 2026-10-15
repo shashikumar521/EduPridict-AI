@@ -41,8 +41,8 @@ export function checkRateLimit(key: string, limit = 25, windowMs = 60000): boole
   return true;
 }
 
-// Periodic cleanup of stale rate limiter records
-setInterval(() => {
+// Periodic cleanup of stale rate limiter records (unref'd so event loop can drain freely in serverless runtimes)
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, timestamps] of rateLimitMap.entries()) {
     const valid = timestamps.filter((t) => now - t < 60000);
@@ -53,6 +53,9 @@ setInterval(() => {
     }
   }
 }, 300000);
+if (cleanupTimer && typeof cleanupTimer.unref === 'function') {
+  cleanupTimer.unref();
+}
 
 /**
  * Builds verified student profile context strictly from authenticated database records.

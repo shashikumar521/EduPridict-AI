@@ -89,12 +89,37 @@ export function createExpressApp(): express.Application {
     next();
   });
 
-  app.use(express.json());
+  // Pre-parsed body middleware: Prevents body-parser from hanging on Vercel
+  // when the runtime has already consumed the stream
+  app.use((req, res, next) => {
+    if (typeof req.body === 'string' && req.body.trim().startsWith('{')) {
+      try {
+        req.body = JSON.parse(req.body);
+        (req as any)._body = true;
+      } catch {}
+    } else if (req.body !== undefined && req.body !== null && typeof req.body === 'object') {
+      (req as any)._body = true;
+    }
+    next();
+  });
+
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // URL Normalization Middleware for Vercel, reverse proxies, and serverless runtimes
   app.use((req, res, next) => {
-    // 1. Check if Vercel provided the original matched path in headers
+    const rawUrl = req.url || '';
+    let queryRoute: string | null = null;
+    if (rawUrl.includes('?')) {
+      try {
+        const u = new URL(rawUrl, 'http://localhost');
+        queryRoute = u.searchParams.get('__route');
+      } catch {}
+    }
+
+    // 1. Check if Vercel provided the original matched path in query or headers
     const matchedPath =
+      queryRoute ||
       (req.headers['x-matched-path'] as string) ||
       (req.headers['x-vercel-matched-path'] as string) ||
       (req.headers['x-rewrite-url'] as string);
@@ -197,8 +222,13 @@ export function createExpressApp(): express.Application {
     const rawClientId = clientCandidates[0] || '';
     
     // Resolve public origin from request headers, proxy headers, or host
-    const forwardedProto = (req.headers['x-forwarded-proto'] as string) || (req.secure ? 'https' : 'http');
-    const forwardedHost = (req.headers['x-forwarded-host'] || req.get('host') || 'localhost:3000') as string;
+    const forwardedProto =
+      (req.headers['x-forwarded-proto'] as string) ||
+      (req.socket && (req.socket as any).encrypted ? 'https' : 'https');
+    const forwardedHost =
+      (req.headers['x-forwarded-host'] as string) ||
+      (req.headers.host as string) ||
+      'localhost:3000';
     const originHeader = (req.headers.origin || req.headers.referer) as string;
     let currentOrigin = `${forwardedProto}://${forwardedHost}`;
     if (originHeader) {
@@ -221,7 +251,8 @@ export function createExpressApp(): express.Application {
 
   app.post('/api/auth/google', async (req, res) => {
     try {
-      const { credential, access_token, clientId } = req.body;
+      const { credential, access_token, clientId } =
+        req.body && typeof req.body === 'object' ? req.body : {};
       if (!credential && !access_token) {
         return res.status(400).json({ error: 'Google credential (ID token) or access token is required.' });
       }
@@ -364,7 +395,7 @@ export function createExpressApp(): express.Application {
         process.env.GOOGLE_CLIENT_ID,
         clientId
       ]
-        .map(id => (typeof id === 'string' ? id.trim() : ''))
+        .map(id => (typeof id === 'string' ? id.trim().replace(/^["']|["']$/g, '') : ''))
         .filter(id => id && !isPlaceholderClientId(id));
 
       const uniqueAllowedIds = Array.from(new Set(allowedClientIds));
@@ -2114,6 +2145,23 @@ How can I assist you today? You can ask about:
         missingConfig: Boolean(isMissingConfig)
       });
     }
+  });
+
+  // Global 404 handler for unrecognized /api routes
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` });
+  });
+
+  // Global Express Error Handler to prevent process crashes or function invocation failures
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('[EduPredict Global Error Handler]:', err);
+    if (res.headersSent) {
+      return next(err);
+    }
+    const statusCode = typeof err?.status === 'number' && err.status >= 400 && err.status < 600 ? err.status : 500;
+    res.status(statusCode).json({
+      error: err?.message || 'An internal server error occurred.'
+    });
   });
 
   return app;

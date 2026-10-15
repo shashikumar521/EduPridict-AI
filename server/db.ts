@@ -3,7 +3,10 @@
  * Uses SQL.js (WASM SQLite engine) persisted to data/edupredict.sqlite
  */
 
-import initSqlJs, { Database } from 'sql.js';
+import type { Database, SqlJsStatic } from 'sql.js';
+// @ts-ignore
+import initSqlJsInline from 'sql.js/dist/sql-wasm-inline.js';
+import initSqlJsDefault from 'sql.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -133,16 +136,94 @@ export interface NotificationItem {
   created_at: string;
 }
 
-const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const DATA_DIR = isVercel ? path.join('/tmp', 'edupredict') : path.resolve(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'edupredict.sqlite');
+function isServerlessRuntime(): boolean {
+  return Boolean(
+    process.env.VERCEL ||
+    process.env.VERCEL_ENV ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.LAMBDA_TASK_ROOT
+  );
+}
+
+function getDataDirectory(): string {
+  if (isServerlessRuntime()) {
+    return path.join('/tmp', 'edupredict');
+  }
+  const localDir = path.resolve(process.cwd(), 'data');
+  try {
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
+    }
+    const testFile = path.join(localDir, '.write_test');
+    fs.writeFileSync(testFile, '1');
+    fs.unlinkSync(testFile);
+    return localDir;
+  } catch {
+    return path.join('/tmp', 'edupredict');
+  }
+}
+
+function getDatabaseFilePath(): string {
+  return path.join(getDataDirectory(), 'edupredict.sqlite');
+}
 
 let dbInstance: Database | null = null;
+let sqlEnginePromise: Promise<SqlJsStatic> | null = null;
+
+async function loadSqlJsEngine(): Promise<SqlJsStatic> {
+  if (sqlEnginePromise) return sqlEnginePromise;
+
+  sqlEnginePromise = (async () => {
+    // 1. Try inline WASM (built-in base64 WASM binary; works 100% on Vercel Serverless / Lambda without external .wasm file)
+    try {
+      const initFn =
+        typeof initSqlJsInline === 'function'
+          ? initSqlJsInline
+          : (initSqlJsInline as any)?.default;
+      if (typeof initFn === 'function') {
+        const engine = await initFn();
+        if (engine && typeof engine.Database === 'function') {
+          return engine;
+        }
+      }
+    } catch (inlineErr) {
+      console.warn('[EduPredict DB] Inline WASM loader notice:', inlineErr);
+    }
+
+    // 2. Try default loader with locateFile pointing to local filesystem locations
+    try {
+      const engine = await initSqlJsDefault({
+        locateFile: (file: string) => {
+          const possiblePaths = [
+            path.resolve(process.cwd(), 'public', file),
+            path.resolve(process.cwd(), 'node_modules/sql.js/dist', file),
+            path.resolve('/tmp', file)
+          ];
+          for (const p of possiblePaths) {
+            if (fs.existsSync(p)) return p;
+          }
+          return file;
+        }
+      });
+      if (engine && typeof engine.Database === 'function') {
+        return engine;
+      }
+    } catch (defaultErr) {
+      console.warn('[EduPredict DB] Default sql.js loader notice:', defaultErr);
+    }
+
+    // 3. Fallback to direct init
+    return await initSqlJsDefault();
+  })();
+
+  return sqlEnginePromise;
+}
 
 function ensureDataDir(): boolean {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    const dir = getDataDirectory();
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
     return true;
   } catch (err) {
@@ -154,9 +235,10 @@ function ensureDataDir(): boolean {
 function saveDbToFile(db: Database) {
   try {
     if (ensureDataDir()) {
+      const dbPath = getDatabaseFilePath();
       const data = db.export();
       const buffer = Buffer.from(data);
-      fs.writeFileSync(DB_FILE, buffer);
+      fs.writeFileSync(dbPath, buffer);
     }
   } catch (err) {
     console.warn('[EduPredict DB] Notice: In-memory snapshot active:', err);
@@ -166,13 +248,14 @@ function saveDbToFile(db: Database) {
 export async function getDb(): Promise<Database> {
   if (dbInstance) return dbInstance;
 
-  const SQL = await initSqlJs();
+  const SQL = await loadSqlJsEngine();
   ensureDataDir();
+  const dbFile = getDatabaseFilePath();
 
   let db: Database;
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const fileBuffer = fs.readFileSync(DB_FILE);
+    if (fs.existsSync(dbFile)) {
+      const fileBuffer = fs.readFileSync(dbFile);
       db = new SQL.Database(fileBuffer);
     } else {
       db = new SQL.Database();
