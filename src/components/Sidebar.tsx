@@ -22,6 +22,7 @@ import { SectionId } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
+import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
 
 interface SidebarProps {
   currentSection: SectionId;
@@ -86,35 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm shrink-0 bg-white dark:bg-[#172033] flex items-center justify-center border border-[#6D28D9]/30 dark:border-[#8B5CF6]/30 p-1">
-              <img
-                src="/edupredict-ai-logo.png"
-                alt="EduPredict AI Logo"
-                className="w-full h-full object-cover rounded-lg"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            {!isCollapsed && (
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className={`font-bold tracking-tight text-sm truncate ${isLight ? 'text-[#172033]' : 'text-white'}`}>
-                    EduPredict AI
-                  </span>
-                  <span
-                    className={`text-[10px] uppercase font-bold px-1.5 py-0.2 rounded shrink-0 border ${
-                      isLight
-                        ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]'
-                        : 'bg-[#6D28D9]/25 text-[#DDD6FE] border-[#8B5CF6]/40'
-                    }`}
-                  >
-                    AI
-                  </span>
-                </div>
-                <p className={`text-[11px] font-medium truncate ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
-                  Academic Intelligence
-                </p>
-              </div>
-            )}
+            <EduPredictLogoAnimation variant="sidebar" isCollapsed={isCollapsed} />
           </div>
 
           <div className="flex items-center">

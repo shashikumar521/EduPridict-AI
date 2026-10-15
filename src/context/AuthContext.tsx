@@ -39,6 +39,7 @@ interface AuthContextType {
   isAuthModalOpen: boolean;
   pendingRedirectSection: string | null;
   refreshAuthConfig: () => Promise<void>;
+  setCustomGoogleClientId: (id: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,9 +48,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('edupredict_token'));
   const [isLoading, setIsLoading] = useState(true);
+
+  const getStoredDevClientId = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        return (localStorage.getItem('edupredict_dev_google_client_id') || '').trim();
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  };
+
   const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
-  const [googleClientId, setGoogleClientId] = useState(envClientId);
-  const [isGoogleConfigured, setIsGoogleConfigured] = useState(Boolean(envClientId));
+  const initialEffectiveClientId = envClientId || getStoredDevClientId();
+  const [googleClientId, setGoogleClientId] = useState(initialEffectiveClientId);
+  const [isGoogleConfigured, setIsGoogleConfigured] = useState(Boolean(initialEffectiveClientId));
   const [currentOrigin, setCurrentOrigin] = useState<string>(() => {
     return typeof window !== 'undefined' ? window.location.origin : '';
   });
@@ -59,12 +73,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [pendingRedirectSection, setPendingRedirectSection] = useState<string | null>(null);
 
+  const setCustomGoogleClientId = (newId: string) => {
+    const trimmed = newId.trim();
+    if (typeof window !== 'undefined') {
+      try {
+        if (trimmed) {
+          localStorage.setItem('edupredict_dev_google_client_id', trimmed);
+        } else {
+          localStorage.removeItem('edupredict_dev_google_client_id');
+        }
+      } catch {}
+    }
+    const effective = envClientId || trimmed;
+    setGoogleClientId(effective);
+    setIsGoogleConfigured(Boolean(effective && effective.length > 0));
+  };
+
   // Hydrate user on mount
   const hydrate = useCallback(async () => {
     setIsLoading(true);
     try {
       const config = await fetchAuthConfig();
-      const effectiveClientId = envClientId || (config.googleClientId || '').trim();
+      const devId = getStoredDevClientId();
+      const effectiveClientId = envClientId || (config.googleClientId || '').trim() || devId;
       setGoogleClientId(effectiveClientId);
       setIsGoogleConfigured(Boolean(effectiveClientId && effectiveClientId.length > 0));
       if (config.currentOrigin) {

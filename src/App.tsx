@@ -44,6 +44,7 @@ import { LearnPracticeView } from './components/LearnPracticeView';
 import { ExportDataView } from './components/ExportDataView';
 import { EduPredictChatbot } from './components/EduPredictChatbot';
 import { EduPredictLogoAnimation } from './components/EduPredictLogoAnimation';
+import { FloatingLogoBackground } from './components/FloatingLogoBackground';
 import { motion, AnimatePresence } from 'motion/react';
 import { Footer } from './components/Footer';
 import {
@@ -300,10 +301,11 @@ function AppContent() {
   if (isAuthLoading) {
     return (
       <div
-        className={`h-[100dvh] w-full flex flex-col items-center justify-center transition-colors ${
+        className={`h-[100dvh] w-full flex flex-col items-center justify-center transition-colors relative ${
           isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0B0F19] text-slate-100'
         }`}
       >
+        <FloatingLogoBackground />
         <EduPredictLogoAnimation variant="splash" />
       </div>
     );
@@ -369,10 +371,13 @@ function AppContent() {
 
   return (
     <div
-      className={`h-[100dvh] max-h-[100dvh] w-full flex flex-col md:flex-row overflow-hidden antialiased transition-colors ${
+      className={`h-[100dvh] max-h-[100dvh] w-full flex flex-col md:flex-row overflow-hidden antialiased transition-colors relative ${
         isLight ? 'bg-[#F7F8FC] text-[#172033]' : 'bg-[#0F172A] text-slate-100'
       }`}
     >
+      {/* Subtle Floating Logo Background Animation */}
+      <FloatingLogoBackground />
+
       {/* Sidebar Navigation - Fixed & stationary on desktop */}
       <Sidebar
         currentSection={currentSection}

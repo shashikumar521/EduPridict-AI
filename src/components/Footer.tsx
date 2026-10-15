@@ -1,6 +1,7 @@
 import React from 'react';
 import { Phone, Mail, Sparkles } from 'lucide-react';
 import { SectionId } from '../types';
+import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
 
 interface FooterProps {
   onNavigate?: (section: SectionId) => void;
@@ -50,14 +51,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               onClick={() => handleNav('home')}
               className="flex items-center gap-2.5 cursor-pointer group select-none text-left w-fit"
             >
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-900 border border-slate-700/80 flex items-center justify-center shrink-0 shadow-sm group-hover:border-indigo-400/80 transition-colors">
-                <img
-                  src="/edupredict-ai-logo.png"
-                  alt="EduPredict AI Logo"
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
+              <EduPredictLogoAnimation variant="compact" showWordmark={false} />
               <span className="text-[17px] font-bold tracking-tight text-white select-none">
                 EduPredict<span className="text-[#818CF8]">AI</span>
               </span>

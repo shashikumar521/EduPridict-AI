@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { dropdownVariants } from '../utils/motionPresets';
+import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
 
 interface HeaderProps {
   currentSection: SectionId;
@@ -152,12 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
               title="Go to Student Dashboard"
             >
-              <img
-                src="/edupredict-ai-logo.png"
-                alt="EduPredict AI"
-                className="w-4 h-4 rounded-full object-cover shrink-0"
-                referrerPolicy="no-referrer"
-              />
+              <EduPredictLogoAnimation variant="header" showWordmark={false} />
               EduPredict AI
             </button>
             <ChevronRight className={`w-3.5 h-3.5 hidden sm:inline shrink-0 ${isLight ? 'text-[#64748B]' : 'text-slate-500'}`} />

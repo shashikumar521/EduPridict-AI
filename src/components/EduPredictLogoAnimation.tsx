@@ -1,78 +1,155 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { EASINGS } from '../utils/motionPresets';
+import { motion, useReducedMotion, TargetAndTransition } from 'motion/react';
+import { useTheme } from '../context/ThemeContext';
 
-interface EduPredictLogoAnimationProps {
-  variant?: 'hero' | 'splash' | 'compact';
+export interface EduPredictLogoAnimationProps {
+  variant?: 'hero' | 'splash' | 'compact' | 'sidebar' | 'header' | 'login' | 'floating-badge';
   showWordmark?: boolean;
   className?: string;
+  isCollapsed?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  onClick?: () => void;
 }
 
 export const EduPredictLogoAnimation: React.FC<EduPredictLogoAnimationProps> = ({
   variant = 'compact',
   showWordmark = true,
   className = '',
+  isCollapsed = false,
+  size,
+  onClick
 }) => {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+  const shouldReduceMotion = useReducedMotion();
+
+  // Floating oscillation: 4-6s cycle, 4-7px vertical travel
+  const floatAnimation: TargetAndTransition = shouldReduceMotion
+    ? { y: 0 }
+    : {
+        y: [0, -6, 0],
+        transition: {
+          duration: 5.2,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }
+      };
+
+  // Header micro-float: 3-4px travel for tight navbar spaces
+  const headerFloatAnimation: TargetAndTransition = shouldReduceMotion
+    ? { y: 0 }
+    : {
+        y: [0, -3, 0],
+        transition: {
+          duration: 4.8,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }
+      };
+
+  // Ambient breathing aura (turquoise & indigo glow)
+  const auraAnimation: TargetAndTransition = shouldReduceMotion
+    ? { opacity: 0.3, scale: 1 }
+    : {
+        opacity: [0.35, 0.65, 0.35],
+        scale: [0.98, 1.06, 0.98],
+        transition: {
+          duration: 5.2,
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }
+      };
+
+  // Border highlight sweep: sweeps across circuit edge once per floating cycle (~5.5s)
+  const sweepAnimation: TargetAndTransition = shouldReduceMotion
+    ? { opacity: 0 }
+    : {
+        x: ['-130%', '240%'],
+        opacity: [0, 0.65, 0],
+        transition: {
+          duration: 1.6,
+          repeat: Infinity,
+          repeatDelay: 3.8,
+          ease: 'easeInOut'
+        }
+      };
+
+  // =========================================================================
+  // 1. HERO VARIANT (Public Homepage Hero Section)
+  // Expressive entrance, soft floating cycle, turquoise glow aura, and bold typography
+  // =========================================================================
   if (variant === 'hero') {
     return (
-      <div className={`flex items-center gap-3.5 ${className}`}>
-        {/* Animated Icon Frame */}
-        <div className="relative group shrink-0">
-          {/* Subtle Ambient Aura */}
+      <div className={`flex items-center gap-3.5 select-none ${className}`}>
+        {/* Animated Icon Frame with Ambient Aura & Perimeter Glow */}
+        <motion.div
+          animate={floatAnimation}
+          className="relative group shrink-0"
+        >
+          {/* Subtle Ambient Turquoise & Violet Aura */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: [0, 0.45, 0.25], scale: [0.8, 1.15, 1] }}
-            transition={{ duration: 1.4, ease: EASINGS.smooth }}
-            className="absolute -inset-1.5 rounded-2xl bg-gradient-to-r from-[#6D28D9]/40 via-[#4F46E5]/30 to-[#8B5CF6]/40 blur-md pointer-events-none"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={auraAnimation}
+            className={`absolute -inset-2 rounded-2xl blur-lg pointer-events-none transition-colors ${
+              isLight
+                ? 'bg-gradient-to-tr from-[#0D9488]/25 via-[#4F46E5]/20 to-[#06B6D4]/30'
+                : 'bg-gradient-to-tr from-[#14B8A6]/35 via-[#6366F1]/25 to-[#06B6D4]/35'
+            }`}
           />
 
-          {/* Logo Container with Border Sweep */}
+          {/* Logo Container with Rounded Circuit Border */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 6 }}
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASINGS.smooth }}
-            className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl overflow-hidden p-1 bg-white dark:bg-[#1E293B] border border-[#DDD6FE] dark:border-[#8B5CF6]/40 shadow-sm flex items-center justify-center"
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative w-12 h-12 sm:w-13 sm:h-13 rounded-2xl overflow-hidden p-1 border shadow-md flex items-center justify-center transition-all ${
+              isLight
+                ? 'bg-white border-[#5EEAD4]/70 shadow-[0_6px_20px_rgba(13,148,136,0.14)]'
+                : 'bg-[#111A2E] border-[#2DD4BF]/50 shadow-[0_6px_24px_rgba(45,212,191,0.22)]'
+            }`}
           >
             <img
               src="/edupredict-ai-logo.png"
               alt="EduPredict AI Logo"
-              className="w-full h-full object-cover rounded-xl"
+              className="w-full h-full object-contain rounded-xl"
               referrerPolicy="no-referrer"
             />
 
-            {/* Light sweep reflection across logo */}
+            {/* Delicate highlight sweep across the emblem */}
             <motion.div
-              initial={{ x: '-100%', opacity: 0 }}
-              animate={{ x: '180%', opacity: [0, 0.6, 0] }}
-              transition={{ delay: 0.45, duration: 0.85, ease: 'easeInOut' }}
-              className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 pointer-events-none"
+              animate={sweepAnimation}
+              className={`absolute inset-y-0 w-1/2 skew-x-12 pointer-events-none ${
+                isLight
+                  ? 'bg-gradient-to-r from-transparent via-white/70 to-transparent'
+                  : 'bg-gradient-to-r from-transparent via-[#5EEAD4]/45 to-transparent'
+              }`}
             />
           </motion.div>
-        </div>
+        </motion.div>
 
-        {/* Staggered Wordmark */}
+        {/* Wordmark with Entrance Stagger */}
         {showWordmark && (
-          <div className="min-w-0">
+          <div className="min-w-0 text-left">
             <motion.div
-              initial={{ opacity: 0, y: 4 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.45, ease: EASINGS.smooth }}
+              transition={{ delay: 0.15, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center gap-1.5"
             >
-              <span className="font-extrabold text-base sm:text-lg tracking-tight text-[#0F172A] dark:text-white">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-[#0F172A] dark:text-white">
                 EduPredict AI
               </span>
-              <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded border bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/40">
+              <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE] dark:bg-[#6D28D9]/25 dark:text-[#DDD6FE] dark:border-[#8B5CF6]/40">
                 AI
               </span>
             </motion.div>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.35, duration: 0.4 }}
-              className="text-[11px] font-semibold tracking-wide text-[#6D28D9] dark:text-[#DDD6FE] uppercase"
+              transition={{ delay: 0.28, duration: 0.4 }}
+              className="text-[11px] font-semibold tracking-wider text-[#0D9488] dark:text-[#2DD4BF] uppercase"
             >
-              Academic Intelligence Platform
+              Predictive Learning Platform
             </motion.p>
           </div>
         )}
@@ -80,70 +157,322 @@ export const EduPredictLogoAnimation: React.FC<EduPredictLogoAnimationProps> = (
     );
   }
 
+  // =========================================================================
+  // 2. SPLASH VARIANT (App Initialization & Loading)
+  // =========================================================================
   if (variant === 'splash') {
     return (
-      <div className={`flex flex-col items-center justify-center ${className}`}>
-        {/* Animated central icon */}
-        <div className="relative">
+      <div className={`flex flex-col items-center justify-center select-none ${className}`}>
+        <motion.div
+          animate={floatAnimation}
+          className="relative group shrink-0"
+        >
+          {/* Pulsing Turquoise Aura */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: [0, 0.5, 0.3], scale: [0.85, 1.2, 1] }}
-            transition={{ duration: 1.2, ease: EASINGS.smooth }}
-            className="absolute -inset-3 rounded-3xl bg-gradient-to-tr from-[#6D28D9]/40 via-[#4F46E5]/30 to-[#8B5CF6]/40 blur-xl pointer-events-none"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={auraAnimation}
+            className={`absolute -inset-4 rounded-3xl blur-xl pointer-events-none ${
+              isLight
+                ? 'bg-gradient-to-tr from-[#0D9488]/30 via-[#4F46E5]/20 to-[#06B6D4]/35'
+                : 'bg-gradient-to-tr from-[#14B8A6]/40 via-[#6366F1]/30 to-[#06B6D4]/40'
+            }`}
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 8 }}
+            initial={{ opacity: 0, scale: 0.88, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.65, ease: EASINGS.smooth }}
-            className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-[#1E293B] flex items-center justify-center border-2 border-[#6D28D9]/40 dark:border-[#8B5CF6]/40 p-2"
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden shadow-2xl p-2 border-2 flex items-center justify-center ${
+              isLight
+                ? 'bg-white border-[#5EEAD4]/80 shadow-[0_10px_35px_rgba(13,148,136,0.2)]'
+                : 'bg-[#111A2E] border-[#2DD4BF]/60 shadow-[0_10px_40px_rgba(45,212,191,0.28)]'
+            }`}
           >
             <img
               src="/edupredict-ai-logo.png"
               alt="EduPredict AI"
-              className="w-full h-full object-cover rounded-2xl"
+              className="w-full h-full object-contain rounded-2xl"
               referrerPolicy="no-referrer"
             />
 
-            {/* Sweep effect */}
             <motion.div
-              initial={{ x: '-120%', opacity: 0 }}
-              animate={{ x: '200%', opacity: [0, 0.7, 0] }}
-              transition={{ delay: 0.4, duration: 0.9, ease: 'easeInOut' }}
-              className="absolute inset-y-0 w-2/3 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 pointer-events-none"
+              animate={sweepAnimation}
+              className={`absolute inset-y-0 w-2/3 skew-x-12 pointer-events-none ${
+                isLight
+                  ? 'bg-gradient-to-r from-transparent via-white/70 to-transparent'
+                  : 'bg-gradient-to-r from-transparent via-[#5EEAD4]/50 to-transparent'
+              }`}
             />
           </motion.div>
-        </div>
+        </motion.div>
 
-        {/* Title */}
+        {/* Brand Text */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5, ease: EASINGS.smooth }}
-          className="mt-5 text-center space-y-1"
+          transition={{ delay: 0.25, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-6 text-center space-y-1"
         >
-          <p className="text-base font-black tracking-tight text-[#0F172A] dark:text-white">
+          <p className="text-lg font-black tracking-tight text-[#0F172A] dark:text-white">
             EduPredict AI
           </p>
-          <p className="text-xs font-bold text-[#6D28D9] dark:text-[#DDD6FE] uppercase tracking-widest">
-            Academic Intelligence Platform
+          <p className="text-xs font-bold text-[#0D9488] dark:text-[#2DD4BF] uppercase tracking-widest">
+            Academic Intelligence &amp; Predictive Learning
           </p>
         </motion.div>
       </div>
     );
   }
 
-  // Compact variant for Header & Sidebar
-  return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <div className="w-8 h-8 rounded-xl overflow-hidden shadow-xs shrink-0 bg-white dark:bg-[#172033] flex items-center justify-center border border-[#6D28D9]/30 dark:border-[#8B5CF6]/30 p-0.5 transition-transform duration-200 hover:scale-105">
-        <img
-          src="/edupredict-ai-logo.png"
-          alt="EduPredict AI"
-          className="w-full h-full object-cover rounded-lg"
-          referrerPolicy="no-referrer"
-        />
+  // =========================================================================
+  // 3. SIDEBAR BRAND VARIANT (Stationary Sidebar Header)
+  // =========================================================================
+  if (variant === 'sidebar') {
+    return (
+      <div className={`flex items-center gap-3 min-w-0 select-none ${className}`}>
+        <motion.div
+          animate={floatAnimation}
+          className="relative group shrink-0"
+        >
+          {/* Subtle Ambient Glow */}
+          <motion.div
+            animate={auraAnimation}
+            className={`absolute -inset-1 rounded-xl blur-sm pointer-events-none ${
+              isLight
+                ? 'bg-gradient-to-tr from-[#0D9488]/20 to-[#6D28D9]/20'
+                : 'bg-gradient-to-tr from-[#14B8A6]/30 to-[#8B5CF6]/30'
+            }`}
+          />
+
+          <div
+            className={`relative w-9 h-9 rounded-xl overflow-hidden shadow-xs shrink-0 flex items-center justify-center p-0.5 border transition-all ${
+              isLight
+                ? 'bg-white border-[#5EEAD4]/60 shadow-[0_2px_8px_rgba(13,148,136,0.12)]'
+                : 'bg-[#111A2E] border-[#2DD4BF]/40 shadow-[0_2px_10px_rgba(45,212,191,0.18)]'
+            }`}
+          >
+            <img
+              src="/edupredict-ai-logo.png"
+              alt="EduPredict AI Logo"
+              className="w-full h-full object-contain rounded-lg"
+              referrerPolicy="no-referrer"
+            />
+            {/* Occasional Circuit Border Highlight */}
+            <motion.div
+              animate={sweepAnimation}
+              className={`absolute inset-y-0 w-1/2 skew-x-12 pointer-events-none ${
+                isLight
+                  ? 'bg-gradient-to-r from-transparent via-white/70 to-transparent'
+                  : 'bg-gradient-to-r from-transparent via-[#5EEAD4]/45 to-transparent'
+              }`}
+            />
+          </div>
+        </motion.div>
+
+        {!isCollapsed && showWordmark && (
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className={`font-bold tracking-tight text-sm truncate ${isLight ? 'text-[#172033]' : 'text-white'}`}>
+                EduPredict AI
+              </span>
+              <span
+                className={`text-[9.5px] uppercase font-bold px-1.5 py-0.2 rounded shrink-0 border ${
+                  isLight
+                    ? 'bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]'
+                    : 'bg-[#6D28D9]/25 text-[#DDD6FE] border-[#8B5CF6]/40'
+                }`}
+              >
+                AI
+              </span>
+            </div>
+            <p className={`text-[11px] font-medium truncate ${isLight ? 'text-[#526078]' : 'text-slate-300'}`}>
+              Academic Intelligence
+            </p>
+          </div>
+        )}
       </div>
+    );
+  }
+
+  // =========================================================================
+  // 4. HEADER BREADCRUMB VARIANT (Micro-Emblem in Header)
+  // =========================================================================
+  if (variant === 'header') {
+    return (
+      <motion.div
+        animate={headerFloatAnimation}
+        className={`relative inline-flex items-center justify-center shrink-0 ${className}`}
+      >
+        <span
+          className={`relative w-4.5 h-4.5 rounded-full overflow-hidden p-0.5 border shadow-2xs flex items-center justify-center ${
+            isLight
+              ? 'bg-white border-[#5EEAD4]/80'
+              : 'bg-[#111A2E] border-[#2DD4BF]/60'
+          }`}
+        >
+          <img
+            src="/edupredict-ai-logo.png"
+            alt="EduPredict AI"
+            className="w-full h-full object-contain rounded-full"
+            referrerPolicy="no-referrer"
+          />
+        </span>
+      </motion.div>
+    );
+  }
+
+  // =========================================================================
+  // 5. LOGIN BANNER VARIANT (Compact Fit-to-Screen Banner)
+  // =========================================================================
+  if (variant === 'login') {
+    return (
+      <motion.div
+        animate={floatAnimation}
+        className={`relative group shrink-0 select-none ${className}`}
+      >
+        <motion.div
+          animate={auraAnimation}
+          className={`absolute -inset-1 rounded-xl blur-sm pointer-events-none ${
+            isLight
+              ? 'bg-gradient-to-tr from-[#0D9488]/20 to-[#6D28D9]/20'
+              : 'bg-gradient-to-tr from-[#14B8A6]/30 to-[#8B5CF6]/30'
+          }`}
+        />
+
+        <div
+          className={`relative w-9.5 h-9.5 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-sm flex items-center justify-center p-0.5 border transition-all ${
+            isLight
+              ? 'bg-white border-[#5EEAD4]/70 shadow-[0_2px_10px_rgba(13,148,136,0.12)]'
+              : 'bg-[#111A2E] border-[#2DD4BF]/50 shadow-[0_2px_12px_rgba(45,212,191,0.2)]'
+          }`}
+        >
+          <img
+            src="/edupredict-ai-logo.png"
+            alt="EduPredict AI Logo"
+            className="w-full h-full object-contain rounded-lg"
+            referrerPolicy="no-referrer"
+          />
+          <motion.div
+            animate={sweepAnimation}
+            className={`absolute inset-y-0 w-1/2 skew-x-12 pointer-events-none ${
+              isLight
+                ? 'bg-gradient-to-r from-transparent via-white/70 to-transparent'
+                : 'bg-gradient-to-r from-transparent via-[#5EEAD4]/45 to-transparent'
+            }`}
+          />
+        </div>
+      </motion.div>
+    );
+  }
+
+  // =========================================================================
+  // 6. FLOATING-BADGE VARIANT (Ambient Floating Emblem Across All Pages)
+  // Anchored at bottom-left, away from bottom-right AI Assistant chatbot
+  // =========================================================================
+  if (variant === 'floating-badge') {
+    return (
+      <div
+        className={`fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-30 hidden sm:flex items-center pointer-events-auto select-none ${className}`}
+        onClick={onClick}
+      >
+        <motion.div
+          animate={floatAnimation}
+          whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+          className={`group flex items-center gap-2 px-2.5 py-1.5 rounded-full border shadow-lg backdrop-blur-md transition-all cursor-default ${
+            isLight
+              ? 'bg-white/90 border-[#5EEAD4]/70 text-[#0F172A] shadow-teal-900/10 hover:border-[#0D9488]'
+              : 'bg-[#111A2E]/90 border-[#2DD4BF]/50 text-white shadow-black/40 hover:border-[#2DD4BF]'
+          }`}
+          title="EduPredict AI • Predictive Learning & Academic Intelligence"
+        >
+          {/* Emblem with turquoise glow aura */}
+          <div className="relative shrink-0">
+            <motion.div
+              animate={auraAnimation}
+              className={`absolute -inset-1 rounded-full blur-xs pointer-events-none ${
+                isLight
+                  ? 'bg-gradient-to-tr from-[#0D9488]/30 to-[#6366F1]/20'
+                  : 'bg-gradient-to-tr from-[#14B8A6]/40 to-[#8B5CF6]/30'
+              }`}
+            />
+            <div className="relative w-6 h-6 rounded-full overflow-hidden p-0.5 bg-[#0B132B] flex items-center justify-center border border-[#2DD4BF]/60">
+              <img
+                src="/edupredict-ai-logo.png"
+                alt="EduPredict AI"
+                className="w-full h-full object-contain rounded-full"
+                referrerPolicy="no-referrer"
+              />
+              <motion.div
+                animate={sweepAnimation}
+                className="absolute inset-y-0 w-1/2 skew-x-12 bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none"
+              />
+            </div>
+          </div>
+
+          {/* Micro Wordmark Pill */}
+          <div className="flex items-center gap-1.5 pr-1">
+            <span className="text-[11px] font-bold tracking-tight">EduPredict AI</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] dark:bg-[#2DD4BF] animate-pulse" />
+            <span className="text-[9.5px] font-semibold text-[#0D9488] dark:text-[#2DD4BF] uppercase tracking-wider hidden md:inline">
+              Active
+            </span>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 7. COMPACT DEFAULT VARIANT
+  // =========================================================================
+  const dimensions =
+    size === 'xs'
+      ? 'w-6 h-6 rounded-md'
+      : size === 'sm'
+      ? 'w-7 h-7 rounded-lg'
+      : size === 'lg'
+      ? 'w-11 h-11 rounded-xl'
+      : 'w-8 h-8 rounded-xl';
+
+  return (
+    <div className={`flex items-center gap-2.5 select-none ${className}`}>
+      <motion.div
+        animate={floatAnimation}
+        className="relative group shrink-0"
+      >
+        <motion.div
+          animate={auraAnimation}
+          className={`absolute -inset-1 rounded-xl blur-xs pointer-events-none ${
+            isLight
+              ? 'bg-gradient-to-tr from-[#0D9488]/20 to-[#6D28D9]/20'
+              : 'bg-gradient-to-tr from-[#14B8A6]/30 to-[#8B5CF6]/30'
+          }`}
+        />
+
+        <div
+          className={`relative ${dimensions} overflow-hidden shadow-2xs shrink-0 flex items-center justify-center p-0.5 border transition-all ${
+            isLight
+              ? 'bg-white border-[#5EEAD4]/60 shadow-[0_2px_8px_rgba(13,148,136,0.1)]'
+              : 'bg-[#111A2E] border-[#2DD4BF]/40 shadow-[0_2px_10px_rgba(45,212,191,0.18)]'
+          }`}
+        >
+          <img
+            src="/edupredict-ai-logo.png"
+            alt="EduPredict AI"
+            className="w-full h-full object-contain rounded-lg"
+            referrerPolicy="no-referrer"
+          />
+          <motion.div
+            animate={sweepAnimation}
+            className={`absolute inset-y-0 w-1/2 skew-x-12 pointer-events-none ${
+              isLight
+                ? 'bg-gradient-to-r from-transparent via-white/70 to-transparent'
+                : 'bg-gradient-to-r from-transparent via-[#5EEAD4]/40 to-transparent'
+            }`}
+          />
+        </div>
+      </motion.div>
+
       {showWordmark && (
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">

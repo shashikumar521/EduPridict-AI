@@ -21,6 +21,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { Footer } from './Footer';
 import { motion } from 'motion/react';
 import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
+import { FloatingLogoBackground } from './FloatingLogoBackground';
 import { EASINGS, cardVariants, containerVariants } from '../utils/motionPresets';
 
 interface HomeViewProps {
@@ -146,12 +147,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans antialiased overflow-x-hidden transition-colors ${
+      className={`min-h-screen flex flex-col font-sans antialiased overflow-x-hidden transition-colors relative ${
         isLight
           ? 'bg-[#F8FAFC] text-[#0F172A] selection:bg-[#7C3AED]/20 selection:text-[#6D28D9]'
           : 'bg-[#0B0F19] text-slate-100 selection:bg-[#7C3AED]/30 selection:text-purple-200'
       }`}
     >
+      {/* Signature Floating Logo Background Animation */}
+      <FloatingLogoBackground />
+
       {/* 1. Header & Navigation */}
       <header
         className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${
@@ -166,14 +170,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
             onClick={() => onNavigateToDashboard('home')}
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none text-left min-w-0 shrink-0"
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-xs shrink-0 bg-[#0B132B] border border-[#7C3AED]/30 flex items-center justify-center p-1 group-hover:scale-105 transition-transform">
-              <img
-                src="/edupredict-ai-logo.png"
-                alt="EduPredict AI Logo"
-                className="w-full h-full object-cover rounded-lg"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <EduPredictLogoAnimation variant="sidebar" showWordmark={false} />
             <div className="flex flex-col justify-center text-left leading-tight min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="text-base sm:text-lg font-bold tracking-tight text-[#0F172A] dark:text-white">
@@ -614,6 +611,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigateToDashboard }) => 
                 );
               })}
             </motion.div>
+          </div>
         </section>
 
       </main>

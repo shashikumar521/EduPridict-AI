@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { MobileAuthFlow } from './MobileAuthFlow';
+import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -235,14 +236,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-md shrink-0 bg-[#0B132B] flex items-center justify-center border border-[#7000E8]/30">
-              <img
-                src="/edupredict-ai-logo.png"
-                alt="EduPredict AI Logo"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <EduPredictLogoAnimation variant="login" showWordmark={false} />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className={`text-lg font-extrabold tracking-tight ${isLight ? 'text-[#172033]' : 'text-white'}`}>

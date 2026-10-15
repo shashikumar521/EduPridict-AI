@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { EduPredictLogoAnimation } from './EduPredictLogoAnimation';
 import {
   ChatMessage,
   GroundingSource,
@@ -586,19 +587,8 @@ export const EduPredictChatbot: React.FC<EduPredictChatbotProps> = ({
                 : 'bg-gradient-to-r from-[#172033] via-[#111A2E] to-[#1E1B4B] border-[#2D3E5E]'
             }`}
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#6D28D9] to-[#4F46E5] p-0.5 shadow-md shrink-0 flex items-center justify-center">
-                <img
-                  src="/edupredict-ai-logo.png"
-                  alt="EduPredict AI Logo"
-                  className="w-full h-full object-cover rounded-[10px]"
-                  onError={(e) => {
-                    // Fallback to Bot icon if image missing
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
-                <Bot className="w-5 h-5 text-white absolute" />
-              </div>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <EduPredictLogoAnimation variant="login" showWordmark={false} />
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
